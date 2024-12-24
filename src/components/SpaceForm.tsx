@@ -1,8 +1,8 @@
 import React from 'react';
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import SpaceFormDimensions from './SpaceFormDimensions';
+import SpaceFormMedia from './SpaceFormMedia';
 
 interface SpaceFormProps {
   x: number;
@@ -32,98 +32,23 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   // Calculate the actual price: each cell is 10x10 pixels, and each pixel costs 0.01 SOL
   const actualPrice = width * height * 100 * 0.01; // 100 = 10x10 pixels per cell
 
-  const handleUrlChange = (value: string) => {
-    onInputChange('link', value);
-    if (value && !isValidUrl(value)) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid URL (e.g., https://example.com)",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const isValidUrl = (urlString: string): boolean => {
-    try {
-      new URL(urlString);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
-
   return (
     <div className="bg-secondary p-4 rounded-lg">
       <div className="flex flex-wrap gap-4 items-end">
-        <div className="flex-1 min-w-[120px]">
-          <label className="block text-xs font-pixel mb-1">X Position</label>
-          <Input
-            type="number"
-            value={x}
-            onChange={(e) => onInputChange('x', parseInt(e.target.value))}
-            className="retro-input h-8"
-            min={0}
-            max={99}
-            disabled={isProcessing}
-          />
-        </div>
-        <div className="flex-1 min-w-[120px]">
-          <label className="block text-xs font-pixel mb-1">Y Position</label>
-          <Input
-            type="number"
-            value={y}
-            onChange={(e) => onInputChange('y', parseInt(e.target.value))}
-            className="retro-input h-8"
-            min={0}
-            max={99}
-            disabled={isProcessing}
-          />
-        </div>
-        <div className="flex-1 min-w-[120px]">
-          <label className="block text-xs font-pixel mb-1">Width</label>
-          <Input
-            type="number"
-            value={width}
-            onChange={(e) => onInputChange('width', parseInt(e.target.value))}
-            className="retro-input h-8"
-            min={1}
-            max={100}
-            disabled={isProcessing}
-          />
-        </div>
-        <div className="flex-1 min-w-[120px]">
-          <label className="block text-xs font-pixel mb-1">Height</label>
-          <Input
-            type="number"
-            value={height}
-            onChange={(e) => onInputChange('height', parseInt(e.target.value))}
-            className="retro-input h-8"
-            min={1}
-            max={100}
-            disabled={isProcessing}
-          />
-        </div>
-        <div className="flex-[2] min-w-[200px]">
-          <label className="block text-xs font-pixel mb-1">Link URL</label>
-          <Input
-            type="url"
-            value={link}
-            onChange={(e) => handleUrlChange(e.target.value)}
-            className="retro-input h-8"
-            placeholder="https://"
-            disabled={isProcessing}
-          />
-        </div>
-        <div className="flex-[2] min-w-[200px]">
-          <label className="block text-xs font-pixel mb-1">Image</label>
-          <Input
-            type="file"
-            onChange={(e) => e.target.files && onImageUpload(e.target.files[0])}
-            className="retro-input h-8"
-            accept="image/*"
-            disabled={isProcessing}
-          />
-        </div>
+        <SpaceFormDimensions
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          onInputChange={(field, value) => onInputChange(field, value)}
+          isProcessing={isProcessing}
+        />
+        <SpaceFormMedia
+          link={link}
+          onInputChange={onInputChange}
+          onImageUpload={onImageUpload}
+          isProcessing={isProcessing}
+        />
         <div className="flex items-center gap-4">
           <div className="text-right font-pixel text-xs whitespace-nowrap">
             Price: {actualPrice.toFixed(2)} SOL
