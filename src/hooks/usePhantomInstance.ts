@@ -9,17 +9,18 @@ export const usePhantomInstance = () => {
       // @ts-ignore
       const provider = window?.phantom?.solana;
       
-      if (provider?.isPhantom) {
-        console.log("✅ Instance Phantom trouvée");
-        return provider;
-      }
-      
-      // Vérification spécifique pour mobile
+      // Vérification spécifique pour mobile d'abord
       // @ts-ignore
       if (window?.solana?.isPhantom) {
         console.log("✅ Instance Phantom mobile trouvée via window.solana");
         // @ts-ignore
         return window.solana;
+      }
+      
+      // Fallback sur l'instance standard
+      if (provider?.isPhantom) {
+        console.log("✅ Instance Phantom trouvée");
+        return provider;
       }
 
       console.log("❌ Pas d'instance Phantom trouvée");

@@ -40,9 +40,8 @@ export const useMobileConnection = (
       }
     };
 
-    if (isMobile && !connected && !checkingConnection) {
+    if (isMobile && !connected && checkingConnection) {
       console.log("🔄 Démarrage de la vérification de connexion mobile...");
-      setCheckingConnection(true);
       checkMobileConnection();
       intervalId = setInterval(checkMobileConnection, 1000);
     }
@@ -73,16 +72,18 @@ export const useMobileConnection = (
       }
     };
 
-    // Vérifie la connexion au chargement initial
+    // Vérifie la connexion au chargement initial et à chaque focus
     checkVisibility();
 
     document.addEventListener('visibilitychange', checkVisibility);
     window.addEventListener('focus', checkVisibility);
+    window.addEventListener('pageshow', checkVisibility);
     window.addEventListener('load', checkVisibility);
 
     return () => {
       document.removeEventListener('visibilitychange', checkVisibility);
       window.removeEventListener('focus', checkVisibility);
+      window.removeEventListener('pageshow', checkVisibility);
       window.removeEventListener('load', checkVisibility);
     };
   }, [getPhantomInstance, setConnected, setPublicKey]);

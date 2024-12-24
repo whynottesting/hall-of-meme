@@ -58,6 +58,12 @@ export const usePhantomWallet = () => {
       if (wallet) {
         setPhantomWallet(wallet);
         
+        if (wallet.publicKey) {
+          console.log("🔄 Wallet déjà connecté");
+          setPublicKey(wallet.publicKey.toString());
+          setConnected(true);
+        }
+        
         wallet.on('connect', () => {
           console.log("🔌 Événement connect détecté");
           if (wallet.publicKey) {
@@ -65,10 +71,6 @@ export const usePhantomWallet = () => {
             console.log("✅ Connecté avec la clé:", key);
             setPublicKey(key);
             setConnected(true);
-            toast({
-              title: "Wallet Connecté",
-              description: "Connexion réussie à Phantom wallet",
-            });
           }
         });
         
@@ -81,12 +83,6 @@ export const usePhantomWallet = () => {
             description: "Déconnexion du Phantom wallet",
           });
         });
-        
-        if (wallet.publicKey) {
-          console.log("🔄 Wallet déjà connecté");
-          setPublicKey(wallet.publicKey.toString());
-          setConnected(true);
-        }
       }
     };
 
@@ -98,6 +94,7 @@ export const usePhantomWallet = () => {
     
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
+      setCheckingConnection(true);
       const currentUrl = window.location.href;
       const encodedUrl = encodeURIComponent(currentUrl);
       const deepLink = `https://phantom.app/ul/browse/${encodedUrl}`;
@@ -118,7 +115,7 @@ export const usePhantomWallet = () => {
     }
 
     await attemptConnection(phantomWallet);
-  }, [isMobile, phantomWallet, attemptConnection]);
+  }, [isMobile, phantomWallet, attemptConnection, setCheckingConnection]);
 
   return { connected, phantomWallet, handleConnectWallet, publicKey };
 };
