@@ -101,7 +101,7 @@
   }
 
   .retro-button {
-    @apply bg-primary text-white font-pixel px-6 py-3 text-sm transition-all hover:bg-gray-50 hover:text-black hover:border-2 hover:border-black focus:outline-none focus:ring-2 focus:ring-accent animate-pixel-fade;
+    @apply bg-primary text-white font-pixel px-6 py-3 text-sm transition-all hover:bg-gray-100 hover:text-black hover:border-2 hover:border-black focus:outline-none focus:ring-2 focus:ring-accent animate-pixel-fade;
   }
 
   .retro-container {
