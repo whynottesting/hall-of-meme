@@ -86,10 +86,12 @@ export const usePhantomWallet = () => {
       const currentUrl = window.location.href;
       console.log("URL actuelle:", currentUrl);
       
-      // Utilisation du format de deep link simplifié comme Magic Eden
-      const phantomDeepLink = `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent(currentUrl)}`;
-      console.log("🔗 Deep link généré:", phantomDeepLink);
+      // Construction du deep link selon la documentation Phantom
+      const encodedUrl = encodeURIComponent(currentUrl);
+      const encodedRef = encodeURIComponent(currentUrl);
+      const phantomDeepLink = `https://phantom.app/ul/browse/${encodedUrl}?ref=${encodedRef}`;
       
+      console.log("🔗 Deep link généré:", phantomDeepLink);
       window.location.href = phantomDeepLink;
       return;
     }
