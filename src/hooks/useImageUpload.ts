@@ -30,7 +30,7 @@ export const useImageUpload = () => {
           download: false,
           transform: {
             quality: 75, // Optimiser la qualité pour mobile
-            format: 'webp' // Utiliser un format moderne
+            format: 'origin' // Format original pour assurer la compatibilité
           }
         });
 
