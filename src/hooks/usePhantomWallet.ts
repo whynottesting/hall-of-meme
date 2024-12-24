@@ -7,7 +7,6 @@ export const usePhantomWallet = () => {
   const [phantomWallet, setPhantomWallet] = useState<any>(null);
   const isMobile = useIsMobile();
 
-  // Fonction pour vérifier l'état de connexion
   const checkConnectionStatus = async (phantom: any) => {
     try {
       console.log("Checking connection status...");
@@ -41,7 +40,6 @@ export const usePhantomWallet = () => {
 
     checkPhantomWallet();
 
-    // Ajouter un listener pour détecter quand l'utilisateur revient sur l'application
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
         console.log("App became visible, checking wallet status...");
@@ -50,8 +48,9 @@ export const usePhantomWallet = () => {
           const phantom = window.phantom?.solana;
           if (phantom?.isPhantom) {
             console.log("Phantom detected after visibility change");
-            const isConnected = await checkConnectionStatus(phantom);
-            console.log("Connection status after visibility change:", isConnected);
+            await phantom.connect();
+            setConnected(true);
+            setPhantomWallet(phantom);
           } else {
             console.log("Phantom not detected after visibility change");
           }
@@ -63,7 +62,6 @@ export const usePhantomWallet = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Cleanup
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -73,26 +71,7 @@ export const usePhantomWallet = () => {
     try {
       if (!phantomWallet && isMobile) {
         console.log("Mobile detected, no Phantom - trying deep link");
-        const phantomDeepLink = "https://phantom.app/ul/browse/";
-        let connectionAttempted = false;
-
-        const timer = setTimeout(() => {
-          if (!connectionAttempted) {
-            console.log("No connection attempt detected, redirecting to download page");
-            window.location.href = "https://phantom.app/download";
-          }
-        }, 2000);
-        
-        window.location.href = phantomDeepLink;
-        
-        document.addEventListener('visibilitychange', () => {
-          if (document.hidden) {
-            console.log("Page hidden, clearing timeout");
-            clearTimeout(timer);
-            connectionAttempted = true;
-          }
-        }, { once: true });
-
+        window.location.href = "https://phantom.app/ul/browse/";
         return;
       } else if (!phantomWallet) {
         toast({
