@@ -15,22 +15,18 @@ export const useSpaces = () => {
     setIsProcessing(true);
     try {
       // Vérifier la disponibilité de l'espace
-      const response = await fetch('/functions/process-space-purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('process-space-purchase', {
+        body: {
           x: selectedSpace.x,
           y: selectedSpace.y,
           width: selectedSpace.width,
           height: selectedSpace.height,
           walletAddress
-        })
+        }
       });
-
-      const data = await response.json();
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (error) {
+        throw new Error(error.message);
       }
 
       // Calculer le prix en lamports (100 pixels par case car 10x10)
