@@ -16,6 +16,13 @@ export const usePhantomWallet = () => {
         if (phantom?.isPhantom) {
           setPhantomWallet(phantom);
           console.log("Phantom wallet detected!");
+          
+          // Vérifier si le wallet est déjà connecté
+          const response = await phantom.connect({ onlyIfTrusted: true });
+          if (response.publicKey) {
+            setConnected(true);
+            console.log("Wallet already connected:", response.publicKey.toString());
+          }
         }
       } catch (error) {
         console.error("Error detecting Phantom wallet:", error);
@@ -23,7 +30,7 @@ export const usePhantomWallet = () => {
     };
 
     checkPhantomWallet();
-  }, [isMobile]);
+  }, []);
 
   const handleConnectWallet = async () => {
     try {
