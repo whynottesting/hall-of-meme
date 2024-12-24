@@ -55,8 +55,8 @@
     display: grid;
     grid-template-columns: repeat(100, 1fr);
     aspect-ratio: 1;
-    width: 98vw;
-    max-height: 98vh;
+    width: 150vw;
+    max-height: none;
     margin: 0 auto;
     border: 2px solid #1a2b3c;
     background: #f0f0f0;
@@ -64,7 +64,15 @@
     left: 50%;
     transform: translateX(-50%);
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: auto;
+  }
+
+  @media (min-width: 768px) {
+    .pixel-grid {
+      width: 98vw;
+      max-height: 98vh;
+      overflow: hidden;
+    }
   }
 
   .pixel-cell {
@@ -95,7 +103,7 @@
   }
 
   .retro-container {
-    @apply max-w-[95vw] mx-auto px-4;
+    @apply max-w-[95vw] mx-auto px-4 overflow-x-auto;
   }
 
   .retro-title {
