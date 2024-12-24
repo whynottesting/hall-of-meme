@@ -53,8 +53,8 @@
       #ffff00 28%,
       #00ff00 42%,
       #00ffff 56%,
-      #0000ff 70%,
-      #ff00ff 84%,
+      #3b82f6 70%,
+      #8b5cf6 84%,
       #ff0000 100%
     );
     background-size: 200% auto;
@@ -62,7 +62,8 @@
     -webkit-background-clip: text;
     background-clip: text;
     animation: rainbow-wave 3s linear infinite;
-    text-shadow: none;
+    font-weight: bold;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
   }
 
   .pixel-grid {
