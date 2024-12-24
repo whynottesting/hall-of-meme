@@ -16,12 +16,6 @@ export const usePhantomWallet = () => {
         if (phantom?.isPhantom) {
           setPhantomWallet(phantom);
           console.log("Phantom wallet detected!");
-        } else if (!isMobile) {
-          toast({
-            title: "Phantom Wallet Non Trouvé",
-            description: "Veuillez installer Phantom Wallet pour continuer",
-            variant: "destructive",
-          });
         }
       } catch (error) {
         console.error("Error detecting Phantom wallet:", error);
@@ -57,6 +51,11 @@ export const usePhantomWallet = () => {
 
         return;
       } else if (!phantomWallet) {
+        toast({
+          title: "Phantom Wallet Non Trouvé",
+          description: "Veuillez installer Phantom Wallet pour continuer",
+          variant: "destructive",
+        });
         window.open('https://phantom.app/', '_blank');
         return;
       }
