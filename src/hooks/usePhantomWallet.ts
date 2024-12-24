@@ -3,14 +3,12 @@ import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhantomWallet, PHANTOM_CONSTANTS } from '@/types/phantom';
 import { usePhantomInstance } from './usePhantomInstance';
-import { useMobileConnection } from './useMobileConnection';
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const [checkingConnection, setCheckingConnection] = useState(false);
 
   const getPhantomInstance = usePhantomInstance();
 
@@ -42,15 +40,6 @@ export const usePhantomWallet = () => {
     }
     return false;
   }, [isMobile]);
-
-  useMobileConnection(
-    isMobile,
-    connected,
-    checkingConnection,
-    setCheckingConnection,
-    setPublicKey,
-    setConnected
-  );
 
   useEffect(() => {
     const initializeWallet = async () => {
@@ -94,8 +83,6 @@ export const usePhantomWallet = () => {
     
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
-      setCheckingConnection(true);
-      // Utilisation du format correct pour ouvrir dans le navigateur Phantom
       const phantomDeepLink = `https://phantom.app/ul/v1/browse/${encodeURIComponent(window.location.href)}`;
       console.log("🔗 Deep link généré:", phantomDeepLink);
       window.location.href = phantomDeepLink;
@@ -114,7 +101,7 @@ export const usePhantomWallet = () => {
     }
 
     await attemptConnection(phantomWallet);
-  }, [isMobile, phantomWallet, attemptConnection, setCheckingConnection]);
+  }, [isMobile, phantomWallet, attemptConnection]);
 
   return { connected, phantomWallet, handleConnectWallet, publicKey };
 };
