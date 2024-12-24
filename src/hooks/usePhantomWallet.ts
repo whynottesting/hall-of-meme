@@ -2,123 +2,136 @@ import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+// Types
+type PhantomWallet = {
+  isPhantom?: boolean;
+  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  on: (event: string, callback: () => void) => void;
+  disconnect: () => Promise<void>;
+};
+
+// Constants
+const PHANTOM_MOBILE_LINK = "https://phantom.app/ul/browse/https://hall-of-meme.com";
+const PHANTOM_DOWNLOAD_LINK = "https://phantom.app/";
+
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
-  const [phantomWallet, setPhantomWallet] = useState<any>(null);
+  const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const isMobile = useIsMobile();
 
-  // Fonction pour obtenir l'instance de Phantom
-  const getPhantomInstance = () => {
+  // Récupère l'instance de Phantom
+  const getPhantomInstance = useCallback((): PhantomWallet | null => {
     try {
       // @ts-ignore
-      return window.phantom?.solana;
-    } catch (error) {
-      console.error("Error getting Phantom instance:", error);
-      return null;
-    }
-  };
-
-  // Fonction pour tenter une connexion au wallet
-  const attemptWalletConnection = async (phantom: any) => {
-    try {
-      console.log("Attempting wallet connection...");
-      const response = await phantom.connect();
-      if (response.publicKey) {
-        console.log("Successfully connected with public key:", response.publicKey.toString());
-        setConnected(true);
-        setPhantomWallet(phantom);
-        return true;
-      }
-    } catch (error) {
-      console.error("Connection attempt failed:", error);
-      return false;
-    }
-    return false;
-  };
-
-  // Gestionnaire de changement de visibilité
-  const handleVisibilityChange = useCallback(async () => {
-    if (!document.hidden) {
-      console.log("App became visible, attempting reconnection...");
-      const phantom = getPhantomInstance();
-      
+      const phantom = window.phantom?.solana;
       if (phantom?.isPhantom) {
-        console.log("Phantom detected after visibility change");
-        try {
-          const connected = await attemptWalletConnection(phantom);
-          if (connected) {
-            toast({
-              title: "Wallet Connecté",
-              description: "Connecté avec succès à Phantom wallet",
-            });
-          }
-        } catch (error) {
-          console.error("Error in visibility change handler:", error);
-        }
-      } else {
-        console.log("Phantom not detected after visibility change");
+        console.log("✅ Phantom instance trouvée");
+        return phantom;
       }
+      console.log("❌ Pas d'instance Phantom trouvée");
+      return null;
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération de l'instance Phantom:", error);
+      return null;
     }
   }, []);
 
-  // Initialisation et gestion des événements
-  useEffect(() => {
-    const initializeWallet = async () => {
-      const phantom = getPhantomInstance();
-      
-      if (phantom?.isPhantom) {
-        console.log("Phantom wallet detected during initialization!");
-        setPhantomWallet(phantom);
-        await attemptWalletConnection(phantom);
-      }
-    };
-
-    initializeWallet();
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [handleVisibilityChange]);
-
-  // Fonction pour gérer la connexion du wallet
-  const handleConnectWallet = async () => {
+  // Tente de connecter le wallet
+  const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
-      if (!phantomWallet && isMobile) {
-        console.log("Mobile detected, no Phantom - redirecting to deep link");
-        window.location.href = "https://phantom.app/ul/browse/https://hall-of-meme.com";
-        return;
-      }
-
-      if (!phantomWallet) {
-        toast({
-          title: "Phantom Wallet Non Trouvé",
-          description: "Veuillez installer Phantom Wallet pour continuer",
-          variant: "destructive",
-        });
-        window.open('https://phantom.app/', '_blank');
-        return;
-      }
-
-      const success = await attemptWalletConnection(phantomWallet);
-      if (success) {
+      console.log("🔄 Tentative de connexion au wallet...");
+      const response = await wallet.connect();
+      
+      if (response.publicKey) {
+        console.log("✅ Connecté avec succès! Clé publique:", response.publicKey.toString());
+        setConnected(true);
         toast({
           title: "Wallet Connecté",
-          description: "Connecté avec succès à Phantom wallet",
+          description: "Connexion réussie à Phantom wallet",
         });
+        return true;
       }
     } catch (error) {
-      console.error("Error in handleConnectWallet:", error);
-      if (isMobile) {
-        window.location.href = "https://phantom.app/download";
-      }
+      console.error("❌ Échec de la tentative de connexion:", error);
       toast({
         title: "Échec de la Connexion",
         description: "Impossible de se connecter à Phantom wallet",
         variant: "destructive",
       });
     }
-  };
+    return false;
+  }, []);
+
+  // Gestionnaire de changement de visibilité
+  const handleVisibilityChange = useCallback(async () => {
+    if (!document.hidden) {
+      console.log("👀 Application visible, vérification de la connexion...");
+      const wallet = getPhantomInstance();
+      
+      if (wallet) {
+        await attemptConnection(wallet);
+      }
+    }
+  }, [getPhantomInstance, attemptConnection]);
+
+  // Initialisation
+  useEffect(() => {
+    const initializeWallet = async () => {
+      const wallet = getPhantomInstance();
+      if (wallet) {
+        setPhantomWallet(wallet);
+        
+        // Écoute les événements de connexion/déconnexion
+        wallet.on('connect', () => {
+          console.log("🔌 Événement connect détecté");
+          setConnected(true);
+        });
+        
+        wallet.on('disconnect', () => {
+          console.log("🔌 Événement disconnect détecté");
+          setConnected(false);
+        });
+        
+        // Tente une connexion initiale
+        await attemptConnection(wallet);
+      }
+    };
+
+    initializeWallet();
+    
+    // Gestion de la visibilité pour le retour depuis l'app mobile
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+    };
+  }, [getPhantomInstance, attemptConnection, handleVisibilityChange]);
+
+  // Gestionnaire de connexion
+  const handleConnectWallet = useCallback(async () => {
+    console.log("🔄 Démarrage du processus de connexion...");
+    
+    if (isMobile && !phantomWallet) {
+      console.log("📱 Redirection vers Phantom mobile");
+      window.location.href = PHANTOM_MOBILE_LINK;
+      return;
+    }
+
+    if (!phantomWallet) {
+      console.log("⚠️ Phantom non détecté, redirection vers la page de téléchargement");
+      toast({
+        title: "Phantom Wallet Non Trouvé",
+        description: "Veuillez installer Phantom Wallet pour continuer",
+        variant: "destructive",
+      });
+      window.open(PHANTOM_DOWNLOAD_LINK, '_blank');
+      return;
+    }
+
+    await attemptConnection(phantomWallet);
+  }, [isMobile, phantomWallet, attemptConnection]);
 
   return { connected, phantomWallet, handleConnectWallet };
 };
