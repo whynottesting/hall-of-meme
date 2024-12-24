@@ -4,6 +4,12 @@ import { toast } from "@/hooks/use-toast";
 export const useImageUpload = () => {
   const handleImageUpload = async (file: File) => {
     try {
+      console.log('Début du téléchargement de l\'image:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       
@@ -13,31 +19,30 @@ export const useImageUpload = () => {
       }
 
       // Upload du fichier
-      const { data, error } = await supabase.storage
+      console.log('Tentative d\'upload vers Supabase Storage...');
+      const { data, error: uploadError } = await supabase.storage
         .from('space-images')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: false,
-          contentType: file.type
+          upsert: false
         });
 
-      if (error) throw error;
+      if (uploadError) {
+        console.error('Erreur lors de l\'upload:', uploadError);
+        throw uploadError;
+      }
 
-      // Obtenir l'URL publique avec le bon cache control
+      console.log('Upload réussi, récupération de l\'URL publique...');
+      
+      // Obtenir l'URL publique
       const { data: { publicUrl } } = supabase.storage
         .from('space-images')
-        .getPublicUrl(fileName, {
-          download: false,
-          transform: {
-            quality: 75, // Optimiser la qualité pour mobile
-            format: 'origin' // Format original pour assurer la compatibilité
-          }
-        });
+        .getPublicUrl(fileName);
 
       // Ajouter un timestamp pour éviter le cache du navigateur
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
 
-      console.log('Image URL générée:', finalUrl);
+      console.log('URL de l\'image générée:', finalUrl);
 
       toast({
         title: "Image Téléchargée",
