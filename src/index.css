@@ -36,6 +36,21 @@
     @apply bg-background text-foreground font-retro;
   }
 
+  @keyframes rainbow {
+    0% { color: #ff0000; }
+    16% { color: #ff8800; }
+    32% { color: #ffff00; }
+    48% { color: #00ff00; }
+    64% { color: #00ffff; }
+    80% { color: #0000ff; }
+    100% { color: #ff00ff; }
+  }
+
+  .rainbow-title {
+    animation: rainbow 3s linear infinite;
+    text-shadow: 2px 2px 0px #000000;
+  }
+
   .pixel-grid {
     display: grid;
     grid-template-columns: repeat(100, 1fr);

@@ -12,7 +12,7 @@ const Header = ({ connected, onConnectWallet }: HeaderProps) => {
       <div className="retro-container py-4">
         <header className="flex justify-between items-center">
           <div className="flex-1"></div>
-          <h1 className="retro-title mb-0 flex-1 text-center">HALL OF MEME</h1>
+          <h1 className="retro-title rainbow-title mb-0 flex-1 text-center animate-bounce">HALL OF MEME</h1>
           <div className="flex-1 flex justify-end">
             <Button
               onClick={onConnectWallet}
