@@ -99,7 +99,10 @@ export const usePhantomWallet = () => {
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
       const currentUrl = window.location.href;
-      window.location.href = PHANTOM_CONSTANTS.MOBILE_LINK + encodeURIComponent(currentUrl);
+      const encodedUrl = encodeURIComponent(currentUrl);
+      const deepLink = `https://phantom.app/ul/browse/${encodedUrl}`;
+      console.log("🔗 Deep link généré:", deepLink);
+      window.location.href = deepLink;
       return;
     }
 

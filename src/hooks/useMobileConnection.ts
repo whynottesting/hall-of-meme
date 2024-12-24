@@ -14,15 +14,29 @@ export const useMobileConnection = (
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 30; // 30 secondes maximum
 
     const checkMobileConnection = async () => {
       const wallet = getPhantomInstance();
+      attempts++;
+
       if (wallet?.publicKey) {
         console.log("🔍 Wallet trouvé après retour de l'app mobile");
-        setPublicKey(wallet.publicKey.toString());
+        const key = wallet.publicKey.toString();
+        setPublicKey(key);
         setConnected(true);
         setCheckingConnection(false);
         clearInterval(intervalId);
+        
+        toast({
+          title: "Wallet Connecté",
+          description: "Connexion réussie à Phantom wallet",
+        });
+      } else if (attempts >= MAX_ATTEMPTS) {
+        console.log("⚠️ Timeout de la vérification de connexion mobile");
+        clearInterval(intervalId);
+        setCheckingConnection(false);
       }
     };
 
@@ -40,7 +54,7 @@ export const useMobileConnection = (
     };
   }, [isMobile, connected, checkingConnection, getPhantomInstance, setCheckingConnection, setConnected, setPublicKey]);
 
-  const handleVisibilityChange = useEffect(() => {
+  useEffect(() => {
     const checkVisibility = async () => {
       if (!document.hidden) {
         console.log("👀 Application visible, vérification de la connexion...");
@@ -59,14 +73,17 @@ export const useMobileConnection = (
       }
     };
 
+    // Vérifie la connexion au chargement initial
+    checkVisibility();
+
     document.addEventListener('visibilitychange', checkVisibility);
     window.addEventListener('focus', checkVisibility);
+    window.addEventListener('load', checkVisibility);
 
     return () => {
       document.removeEventListener('visibilitychange', checkVisibility);
       window.removeEventListener('focus', checkVisibility);
+      window.removeEventListener('load', checkVisibility);
     };
   }, [getPhantomInstance, setConnected, setPublicKey]);
-
-  return handleVisibilityChange;
 };

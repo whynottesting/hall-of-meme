@@ -4,12 +4,24 @@ import { PhantomWallet } from '@/types/phantom';
 export const usePhantomInstance = () => {
   return useCallback((): PhantomWallet | null => {
     try {
+      if (typeof window === 'undefined') return null;
+
       // @ts-ignore
-      const phantom = window.phantom?.solana;
-      if (phantom?.isPhantom) {
-        console.log("✅ Phantom instance trouvée");
-        return phantom;
+      const provider = window?.phantom?.solana;
+      
+      if (provider?.isPhantom) {
+        console.log("✅ Instance Phantom trouvée");
+        return provider;
       }
+      
+      // Vérification spécifique pour mobile
+      // @ts-ignore
+      if (window?.solana?.isPhantom) {
+        console.log("✅ Instance Phantom mobile trouvée via window.solana");
+        // @ts-ignore
+        return window.solana;
+      }
+
       console.log("❌ Pas d'instance Phantom trouvée");
       return null;
     } catch (error) {
