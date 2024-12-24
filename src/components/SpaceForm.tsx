@@ -28,6 +28,9 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   price,
   isProcessing
 }) => {
+  // Calculate the actual price: each cell is 10x10 pixels, and each pixel costs 0.01 SOL
+  const actualPrice = width * height * 100 * 0.01; // 100 = 10x10 pixels per cell
+
   return (
     <div className="bg-secondary p-4 rounded-lg">
       <div className="flex flex-wrap gap-4 items-end">
@@ -102,7 +105,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right font-pixel text-xs whitespace-nowrap">
-            Price: {price.toFixed(2)} SOL
+            Price: {actualPrice.toFixed(2)} SOL
           </div>
           <Button
             onClick={onSubmit}

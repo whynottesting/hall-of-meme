@@ -33,17 +33,13 @@ export const useSpaces = () => {
         throw new Error(data.error);
       }
 
-      // Calculer le prix en lamports
-      const price = selectedSpace.width * selectedSpace.height * 0.01;
+      // Calculer le prix en lamports (100 pixels par case car 10x10)
+      const price = selectedSpace.width * selectedSpace.height * 100 * 0.01;
       const lamports = Math.floor(price * data.lamportsPerSol);
 
-      // @ts-ignore
-      const provider = window.phantom?.solana;
-      
-      if (!provider) throw new Error("Phantom wallet not found");
-
       const signature = await createSolanaTransaction(
-        provider,
+        // @ts-ignore
+        window.phantom?.solana,
         data.ownerWallet,
         lamports
       );
