@@ -14,12 +14,14 @@ type PhantomWallet = {
 // Constants
 const PHANTOM_MOBILE_LINK = "https://phantom.app/ul/browse/https://hall-of-meme.com";
 const PHANTOM_DOWNLOAD_LINK = "https://phantom.app/";
+const MOBILE_CHECK_INTERVAL = 1000; // 1 seconde
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
+  const [checkingConnection, setCheckingConnection] = useState(false);
 
   // Récupère l'instance de Phantom
   const getPhantomInstance = useCallback((): PhantomWallet | null => {
@@ -57,14 +59,41 @@ export const usePhantomWallet = () => {
       }
     } catch (error) {
       console.error("❌ Échec de la tentative de connexion:", error);
-      toast({
-        title: "Échec de la Connexion",
-        description: "Impossible de se connecter à Phantom wallet",
-        variant: "destructive",
-      });
+      if (!isMobile) {
+        toast({
+          title: "Échec de la Connexion",
+          description: "Impossible de se connecter à Phantom wallet",
+          variant: "destructive",
+        });
+      }
     }
     return false;
-  }, []);
+  }, [isMobile]);
+
+  // Vérifie périodiquement la connexion sur mobile
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout;
+
+    if (isMobile && !connected && !checkingConnection) {
+      setCheckingConnection(true);
+      intervalId = setInterval(async () => {
+        const wallet = getPhantomInstance();
+        if (wallet?.publicKey) {
+          console.log("🔍 Wallet trouvé après retour de l'app mobile");
+          setPublicKey(wallet.publicKey.toString());
+          setConnected(true);
+          clearInterval(intervalId);
+          setCheckingConnection(false);
+        }
+      }, MOBILE_CHECK_INTERVAL);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isMobile, connected, checkingConnection, getPhantomInstance]);
 
   // Gestionnaire de changement de visibilité
   const handleVisibilityChange = useCallback(async () => {
@@ -72,11 +101,12 @@ export const usePhantomWallet = () => {
       console.log("👀 Application visible, vérification de la connexion...");
       const wallet = getPhantomInstance();
       
-      if (wallet) {
-        await attemptConnection(wallet);
+      if (wallet?.publicKey) {
+        setPublicKey(wallet.publicKey.toString());
+        setConnected(true);
       }
     }
-  }, [getPhantomInstance, attemptConnection]);
+  }, [getPhantomInstance]);
 
   // Initialisation
   useEffect(() => {
@@ -100,8 +130,12 @@ export const usePhantomWallet = () => {
           setPublicKey(null);
         });
         
-        // Tente une connexion initiale
-        await attemptConnection(wallet);
+        // Vérifie si déjà connecté
+        if (wallet.publicKey) {
+          console.log("🔄 Wallet déjà connecté");
+          setPublicKey(wallet.publicKey.toString());
+          setConnected(true);
+        }
       }
     };
 
@@ -115,7 +149,7 @@ export const usePhantomWallet = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleVisibilityChange);
     };
-  }, [getPhantomInstance, attemptConnection, handleVisibilityChange]);
+  }, [getPhantomInstance, handleVisibilityChange]);
 
   // Gestionnaire de connexion
   const handleConnectWallet = useCallback(async () => {
