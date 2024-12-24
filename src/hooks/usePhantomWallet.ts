@@ -10,6 +10,7 @@ export const usePhantomWallet = () => {
   // Fonction pour vérifier l'état de connexion
   const checkConnectionStatus = async (phantom: any) => {
     try {
+      console.log("Checking connection status...");
       const response = await phantom.connect({ onlyIfTrusted: true });
       if (response.publicKey) {
         setConnected(true);
@@ -44,10 +45,18 @@ export const usePhantomWallet = () => {
     const handleVisibilityChange = async () => {
       if (!document.hidden) {
         console.log("App became visible, checking wallet status...");
-        // @ts-ignore
-        const phantom = window.phantom?.solana;
-        if (phantom?.isPhantom) {
-          await checkConnectionStatus(phantom);
+        try {
+          // @ts-ignore
+          const phantom = window.phantom?.solana;
+          if (phantom?.isPhantom) {
+            console.log("Phantom detected after visibility change");
+            const isConnected = await checkConnectionStatus(phantom);
+            console.log("Connection status after visibility change:", isConnected);
+          } else {
+            console.log("Phantom not detected after visibility change");
+          }
+        } catch (error) {
+          console.error("Error in visibility change handler:", error);
         }
       }
     };
@@ -63,19 +72,22 @@ export const usePhantomWallet = () => {
   const handleConnectWallet = async () => {
     try {
       if (!phantomWallet && isMobile) {
+        console.log("Mobile detected, no Phantom - trying deep link");
         const phantomDeepLink = "https://phantom.app/ul/browse/";
         let connectionAttempted = false;
 
         const timer = setTimeout(() => {
           if (!connectionAttempted) {
+            console.log("No connection attempt detected, redirecting to download page");
             window.location.href = "https://phantom.app/download";
           }
-        }, 1000);
-
+        }, 2000);
+        
         window.location.href = phantomDeepLink;
         
         document.addEventListener('visibilitychange', () => {
           if (document.hidden) {
+            console.log("Page hidden, clearing timeout");
             clearTimeout(timer);
             connectionAttempted = true;
           }
@@ -92,6 +104,7 @@ export const usePhantomWallet = () => {
         return;
       }
 
+      console.log("Attempting to connect to Phantom wallet...");
       const { publicKey } = await phantomWallet.connect();
       if (publicKey) {
         setConnected(true);
