@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
@@ -15,15 +15,50 @@ const Index = () => {
     link: '',
   });
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
+  const [phantomWallet, setPhantomWallet] = useState<any>(null);
+
+  useEffect(() => {
+    const checkPhantomWallet = async () => {
+      try {
+        // @ts-ignore
+        const phantom = window.phantom?.solana;
+        
+        if (phantom?.isPhantom) {
+          setPhantomWallet(phantom);
+          console.log("Phantom wallet detected!");
+        } else {
+          toast({
+            title: "Phantom Wallet Not Found",
+            description: "Please install Phantom Wallet to continue",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error detecting Phantom wallet:", error);
+      }
+    };
+
+    checkPhantomWallet();
+  }, []);
 
   const handleConnectWallet = async () => {
     try {
-      setConnected(true);
-      toast({
-        title: "Wallet Connected",
-        description: "Successfully connected to Phantom wallet",
-      });
+      if (!phantomWallet) {
+        window.open('https://phantom.app/', '_blank');
+        return;
+      }
+
+      const { publicKey } = await phantomWallet.connect();
+      if (publicKey) {
+        setConnected(true);
+        console.log("Connected with public key:", publicKey.toString());
+        toast({
+          title: "Wallet Connected",
+          description: "Successfully connected to Phantom wallet",
+        });
+      }
     } catch (error) {
+      console.error("Error connecting to Phantom wallet:", error);
       toast({
         title: "Connection Failed",
         description: "Failed to connect to Phantom wallet",
