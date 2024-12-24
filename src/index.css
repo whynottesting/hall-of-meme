@@ -34,7 +34,7 @@
 
   body {
     @apply bg-background text-foreground font-retro;
-    background-color: #E5DEFF;
+    background-color: #D4C6FF;
   }
 
   @keyframes rainbow {
