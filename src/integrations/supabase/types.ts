@@ -9,7 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      spaces: {
+        Row: {
+          created_at: string | null
+          height: number
+          id: string
+          image_url: string | null
+          price: number
+          url: string | null
+          wallet_address: string
+          width: number
+          x: number
+          y: number
+        }
+        Insert: {
+          created_at?: string | null
+          height: number
+          id?: string
+          image_url?: string | null
+          price: number
+          url?: string | null
+          wallet_address: string
+          width: number
+          x: number
+          y: number
+        }
+        Update: {
+          created_at?: string | null
+          height?: number
+          id?: string
+          image_url?: string | null
+          price?: number
+          url?: string | null
+          wallet_address?: string
+          width?: number
+          x?: number
+          y?: number
+        }
+        Relationships: []
+      }
+      transaction_history: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          space_id: string | null
+          status: string
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          space_id?: string | null
+          status: string
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          space_id?: string | null
+          status?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_history_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -3,7 +3,8 @@ import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [connected, setConnected] = useState(false);
@@ -28,8 +29,8 @@ const Index = () => {
           console.log("Phantom wallet detected!");
         } else {
           toast({
-            title: "Phantom Wallet Not Found",
-            description: "Please install Phantom Wallet to continue",
+            title: "Phantom Wallet Non Trouvé",
+            description: "Veuillez installer Phantom Wallet pour continuer",
             variant: "destructive",
           });
         }
@@ -38,7 +39,34 @@ const Index = () => {
       }
     };
 
+    const loadOwnedSpaces = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('spaces')
+          .select('*');
+        
+        if (error) throw error;
+        
+        setOwnedSpaces(data.map(space => ({
+          x: space.x,
+          y: space.y,
+          width: space.width,
+          height: space.height,
+          image: space.image_url,
+          link: space.url
+        })));
+      } catch (error) {
+        console.error('Error loading spaces:', error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les espaces existants",
+          variant: "destructive",
+        });
+      }
+    };
+
     checkPhantomWallet();
+    loadOwnedSpaces();
   }, []);
 
   const handleConnectWallet = async () => {
@@ -53,15 +81,15 @@ const Index = () => {
         setConnected(true);
         console.log("Connected with public key:", publicKey.toString());
         toast({
-          title: "Wallet Connected",
-          description: "Successfully connected to Phantom wallet",
+          title: "Wallet Connecté",
+          description: "Connecté avec succès à Phantom wallet",
         });
       }
     } catch (error) {
       console.error("Error connecting to Phantom wallet:", error);
       toast({
-        title: "Connection Failed",
-        description: "Failed to connect to Phantom wallet",
+        title: "Échec de la Connexion",
+        description: "Impossible de se connecter à Phantom wallet",
         variant: "destructive",
       });
     }
@@ -82,36 +110,116 @@ const Index = () => {
     }));
   };
 
-  const handleImageUpload = (file: File) => {
-    toast({
-      title: "Image Uploaded",
-      description: "Your image has been successfully uploaded",
-    });
-  };
+  const handleImageUpload = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from('space-images')
+        .upload(fileName, file);
 
-  const calculatePrice = () => {
-    return selectedSpace.width * selectedSpace.height * 100 * 0.01;
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('space-images')
+        .getPublicUrl(fileName);
+
+      toast({
+        title: "Image Téléchargée",
+        description: "Votre image a été téléchargée avec succès",
+      });
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de télécharger l'image",
+        variant: "destructive",
+      });
+      return null;
+    }
   };
 
   const handleSubmit = async () => {
     if (!connected) {
       toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your Phantom wallet first",
+        title: "Wallet Non Connecté",
+        description: "Veuillez d'abord connecter votre Phantom wallet",
         variant: "destructive",
       });
       return;
     }
 
     try {
+      const publicKey = phantomWallet.publicKey.toString();
+      const price = selectedSpace.width * selectedSpace.height * 0.01;
+
+      // Insert into spaces table
+      const { data: space, error: spaceError } = await supabase
+        .from('spaces')
+        .insert([{
+          wallet_address: publicKey,
+          x: selectedSpace.x,
+          y: selectedSpace.y,
+          width: selectedSpace.width,
+          height: selectedSpace.height,
+          url: selectedSpace.link,
+          price: price,
+        }])
+        .select()
+        .single();
+
+      if (spaceError) throw spaceError;
+
+      // Record the transaction
+      const { error: transactionError } = await supabase
+        .from('transaction_history')
+        .insert([{
+          wallet_address: publicKey,
+          space_id: space.id,
+          status: 'completed',
+        }]);
+
+      if (transactionError) throw transactionError;
+
       toast({
-        title: "Space Secured!",
-        description: "Your space has been successfully purchased",
+        title: "Espace Sécurisé !",
+        description: "Votre espace a été acheté avec succès",
       });
-    } catch (error) {
+
+      // Refresh the owned spaces
+      const { data: updatedSpaces } = await supabase
+        .from('spaces')
+        .select('*');
+      
+      setOwnedSpaces(updatedSpaces?.map(space => ({
+        x: space.x,
+        y: space.y,
+        width: space.width,
+        height: space.height,
+        image: space.image_url,
+        link: space.url
+      })) || []);
+
+    } catch (error: any) {
+      console.error('Error securing space:', error);
+      
+      // Record the failed transaction if we have a space ID
+      if (error.space_id) {
+        await supabase
+          .from('transaction_history')
+          .insert([{
+            wallet_address: phantomWallet.publicKey.toString(),
+            space_id: error.space_id,
+            status: 'failed',
+            error_message: error.message
+          }]);
+      }
+
       toast({
-        title: "Transaction Failed",
-        description: "Failed to secure your space",
+        title: "Transaction Échouée",
+        description: "Impossible de sécuriser votre espace",
         variant: "destructive",
       });
     }
@@ -129,7 +237,7 @@ const Index = () => {
                 onClick={handleConnectWallet}
                 className="retro-button"
               >
-                {connected ? "Wallet Connected" : "Connect Phantom Wallet"}
+                {connected ? "Wallet Connecté" : "Connecter Phantom Wallet"}
               </Button>
             </div>
           </header>
@@ -144,7 +252,7 @@ const Index = () => {
           onInputChange={handleInputChange}
           onImageUpload={handleImageUpload}
           onSubmit={handleSubmit}
-          price={calculatePrice()}
+          price={selectedSpace.width * selectedSpace.height * 0.01}
         />
 
         <div className="mt-4 mb-4">
