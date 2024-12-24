@@ -33,26 +33,31 @@ export const usePhantomWallet = () => {
 
   const handleConnectWallet = async () => {
     try {
-      if (!phantomWallet) {
-        if (isMobile) {
-          // Try to detect if Phantom is installed by checking if we can open its deep link
-          const phantomDeepLink = "https://phantom.app/ul/browse/";
-          const timer = setTimeout(() => {
-            // If we reach this point, Phantom is not installed
-            window.location.href = "https://phantom.app/download";
-          }, 1000);
+      if (!phantomWallet && isMobile) {
+        // Try to detect if Phantom is installed by checking if we can open its deep link
+        const phantomDeepLink = "https://phantom.app/ul/browse/";
+        let connectionAttempted = false;
 
-          window.location.href = phantomDeepLink;
-          
-          // Clear the timeout if the page is hidden (meaning the deep link worked)
-          document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-              clearTimeout(timer);
-            }
-          });
-        } else {
-          window.open('https://phantom.app/', '_blank');
-        }
+        const timer = setTimeout(() => {
+          // Only redirect if no connection was attempted
+          if (!connectionAttempted) {
+            window.location.href = "https://phantom.app/download";
+          }
+        }, 1000);
+
+        window.location.href = phantomDeepLink;
+        
+        // Clear the timeout if the page is hidden (meaning the deep link worked)
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            clearTimeout(timer);
+            connectionAttempted = true;
+          }
+        });
+
+        return;
+      } else if (!phantomWallet) {
+        window.open('https://phantom.app/', '_blank');
         return;
       }
 
@@ -67,6 +72,9 @@ export const usePhantomWallet = () => {
       }
     } catch (error) {
       console.error("Error connecting to Phantom wallet:", error);
+      if (isMobile) {
+        window.location.href = "https://phantom.app/download";
+      }
       toast({
         title: "Échec de la Connexion",
         description: "Impossible de se connecter à Phantom wallet",
