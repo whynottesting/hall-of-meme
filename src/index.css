@@ -40,8 +40,8 @@
     display: grid;
     grid-template-columns: repeat(100, 1fr);
     aspect-ratio: 1;
-    width: 95vh;
-    max-width: 95vw;
+    width: 98vw;
+    max-height: 98vh;
     margin: 0 auto;
     border: 2px solid #1a2b3c;
     background: #f0f0f0;
