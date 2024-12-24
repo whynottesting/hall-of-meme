@@ -84,19 +84,22 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="retro-container py-4">
-        <header className="flex flex-col items-center mb-8">
-          <div className="w-full flex justify-end mb-4">
+      <div className="fixed top-0 left-0 right-0 bg-background z-50 border-b border-primary">
+        <div className="retro-container py-4">
+          <header className="flex justify-between items-center">
+            <h1 className="retro-title mb-0">HALL OF MEME</h1>
             <Button
               onClick={handleConnectWallet}
               className="retro-button"
             >
               {connected ? "Wallet Connected" : "Connect Phantom Wallet"}
             </Button>
-          </div>
-          <h1 className="retro-title">HALL OF MEME</h1>
-          <p className="retro-subtitle">Your Meme, Your Space, Your Legacy</p>
-        </header>
+          </header>
+        </div>
+      </div>
+
+      <div className="retro-container pt-32">
+        <p className="retro-subtitle">Your Meme, Your Space, Your Legacy</p>
 
         <SpaceForm
           {...selectedSpace}
