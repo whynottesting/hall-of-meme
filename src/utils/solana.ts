@@ -1,4 +1,10 @@
+import { Buffer } from 'buffer';
 import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+
+// Polyfill pour Buffer
+if (typeof window !== 'undefined') {
+  window.Buffer = Buffer;
+}
 
 const SOLANA_NETWORK = 'https://api.devnet.solana.com';
 const connection = new Connection(SOLANA_NETWORK);
