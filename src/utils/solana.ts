@@ -1,6 +1,6 @@
 import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 
-const SOLANA_NETWORK = 'devnet';
+const SOLANA_NETWORK = 'https://api.devnet.solana.com';
 const connection = new Connection(SOLANA_NETWORK);
 
 export const createSolanaTransaction = async (
