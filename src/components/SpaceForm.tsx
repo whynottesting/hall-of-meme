@@ -1,6 +1,7 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface SpaceFormProps {
   x: number;
@@ -12,6 +13,7 @@ interface SpaceFormProps {
   onImageUpload: (file: File) => void;
   onSubmit: () => void;
   price: number;
+  isProcessing: boolean;
 }
 
 const SpaceForm: React.FC<SpaceFormProps> = ({
@@ -23,7 +25,8 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   onInputChange,
   onImageUpload,
   onSubmit,
-  price
+  price,
+  isProcessing
 }) => {
   return (
     <div className="bg-secondary p-4 rounded-lg">
@@ -37,6 +40,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             className="retro-input h-8"
             min={0}
             max={99}
+            disabled={isProcessing}
           />
         </div>
         <div className="flex-1 min-w-[120px]">
@@ -48,6 +52,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             className="retro-input h-8"
             min={0}
             max={99}
+            disabled={isProcessing}
           />
         </div>
         <div className="flex-1 min-w-[120px]">
@@ -59,6 +64,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             className="retro-input h-8"
             min={1}
             max={100}
+            disabled={isProcessing}
           />
         </div>
         <div className="flex-1 min-w-[120px]">
@@ -70,6 +76,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             className="retro-input h-8"
             min={1}
             max={100}
+            disabled={isProcessing}
           />
         </div>
         <div className="flex-[2] min-w-[200px]">
@@ -80,6 +87,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             onChange={(e) => onInputChange('link', e.target.value)}
             className="retro-input h-8"
             placeholder="https://"
+            disabled={isProcessing}
           />
         </div>
         <div className="flex-[2] min-w-[200px]">
@@ -89,6 +97,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             onChange={(e) => e.target.files && onImageUpload(e.target.files[0])}
             className="retro-input h-8"
             accept="image/*"
+            disabled={isProcessing}
           />
         </div>
         <div className="flex items-center gap-4">
@@ -98,8 +107,16 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
           <Button
             onClick={onSubmit}
             className="retro-button h-8 px-4 py-0 whitespace-nowrap"
+            disabled={isProcessing}
           >
-            Secure Your Space
+            {isProcessing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Secure Your Space'
+            )}
           </Button>
         </div>
       </div>

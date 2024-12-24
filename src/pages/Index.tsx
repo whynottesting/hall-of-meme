@@ -5,7 +5,6 @@ import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 import { useSpaces } from '@/hooks/useSpaces';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -13,9 +12,11 @@ const Index = () => {
   const {
     selectedSpace,
     ownedSpaces,
+    isProcessing,
     handleSpaceSelection,
     handleInputChange,
     handleImageUpload,
+    processSpacePurchase,
     loadOwnedSpaces
   } = useSpaces();
 
@@ -24,7 +25,7 @@ const Index = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!connected) {
+    if (!connected || !phantomWallet) {
       toast({
         title: "Wallet Non Connecté",
         description: "Veuillez d'abord connecter votre Phantom wallet",
@@ -33,63 +34,29 @@ const Index = () => {
       return;
     }
 
-    try {
-      const publicKey = phantomWallet.publicKey.toString();
-      const price = selectedSpace.width * selectedSpace.height * 0.01;
-
-      const { data: space, error: spaceError } = await supabase
-        .from('spaces')
-        .insert([{
-          wallet_address: publicKey,
-          x: selectedSpace.x,
-          y: selectedSpace.y,
-          width: selectedSpace.width,
-          height: selectedSpace.height,
-          url: selectedSpace.link,
-          price: price,
-        }])
-        .select()
-        .single();
-
-      if (spaceError) throw spaceError;
-
-      const { error: transactionError } = await supabase
-        .from('transaction_history')
-        .insert([{
-          wallet_address: publicKey,
-          space_id: space.id,
-          status: 'completed',
-        }]);
-
-      if (transactionError) throw transactionError;
-
+    if (!selectedSpace.link) {
       toast({
-        title: "Espace Sécurisé !",
-        description: "Votre espace a été acheté avec succès",
-      });
-
-      loadOwnedSpaces();
-
-    } catch (error: any) {
-      console.error('Error securing space:', error);
-      
-      if (error.space_id) {
-        await supabase
-          .from('transaction_history')
-          .insert([{
-            wallet_address: phantomWallet.publicKey.toString(),
-            space_id: error.space_id,
-            status: 'failed',
-            error_message: error.message
-          }]);
-      }
-
-      toast({
-        title: "Transaction Échouée",
-        description: "Impossible de sécuriser votre espace",
+        title: "Lien Manquant",
+        description: "Veuillez fournir un lien URL pour votre espace",
         variant: "destructive",
       });
+      return;
     }
+
+    const imageInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (!imageInput?.files?.[0]) {
+      toast({
+        title: "Image Manquante",
+        description: "Veuillez sélectionner une image pour votre espace",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const imageUrl = await handleImageUpload(imageInput.files[0]);
+    if (!imageUrl) return;
+
+    await processSpacePurchase(phantomWallet.publicKey.toString(), imageUrl);
   };
 
   return (
@@ -105,6 +72,7 @@ const Index = () => {
           onImageUpload={handleImageUpload}
           onSubmit={handleSubmit}
           price={selectedSpace.width * selectedSpace.height * 0.01}
+          isProcessing={isProcessing}
         />
 
         <div className="mt-4 mb-4">
