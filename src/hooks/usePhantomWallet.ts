@@ -1,20 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// Types
-type PhantomWallet = {
-  isPhantom?: boolean;
-  publicKey?: { toString: () => string };
-  connect: () => Promise<{ publicKey: { toString: () => string } }>;
-  on: (event: string, callback: () => void) => void;
-  disconnect: () => Promise<void>;
-};
-
-// Constants
-const PHANTOM_MOBILE_LINK = "https://phantom.app/ul/browse/";
-const PHANTOM_DOWNLOAD_LINK = "https://phantom.app/";
-const MOBILE_CHECK_INTERVAL = 1000; // 1 seconde
+import { PhantomWallet, PHANTOM_CONSTANTS } from '@/types/phantom';
+import { usePhantomInstance } from './usePhantomInstance';
+import { useMobileConnection } from './useMobileConnection';
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
@@ -23,24 +12,8 @@ export const usePhantomWallet = () => {
   const isMobile = useIsMobile();
   const [checkingConnection, setCheckingConnection] = useState(false);
 
-  // Récupère l'instance de Phantom
-  const getPhantomInstance = useCallback((): PhantomWallet | null => {
-    try {
-      // @ts-ignore
-      const phantom = window.phantom?.solana;
-      if (phantom?.isPhantom) {
-        console.log("✅ Phantom instance trouvée");
-        return phantom;
-      }
-      console.log("❌ Pas d'instance Phantom trouvée");
-      return null;
-    } catch (error) {
-      console.error("❌ Erreur lors de la récupération de l'instance Phantom:", error);
-      return null;
-    }
-  }, []);
+  const getPhantomInstance = usePhantomInstance();
 
-  // Tente de connecter le wallet
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
@@ -70,62 +43,21 @@ export const usePhantomWallet = () => {
     return false;
   }, [isMobile]);
 
-  // Vérifie périodiquement la connexion sur mobile
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+  useMobileConnection(
+    isMobile,
+    connected,
+    checkingConnection,
+    setCheckingConnection,
+    setPublicKey,
+    setConnected
+  );
 
-    const checkMobileConnection = async () => {
-      const wallet = getPhantomInstance();
-      if (wallet?.publicKey) {
-        console.log("🔍 Wallet trouvé après retour de l'app mobile");
-        setPublicKey(wallet.publicKey.toString());
-        setConnected(true);
-        setCheckingConnection(false);
-        clearInterval(intervalId);
-      }
-    };
-
-    if (isMobile && !connected && !checkingConnection) {
-      console.log("🔄 Démarrage de la vérification de connexion mobile...");
-      setCheckingConnection(true);
-      checkMobileConnection();
-      intervalId = setInterval(checkMobileConnection, MOBILE_CHECK_INTERVAL);
-    }
-
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, [isMobile, connected, checkingConnection, getPhantomInstance]);
-
-  // Gestionnaire de changement de visibilité
-  const handleVisibilityChange = useCallback(async () => {
-    if (!document.hidden) {
-      console.log("👀 Application visible, vérification de la connexion...");
-      const wallet = getPhantomInstance();
-      
-      if (wallet?.publicKey) {
-        const key = wallet.publicKey.toString();
-        console.log("✅ Wallet trouvé au retour, clé:", key);
-        setPublicKey(key);
-        setConnected(true);
-        toast({
-          title: "Wallet Connecté",
-          description: "Connexion réussie à Phantom wallet",
-        });
-      }
-    }
-  }, [getPhantomInstance]);
-
-  // Initialisation
   useEffect(() => {
     const initializeWallet = async () => {
       const wallet = getPhantomInstance();
       if (wallet) {
         setPhantomWallet(wallet);
         
-        // Écoute les événements de connexion/déconnexion
         wallet.on('connect', () => {
           console.log("🔌 Événement connect détecté");
           if (wallet.publicKey) {
@@ -150,7 +82,6 @@ export const usePhantomWallet = () => {
           });
         });
         
-        // Vérifie si déjà connecté
         if (wallet.publicKey) {
           console.log("🔄 Wallet déjà connecté");
           setPublicKey(wallet.publicKey.toString());
@@ -160,25 +91,15 @@ export const usePhantomWallet = () => {
     };
 
     initializeWallet();
-    
-    // Gestion de la visibilité pour le retour depuis l'app mobile
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleVisibilityChange);
+  }, [getPhantomInstance]);
 
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleVisibilityChange);
-    };
-  }, [getPhantomInstance, handleVisibilityChange]);
-
-  // Gestionnaire de connexion
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
     
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
       const currentUrl = window.location.href;
-      window.location.href = PHANTOM_MOBILE_LINK + encodeURIComponent(currentUrl);
+      window.location.href = PHANTOM_CONSTANTS.MOBILE_LINK + encodeURIComponent(currentUrl);
       return;
     }
 
@@ -189,7 +110,7 @@ export const usePhantomWallet = () => {
         description: "Veuillez installer Phantom Wallet pour continuer",
         variant: "destructive",
       });
-      window.open(PHANTOM_DOWNLOAD_LINK, '_blank');
+      window.open(PHANTOM_CONSTANTS.DOWNLOAD_LINK, '_blank');
       return;
     }
 
