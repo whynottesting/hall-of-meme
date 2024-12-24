@@ -14,7 +14,16 @@ export const createSolanaTransaction = async (
   recipientAddress: string,
   lamports: number
 ) => {
-  const transaction = new Transaction().add(
+  // Créer une nouvelle transaction
+  const transaction = new Transaction();
+  
+  // Obtenir un blockhash récent
+  const { blockhash } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = provider.publicKey;
+
+  // Ajouter l'instruction de transfert
+  transaction.add(
     SystemProgram.transfer({
       fromPubkey: provider.publicKey,
       toPubkey: new PublicKey(recipientAddress),
