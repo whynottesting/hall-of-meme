@@ -18,7 +18,6 @@ const Index = () => {
 
   const handleConnectWallet = async () => {
     try {
-      // Phantom wallet connection logic will go here
       setConnected(true);
       toast({
         title: "Wallet Connected",
@@ -49,7 +48,6 @@ const Index = () => {
   };
 
   const handleImageUpload = (file: File) => {
-    // Image upload logic will go here
     toast({
       title: "Image Uploaded",
       description: "Your image has been successfully uploaded",
@@ -61,8 +59,16 @@ const Index = () => {
   };
 
   const handleSubmit = async () => {
+    if (!connected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your Phantom wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Transaction logic will go here
       toast({
         title: "Space Secured!",
         description: "Your space has been successfully purchased",
@@ -78,38 +84,36 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="retro-container py-8">
-        <header className="text-center mb-8">
-          <h1 className="retro-title">HALL OF MEME</h1>
-          <p className="retro-subtitle">Your Meme, Your Space, Your Legacy</p>
-          {!connected && (
-            <Button
-              onClick={handleConnectWallet}
-              className="retro-button"
-            >
-              Connect Phantom Wallet
-            </Button>
-          )}
+      <div className="retro-container py-4">
+        <header className="flex justify-between items-center mb-8">
+          <Button
+            onClick={handleConnectWallet}
+            className="retro-button"
+          >
+            {connected ? "Wallet Connected" : "Connect Phantom Wallet"}
+          </Button>
+          <SolPrice />
         </header>
 
-        <SolPrice />
+        <div className="text-center mb-8">
+          <h1 className="retro-title">HALL OF MEME</h1>
+          <p className="retro-subtitle">Your Meme, Your Space, Your Legacy</p>
+        </div>
 
-        <div className="grid lg:grid-cols-[1fr,400px] gap-8 items-start">
+        <SpaceForm
+          {...selectedSpace}
+          onInputChange={handleInputChange}
+          onImageUpload={handleImageUpload}
+          onSubmit={handleSubmit}
+          price={calculatePrice()}
+        />
+
+        <div className="mt-8">
           <PixelGrid
             selectedCells={selectedSpace}
             ownedCells={ownedSpaces}
             onCellClick={handleSpaceSelection}
           />
-          
-          {connected && (
-            <SpaceForm
-              {...selectedSpace}
-              onInputChange={handleInputChange}
-              onImageUpload={handleImageUpload}
-              onSubmit={handleSubmit}
-              price={calculatePrice()}
-            />
-          )}
         </div>
       </div>
     </div>

@@ -40,8 +40,8 @@
     display: grid;
     grid-template-columns: repeat(100, 1fr);
     aspect-ratio: 1;
-    width: 90vh;
-    max-width: 90vw;
+    width: 95vh;
+    max-width: 95vw;
     margin: 0 auto;
     border: 2px solid #1a2b3c;
     background: #f0f0f0;
@@ -75,7 +75,7 @@
   }
 
   .retro-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-[95vw] mx-auto px-4;
   }
 
   .retro-title {
