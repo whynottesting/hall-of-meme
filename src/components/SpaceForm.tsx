@@ -2,6 +2,7 @@ import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface SpaceFormProps {
   x: number;
@@ -30,6 +31,26 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
 }) => {
   // Calculate the actual price: each cell is 10x10 pixels, and each pixel costs 0.01 SOL
   const actualPrice = width * height * 100 * 0.01; // 100 = 10x10 pixels per cell
+
+  const handleUrlChange = (value: string) => {
+    onInputChange('link', value);
+    if (value && !isValidUrl(value)) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL (e.g., https://example.com)",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      new URL(urlString);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
 
   return (
     <div className="bg-secondary p-4 rounded-lg">
@@ -87,7 +108,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
           <Input
             type="url"
             value={link}
-            onChange={(e) => onInputChange('link', e.target.value)}
+            onChange={(e) => handleUrlChange(e.target.value)}
             className="retro-input h-8"
             placeholder="https://"
             disabled={isProcessing}

@@ -18,7 +18,7 @@ const Header = ({ connected, onConnectWallet }: HeaderProps) => {
               onClick={onConnectWallet}
               className="retro-button"
             >
-              {connected ? "Wallet Connecté" : "Connecter Phantom Wallet"}
+              {connected ? "Wallet Connected" : "Connect Phantom Wallet"}
             </Button>
           </div>
         </header>
