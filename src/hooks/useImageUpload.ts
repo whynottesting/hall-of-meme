@@ -10,6 +10,17 @@ export const useImageUpload = () => {
         size: file.size
       });
 
+      // Vérifier la taille du fichier (5MB max)
+      const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB en bytes
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "Image trop volumineuse",
+          description: "L'image ne doit pas dépasser 5MB",
+          variant: "destructive",
+        });
+        return null;
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random()}.${fileExt}`;
       
