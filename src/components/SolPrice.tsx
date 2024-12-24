@@ -15,10 +15,10 @@ const SolPrice: React.FC = () => {
   });
 
   return (
-    <div className="text-center font-retro text-lg mb-4 flex justify-center items-center gap-4">
+    <div className="text-center font-retro text-xs md:text-lg mb-4 flex flex-nowrap justify-center items-center gap-2 md:gap-4 whitespace-nowrap">
       <span>1 SOL = ${solPrice?.toFixed(2) || '...'}</span>
       <span>1 pixel = 0.01 SOL</span>
-      <span>1 square = 1 SOL (10x10 pixels)</span>
+      <span>1 square = 1 SOL</span>
     </div>
   );
 };
