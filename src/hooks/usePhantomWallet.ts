@@ -5,6 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // Types
 type PhantomWallet = {
   isPhantom?: boolean;
+  publicKey?: { toString: () => string };
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
   on: (event: string, callback: () => void) => void;
   disconnect: () => Promise<void>;
@@ -17,6 +18,7 @@ const PHANTOM_DOWNLOAD_LINK = "https://phantom.app/";
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
+  const [publicKey, setPublicKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   // Récupère l'instance de Phantom
@@ -43,7 +45,9 @@ export const usePhantomWallet = () => {
       const response = await wallet.connect();
       
       if (response.publicKey) {
-        console.log("✅ Connecté avec succès! Clé publique:", response.publicKey.toString());
+        const key = response.publicKey.toString();
+        console.log("✅ Connecté avec succès! Clé publique:", key);
+        setPublicKey(key);
         setConnected(true);
         toast({
           title: "Wallet Connecté",
@@ -85,11 +89,15 @@ export const usePhantomWallet = () => {
         wallet.on('connect', () => {
           console.log("🔌 Événement connect détecté");
           setConnected(true);
+          if (wallet.publicKey) {
+            setPublicKey(wallet.publicKey.toString());
+          }
         });
         
         wallet.on('disconnect', () => {
           console.log("🔌 Événement disconnect détecté");
           setConnected(false);
+          setPublicKey(null);
         });
         
         // Tente une connexion initiale
@@ -133,5 +141,5 @@ export const usePhantomWallet = () => {
     await attemptConnection(phantomWallet);
   }, [isMobile, phantomWallet, attemptConnection]);
 
-  return { connected, phantomWallet, handleConnectWallet };
+  return { connected, phantomWallet, handleConnectWallet, publicKey };
 };
