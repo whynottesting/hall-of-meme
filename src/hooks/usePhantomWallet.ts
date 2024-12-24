@@ -7,6 +7,21 @@ export const usePhantomWallet = () => {
   const [phantomWallet, setPhantomWallet] = useState<any>(null);
   const isMobile = useIsMobile();
 
+  // Fonction pour vérifier l'état de connexion
+  const checkConnectionStatus = async (phantom: any) => {
+    try {
+      const response = await phantom.connect({ onlyIfTrusted: true });
+      if (response.publicKey) {
+        setConnected(true);
+        console.log("Wallet connected with public key:", response.publicKey.toString());
+        return true;
+      }
+    } catch (error) {
+      console.log("Not already connected:", error);
+    }
+    return false;
+  };
+
   useEffect(() => {
     const checkPhantomWallet = async () => {
       try {
@@ -16,13 +31,7 @@ export const usePhantomWallet = () => {
         if (phantom?.isPhantom) {
           setPhantomWallet(phantom);
           console.log("Phantom wallet detected!");
-          
-          // Vérifier si le wallet est déjà connecté
-          const response = await phantom.connect({ onlyIfTrusted: true });
-          if (response.publicKey) {
-            setConnected(true);
-            console.log("Wallet already connected:", response.publicKey.toString());
-          }
+          await checkConnectionStatus(phantom);
         }
       } catch (error) {
         console.error("Error detecting Phantom wallet:", error);
@@ -30,17 +39,34 @@ export const usePhantomWallet = () => {
     };
 
     checkPhantomWallet();
+
+    // Ajouter un listener pour détecter quand l'utilisateur revient sur l'application
+    const handleVisibilityChange = async () => {
+      if (!document.hidden) {
+        console.log("App became visible, checking wallet status...");
+        // @ts-ignore
+        const phantom = window.phantom?.solana;
+        if (phantom?.isPhantom) {
+          await checkConnectionStatus(phantom);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const handleConnectWallet = async () => {
     try {
       if (!phantomWallet && isMobile) {
-        // Try to detect if Phantom is installed by checking if we can open its deep link
         const phantomDeepLink = "https://phantom.app/ul/browse/";
         let connectionAttempted = false;
 
         const timer = setTimeout(() => {
-          // Only redirect if no connection was attempted
           if (!connectionAttempted) {
             window.location.href = "https://phantom.app/download";
           }
@@ -48,13 +74,12 @@ export const usePhantomWallet = () => {
 
         window.location.href = phantomDeepLink;
         
-        // Clear the timeout if the page is hidden (meaning the deep link worked)
         document.addEventListener('visibilitychange', () => {
           if (document.hidden) {
             clearTimeout(timer);
             connectionAttempted = true;
           }
-        });
+        }, { once: true });
 
         return;
       } else if (!phantomWallet) {
