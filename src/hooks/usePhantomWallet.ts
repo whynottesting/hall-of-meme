@@ -84,24 +84,12 @@ export const usePhantomWallet = () => {
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
       const currentUrl = window.location.href;
-      const urlObj = new URL(currentUrl);
-      const baseUrl = `${urlObj.protocol}//${urlObj.host}`;
-      const dappUrl = encodeURIComponent(baseUrl);
+      console.log("URL actuelle:", currentUrl);
       
-      // Détection du système d'exploitation pour le deep linking
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isIOS = /iphone|ipad|ipod/.test(userAgent);
-      
-      // Construction du deep link en fonction de la plateforme
-      let phantomDeepLink;
-      if (isIOS) {
-        phantomDeepLink = `phantom://browse/${dappUrl}`;
-      } else {
-        // Pour Android et autres plateformes
-        phantomDeepLink = `https://phantom.app/ul/browse/${dappUrl}`;
-      }
-      
+      // Utilisation du format de deep link simplifié comme Magic Eden
+      const phantomDeepLink = `https://phantom.app/ul/v1/connect?app_url=${encodeURIComponent(currentUrl)}`;
       console.log("🔗 Deep link généré:", phantomDeepLink);
+      
       window.location.href = phantomDeepLink;
       return;
     }
