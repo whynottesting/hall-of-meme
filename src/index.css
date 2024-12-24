@@ -76,6 +76,10 @@
     aspect-ratio: 1;
     border: 1px solid rgba(26, 43, 60, 0.1);
     transition: all 0.2s ease-in-out;
+
+    @media (max-width: 767px) {
+      border-width: 0.5px;
+    }
   }
 
   .pixel-cell:hover {
