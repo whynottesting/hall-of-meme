@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [phantomWallet, setPhantomWallet] = useState<any>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkPhantomWallet = async () => {
@@ -14,7 +16,7 @@ export const usePhantomWallet = () => {
         if (phantom?.isPhantom) {
           setPhantomWallet(phantom);
           console.log("Phantom wallet detected!");
-        } else {
+        } else if (!isMobile) {
           toast({
             title: "Phantom Wallet Non Trouvé",
             description: "Veuillez installer Phantom Wallet pour continuer",
@@ -27,12 +29,30 @@ export const usePhantomWallet = () => {
     };
 
     checkPhantomWallet();
-  }, []);
+  }, [isMobile]);
 
   const handleConnectWallet = async () => {
     try {
       if (!phantomWallet) {
-        window.open('https://phantom.app/', '_blank');
+        if (isMobile) {
+          // Try to detect if Phantom is installed by checking if we can open its deep link
+          const phantomDeepLink = "https://phantom.app/ul/browse/";
+          const timer = setTimeout(() => {
+            // If we reach this point, Phantom is not installed
+            window.location.href = "https://phantom.app/download";
+          }, 1000);
+
+          window.location.href = phantomDeepLink;
+          
+          // Clear the timeout if the page is hidden (meaning the deep link worked)
+          document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+              clearTimeout(timer);
+            }
+          });
+        } else {
+          window.open('https://phantom.app/', '_blank');
+        }
         return;
       }
 
