@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PixelGridProps {
   selectedCells: { x: number; y: number; width: number; height: number } | null;
@@ -37,16 +38,18 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderOwnedCells = () => {
     return ownedCells.map(owned => {
-      // Debugging logs
       console.log('Owned cell data:', owned);
       
-      // Get the image URL and handle different formats
+      // Get the image URL
       let imageUrl = owned.image;
       console.log('Initial image URL:', imageUrl);
 
-      // If the URL starts with 'public/lovable-uploads/', use it directly
-      if (imageUrl && imageUrl.startsWith('public/lovable-uploads/')) {
-        imageUrl = `/${imageUrl}`; // Add leading slash for correct path resolution
+      // Construct the full Supabase Storage URL
+      if (imageUrl && !imageUrl.startsWith('http')) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('space-images')
+          .getPublicUrl(imageUrl.replace('public/lovable-uploads/', ''));
+        imageUrl = publicUrl;
       }
       console.log('Final image URL:', imageUrl);
 
