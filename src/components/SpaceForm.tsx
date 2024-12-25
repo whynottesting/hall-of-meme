@@ -29,8 +29,8 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   price,
   isProcessing
 }) => {
-  // Calculate the actual price: each cell is 10x10 pixels, and each pixel costs 0.01 SOL
-  const actualPrice = width * height * 10 * 10 * 0.01; // 10x10 pixels per cell, 0.01 SOL per pixel
+  // Calcul correct : width * height cellules * (10 * 10) pixels par cellule * 0.01 SOL par pixel
+  const actualPrice = width * height * 100 * 0.01;
 
   return (
     <div className="bg-secondary p-4 rounded-lg">
