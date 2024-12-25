@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
@@ -10,6 +10,10 @@ export const useSpaces = () => {
   const { handleImageUpload } = useImageUpload();
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    loadOwnedSpaces();
+  }, []);
 
   const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);

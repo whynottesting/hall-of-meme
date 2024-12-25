@@ -38,15 +38,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   const renderGrid = () => {
     const grid = [];
     for (let y = 0; y < 100; y++) {
-      const row = [];
       for (let x = 0; x < 100; x++) {
         const owned = getOwnedCell(x, y);
         const selected = isSelected(x, y);
         const isMainCell = owned && x === owned.x && y === owned.y;
 
-        // Si c'est une cellule principale d'un espace possédé
         if (isMainCell) {
-          row.push(
+          grid.push(
             <div
               key={`${x}-${y}`}
               className={cn(
@@ -55,8 +53,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 "hover:opacity-90"
               )}
               style={{
-                gridColumn: `span ${owned.width}`,
-                gridRow: `span ${owned.height}`,
+                gridColumn: `${x + 1} / span ${owned.width}`,
+                gridRow: `${y + 1} / span ${owned.height}`,
                 backgroundImage: owned.image ? `url(${owned.image})` : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
@@ -66,17 +64,18 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               title={owned.link}
             />
           );
-          x += owned.width - 1; // Sauter les cellules couvertes par cet espace
-        }
-        // Si ce n'est pas une cellule couverte par un espace possédé
-        else if (!owned) {
-          row.push(
+          x += owned.width - 1; // Skip cells covered by this space
+        } else if (!owned) {
+          grid.push(
             <div
               key={`${x}-${y}`}
+              style={{
+                gridColumn: x + 1,
+                gridRow: y + 1,
+              }}
               className={cn(
                 "pixel-cell",
                 selected && "selected",
-                "border border-gray-200",
                 "transition-colors duration-200",
                 "hover:bg-gray-100"
               )}
@@ -85,17 +84,17 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           );
         }
       }
-      grid.push(row);
     }
     return grid;
   };
 
   return (
     <div 
-      className="grid"
+      className="pixel-grid"
       style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(100, 1fr)',
+        gridTemplateRows: 'repeat(100, 1fr)',
         gap: '0px',
         width: '100%',
         aspectRatio: '1/1',
