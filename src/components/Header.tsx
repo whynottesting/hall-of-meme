@@ -18,7 +18,7 @@ const Header = ({ connected, onConnectWallet }: HeaderProps) => {
           <div className="flex-1 flex items-center">
             <InfoDialog />
           </div>
-          <h1 className="retro-title rainbow-title mb-0 flex-1 animate-bounce whitespace-nowrap text-2xl md:text-6xl text-center">HALL OF MEME</h1>
+          <h1 className="retro-title rainbow-title mb-0 flex-1 animate-bounce whitespace-nowrap text-2xl md:text-6xl text-left md:text-center">HALL OF MEME</h1>
           <div className="flex-1 flex justify-end">
             <Button
               onClick={onConnectWallet}
