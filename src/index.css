@@ -60,7 +60,7 @@
     width: 100vw;
     max-height: 100vw;
     margin: 0 auto;
-    border: 2px solid #1a2b3c;
+    border: 0.1px solid rgba(26, 43, 60, 0.02);
     background: #f0f0f0;
     position: relative;
     left: 50%;
@@ -71,6 +71,7 @@
     @media (min-width: 768px) {
       width: 98vw;
       max-height: 98vh;
+      border: 2px solid #1a2b3c;
     }
   }
 
