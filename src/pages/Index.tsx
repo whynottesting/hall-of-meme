@@ -69,7 +69,7 @@ const Index = () => {
 
       <div className="retro-container pt-32">
         <div className="flex items-center justify-between">
-          <p className="retro-subtitle mb-0 text-center flex-grow">Your Meme, Your Space, Your Legacy</p>
+          <p className="retro-subtitle mb-0 text-center flex-1 px-4">Your Meme, Your Space, Your Legacy</p>
           <InfoDialog />
         </div>
         
