@@ -37,9 +37,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderOwnedCells = () => {
     return ownedCells.map(owned => {
-      const imageUrl = owned.image 
-        ? `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`
-        : undefined;
+      // Vérifier si l'image est une URL complète ou juste un nom de fichier
+      const imageUrl = owned.image?.startsWith('http') 
+        ? owned.image 
+        : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
+
+      console.log('Tentative de chargement de l\'image:', imageUrl);
 
       return (
         <div
@@ -52,6 +55,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             height: '100%',
             cursor: 'pointer',
             border: '1px solid #1a2b3c',
+            overflow: 'hidden'
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
@@ -67,9 +71,19 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 position: 'absolute',
                 top: 0,
                 left: 0,
+                display: 'block'
               }}
-              onError={(e) => console.error('Image loading error:', e)}
-              onLoad={() => console.log('Image loaded successfully:', imageUrl)}
+              onError={(e) => {
+                console.error('Erreur de chargement de l\'image:', {
+                  url: imageUrl,
+                  error: e
+                });
+                // Afficher une image par défaut en cas d'erreur
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+              onLoad={() => {
+                console.log('Image chargée avec succès:', imageUrl);
+              }}
             />
           )}
         </div>
