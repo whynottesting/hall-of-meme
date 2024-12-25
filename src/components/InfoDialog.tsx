@@ -35,10 +35,6 @@ const InfoDialog = () => {
             <h3 className="font-bold">3. How can I benefit from the airdrop?</h3>
             <p>By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you share the page on X/Twitter, we'll track it—and that will also make you eligible for the airdrop.</p>
           </div>
-
-          <p className="text-sm text-muted-foreground mt-4">
-            Prix : 0.01 SOL par pixel
-          </p>
         </div>
       </DialogContent>
     </Dialog>
