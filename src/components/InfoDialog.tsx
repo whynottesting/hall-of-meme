@@ -12,7 +12,7 @@ const InfoDialog = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="inline-flex items-center justify-center rounded-full w-8 h-8 border-2 border-primary hover:bg-accent hover:text-primary transition-colors">
+        <button className="inline-flex items-center justify-center w-8 h-8 hover:bg-accent hover:text-primary transition-colors">
           <Info className="w-4 h-4" />
         </button>
       </DialogTrigger>
