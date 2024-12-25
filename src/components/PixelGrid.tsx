@@ -40,15 +40,15 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       // Debugging logs
       console.log('Owned cell data:', owned);
       
-      // Get the image URL from the image_url field
-      let imageUrl = owned.image_url || owned.image;
+      // Get the image URL and handle different formats
+      let imageUrl = owned.image;
       console.log('Initial image URL:', imageUrl);
 
-      // Construct the full URL if needed
-      if (imageUrl && !imageUrl.startsWith('http') && !imageUrl.startsWith('public/')) {
-        imageUrl = `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${imageUrl}`;
-        console.log('Constructed full URL:', imageUrl);
+      // If the URL starts with 'public/lovable-uploads/', use it directly
+      if (imageUrl && imageUrl.startsWith('public/lovable-uploads/')) {
+        imageUrl = `/${imageUrl}`; // Add leading slash for correct path resolution
       }
+      console.log('Final image URL:', imageUrl);
 
       return (
         <div
