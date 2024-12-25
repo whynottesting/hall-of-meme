@@ -42,10 +42,32 @@ export const useSpaces = () => {
     loadOwnedSpaces();
   }, []);
 
+  const checkSpaceOverlap = (newSpace: any) => {
+    return ownedSpaces.some(existingSpace => {
+      // Check if the new space overlaps with any existing space
+      const xOverlap = (
+        (newSpace.x >= existingSpace.x && newSpace.x < existingSpace.x + existingSpace.width) ||
+        (existingSpace.x >= newSpace.x && existingSpace.x < newSpace.x + newSpace.width)
+      );
+      
+      const yOverlap = (
+        (newSpace.y >= existingSpace.y && newSpace.y < existingSpace.y + existingSpace.height) ||
+        (existingSpace.y >= newSpace.y && existingSpace.y < newSpace.y + newSpace.height)
+      );
+
+      return xOverlap && yOverlap;
+    });
+  };
+
   const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
     try {
       if (!selectedSpace) throw new Error("Aucun espace sélectionné");
+
+      // Check for overlap before proceeding
+      if (checkSpaceOverlap(selectedSpace)) {
+        throw new Error("Cet espace chevauche un espace déjà réservé");
+      }
 
       const price = selectedSpace.width * selectedSpace.height * 0.01;
 
