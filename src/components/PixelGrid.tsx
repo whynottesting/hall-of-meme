@@ -37,14 +37,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const renderOwnedCells = () => {
-    return ownedCells.map(owned => {
+    return ownedCells.map(async (owned) => {
       console.log('Owned cell data:', owned);
       
-      // Get the image URL
       let imageUrl = owned.image;
       console.log('Initial image URL:', imageUrl);
 
-      // Vérification détaillée de l'URL de l'image
       if (imageUrl) {
         if (imageUrl.startsWith('http')) {
           console.log('URL complète détectée:', imageUrl);
@@ -52,6 +50,15 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           console.log('URL relative détectée, construction de l\'URL Supabase...');
           const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
           console.log('Chemin nettoyé:', cleanPath);
+          
+          // Vérifier si le fichier existe dans le bucket
+          const { data: fileExists } = await supabase.storage
+            .from('space-images')
+            .list('', {
+              search: cleanPath
+            });
+          
+          console.log('Vérification existence fichier:', fileExists);
           
           const { data: { publicUrl } } = supabase.storage
             .from('space-images')
@@ -90,7 +97,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               onError={(e) => {
                 console.error('Erreur de chargement de l\'image:', {
                   url: imageUrl,
-                  error: e
+                  error: e,
+                  exists: fileExists
                 });
                 e.currentTarget.src = '/placeholder.svg';
               }}
