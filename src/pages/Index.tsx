@@ -68,9 +68,8 @@ const Index = () => {
       <Header connected={connected} onConnectWallet={handleConnectWallet} />
 
       <div className="retro-container pt-32">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <p className="retro-subtitle mb-0 text-center flex-1">Your Meme, Your Space, Your Legacy</p>
-          <InfoDialog />
+        <div className="max-w-4xl mx-auto">
+          <p className="retro-subtitle mb-0 text-center">Your Meme, Your Space, Your Legacy</p>
         </div>
         
         {!showForm ? (
