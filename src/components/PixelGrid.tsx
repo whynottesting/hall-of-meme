@@ -29,47 +29,81 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const handleCellClick = (x: number, y: number, ownedCell: typeof ownedCells[0] | undefined) => {
     if (ownedCell && ownedCell.link) {
-      window.open(ownedCell.link, '_blank');
+      window.open(ownedCell.link, '_blank', 'noopener,noreferrer');
     } else {
       onCellClick(x, y);
     }
   };
 
-  const renderCell = (x: number, y: number) => {
-    const owned = getOwnedCell(x, y);
-    const selected = isSelected(x, y);
-    const isMainCell = owned && x === owned.x && y === owned.y;
+  const renderGrid = () => {
+    const grid = [];
+    for (let y = 0; y < 100; y++) {
+      const row = [];
+      for (let x = 0; x < 100; x++) {
+        const owned = getOwnedCell(x, y);
+        const selected = isSelected(x, y);
+        const isMainCell = owned && x === owned.x && y === owned.y;
 
-    // Always render a cell, but with different properties based on conditions
-    return (
-      <div
-        key={`${x}-${y}`}
-        className={cn(
-          "pixel-cell",
-          selected && "selected",
-          owned && "owned"
-        )}
-        style={isMainCell ? {
-          backgroundImage: owned.image ? `url(${owned.image})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          width: `${owned.width * 100}%`,
-          height: `${owned.height * 100}%`,
-          gridColumn: `span ${owned.width}`,
-          gridRow: `span ${owned.height}`,
-          cursor: owned.link ? 'pointer' : 'default'
-        } : {}}
-        onClick={() => handleCellClick(x, y, owned)}
-        title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
-      />
-    );
+        // Si c'est une cellule principale d'un espace possédé
+        if (isMainCell) {
+          row.push(
+            <div
+              key={`${x}-${y}`}
+              className={cn(
+                "relative cursor-pointer",
+                "transition-all duration-200",
+                "hover:opacity-90"
+              )}
+              style={{
+                gridColumn: `span ${owned.width}`,
+                gridRow: `span ${owned.height}`,
+                backgroundImage: owned.image ? `url(${owned.image})` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: '1px solid #1a2b3c'
+              }}
+              onClick={() => handleCellClick(x, y, owned)}
+              title={owned.link}
+            />
+          );
+          x += owned.width - 1; // Sauter les cellules couvertes par cet espace
+        }
+        // Si ce n'est pas une cellule couverte par un espace possédé
+        else if (!owned) {
+          row.push(
+            <div
+              key={`${x}-${y}`}
+              className={cn(
+                "pixel-cell",
+                selected && "selected",
+                "border border-gray-200",
+                "transition-colors duration-200",
+                "hover:bg-gray-100"
+              )}
+              onClick={() => handleCellClick(x, y, owned)}
+            />
+          );
+        }
+      }
+      grid.push(row);
+    }
+    return grid;
   };
 
   return (
-    <div className="pixel-grid">
-      {Array.from({ length: 100 }, (_, y) =>
-        Array.from({ length: 100 }, (_, x) => renderCell(x, y))
-      )}
+    <div 
+      className="grid"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(100, 1fr)',
+        gap: '0px',
+        width: '100%',
+        aspectRatio: '1/1',
+        backgroundColor: '#f5f5f5',
+        border: '1px solid #e2e8f0'
+      }}
+    >
+      {renderGrid()}
     </div>
   );
 };
