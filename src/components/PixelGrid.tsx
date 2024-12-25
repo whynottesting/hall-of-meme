@@ -8,7 +8,12 @@ interface PixelGridProps {
   onCellClick: (x: number, y: number) => void;
 }
 
-interface ProcessedCell extends Omit<PixelGridProps['ownedCells'][0], 'image'> {
+interface ProcessedCell {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  link: string;
   processedImageUrl: string;
 }
 
@@ -18,42 +23,21 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   useEffect(() => {
     const processImages = async () => {
       const processed = await Promise.all(
-        ownedCells.map(async (owned) => {
-          console.log('Owned cell data:', owned);
+        ownedCells.map(async (cell) => {
+          let imageUrl = cell.image;
           
-          let imageUrl = owned.image;
-          console.log('Initial image URL:', imageUrl);
-
           if (imageUrl) {
-            if (imageUrl.startsWith('http')) {
-              console.log('URL complète détectée:', imageUrl);
-            } else {
-              console.log('URL relative détectée, construction de l\'URL Supabase...');
+            if (!imageUrl.startsWith('http')) {
               const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
-              console.log('Chemin nettoyé:', cleanPath);
-              
-              // Vérifier si le fichier existe dans le bucket
-              const { data: fileExists } = await supabase.storage
-                .from('space-images')
-                .list('', {
-                  search: cleanPath
-                });
-              
-              console.log('Vérification existence fichier:', fileExists);
-              
               const { data: { publicUrl } } = supabase.storage
                 .from('space-images')
                 .getPublicUrl(cleanPath);
-              
               imageUrl = publicUrl;
-              console.log('URL Supabase construite:', imageUrl);
             }
-          } else {
-            console.log('Aucune URL d\'image trouvée pour cette cellule');
           }
 
           return {
-            ...owned,
+            ...cell,
             processedImageUrl: imageUrl
           };
         })
@@ -92,38 +76,38 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const renderOwnedCells = () => {
-    return processedCells.map((owned) => (
+    return processedCells.map((cell) => (
       <div
-        key={`owned-${owned.x}-${owned.y}`}
+        key={`owned-${cell.x}-${cell.y}`}
         className="absolute"
         style={{
-          left: `${owned.x}%`,
-          top: `${owned.y}%`,
-          width: `${owned.width}%`,
-          height: `${owned.height}%`,
+          left: `${cell.x}%`,
+          top: `${cell.y}%`,
+          width: `${cell.width}%`,
+          height: `${cell.height}%`,
           backgroundColor: '#ffffff',
           border: '1px solid rgba(26, 43, 60, 0.1)',
           overflow: 'hidden',
           cursor: 'pointer',
         }}
-        onClick={() => handleCellClick(owned.x, owned.y, owned)}
-        title={owned.link}
+        onClick={() => handleCellClick(cell.x, cell.y, cell)}
+        title={cell.link}
       >
-        {owned.processedImageUrl && (
+        {cell.processedImageUrl && (
           <img
-            src={owned.processedImageUrl}
+            src={cell.processedImageUrl}
             alt=""
             className="w-full h-full object-cover"
             style={{ display: 'block' }}
             onError={(e) => {
               console.error('Erreur de chargement de l\'image:', {
-                url: owned.processedImageUrl,
+                url: cell.processedImageUrl,
                 error: e
               });
               e.currentTarget.src = '/placeholder.svg';
             }}
             onLoad={() => {
-              console.log('Image chargée avec succès:', owned.processedImageUrl);
+              console.log('Image chargée avec succès:', cell.processedImageUrl);
             }}
           />
         )}
