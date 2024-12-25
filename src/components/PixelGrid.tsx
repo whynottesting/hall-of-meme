@@ -8,8 +8,6 @@ interface PixelGridProps {
 }
 
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
-  console.log('Rendering PixelGrid with owned cells:', ownedCells);
-
   const isSelected = (x: number, y: number) => {
     if (!selectedCells) return false;
     return (
@@ -21,16 +19,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const getOwnedCell = (x: number, y: number) => {
-    const cell = ownedCells.find(cell => 
+    return ownedCells.find(cell => 
       x >= cell.x &&
       x < cell.x + cell.width &&
       y >= cell.y &&
       y < cell.y + cell.height
     );
-    if (cell) {
-      console.log(`Found owned cell at ${x},${y}:`, cell);
-    }
-    return cell;
   };
 
   const handleCellClick = (x: number, y: number, ownedCell: typeof ownedCells[0] | undefined) => {
@@ -45,48 +39,35 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const owned = getOwnedCell(x, y);
     const selected = isSelected(x, y);
     
+    // Check if this is the top-left cell of an owned space
     const isMainCell = owned && x === owned.x && y === owned.y;
     
+    // Only render cells that are either:
+    // 1. Not part of an owned space
+    // 2. The main cell of an owned space
+    // 3. Selected cells
     if (!owned || isMainCell || selected) {
-      let cellStyle: React.CSSProperties = {};
-      
-      if (owned && isMainCell) {
-        console.log('Rendering owned cell at', x, y, 'with image:', owned.image);
-        cellStyle = {
-          backgroundImage: owned.image ? `url(${owned.image})` : 'none',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          width: `${owned.width * 100}%`,
-          height: `${owned.height * 100}%`,
-          gridColumn: `span ${owned.width}`,
-          gridRow: `span ${owned.height}`,
-          cursor: owned.link ? 'pointer' : 'default',
-          border: '1px solid rgba(26, 43, 60, 0.1)',
-          position: 'relative',
-          zIndex: 1
-        };
-      }
-
       return (
         <div
           key={`${x}-${y}`}
           className={cn(
             "pixel-cell",
             selected && "selected",
-            owned && "owned",
-            "relative"
+            owned && "owned"
           )}
-          style={cellStyle}
+          style={owned && isMainCell ? {
+            backgroundImage: `url(${owned.image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            width: `${owned.width * 100}%`,
+            height: `${owned.height * 100}%`,
+            gridColumn: `span ${owned.width}`,
+            gridRow: `span ${owned.height}`,
+            cursor: owned.link ? 'pointer' : 'default'
+          } : {}}
           onClick={() => handleCellClick(x, y, owned)}
           title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
-        >
-          {owned && isMainCell && !owned.image && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              No image
-            </div>
-          )}
-        </div>
+        />
       );
     }
     return null;

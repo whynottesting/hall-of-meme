@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
@@ -10,27 +10,10 @@ export const useSpaces = () => {
   const { handleImageUpload } = useImageUpload();
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadOwnedSpaces();
-  }, []);
 
   const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
     try {
-      // Vérifier si l'espace existe déjà
-      const { data: existingSpaces } = await supabase
-        .from('spaces')
-        .select('*')
-        .eq('x', selectedSpace.x)
-        .eq('y', selectedSpace.y)
-        .single();
-
-      if (existingSpaces) {
-        throw new Error('Cet espace est déjà pris');
-      }
-
       // Vérifier la disponibilité de l'espace
       const { data, error } = await supabase.functions.invoke('process-space-purchase', {
         body: {
@@ -46,7 +29,7 @@ export const useSpaces = () => {
         throw new Error(error.message);
       }
 
-      // Calculer le prix en lamports
+      // Calculer le prix en lamports (100 pixels par case car 10x10)
       const price = selectedSpace.width * selectedSpace.height * 100 * 0.01;
       const lamports = Math.floor(price * data.lamportsPerSol);
 
@@ -56,8 +39,6 @@ export const useSpaces = () => {
         data.ownerWallet,
         lamports
       );
-
-      console.log('Saving space to database with image URL:', imageUrl);
 
       // Sauvegarder l'espace dans la base de données
       const { data: space, error: spaceError } = await supabase
@@ -75,12 +56,7 @@ export const useSpaces = () => {
         .select()
         .single();
 
-      if (spaceError) {
-        console.error('Error saving space:', spaceError);
-        throw spaceError;
-      }
-
-      console.log('Space saved successfully:', space);
+      if (spaceError) throw spaceError;
 
       // Enregistrer la transaction
       await supabase
@@ -120,40 +96,21 @@ export const useSpaces = () => {
   };
 
   const loadOwnedSpaces = async () => {
-    setIsLoading(true);
     try {
-      console.log('Loading owned spaces...');
       const { data, error } = await supabase
         .from('spaces')
         .select('*');
       
-      if (error) {
-        console.error('Error fetching spaces:', error);
-        throw error;
-      }
+      if (error) throw error;
       
-      console.log('Raw spaces data from Supabase:', data);
-      
-      if (!data || data.length === 0) {
-        console.log('No spaces found in database');
-        setOwnedSpaces([]);
-        return;
-      }
-      
-      const formattedSpaces = data.map(space => {
-        console.log('Formatting space:', space);
-        return {
-          x: space.x,
-          y: space.y,
-          width: space.width,
-          height: space.height,
-          image: space.image_url,
-          link: space.url
-        };
-      });
-      
-      console.log('Formatted spaces for PixelGrid:', formattedSpaces);
-      setOwnedSpaces(formattedSpaces);
+      setOwnedSpaces(data.map(space => ({
+        x: space.x,
+        y: space.y,
+        width: space.width,
+        height: space.height,
+        image: space.image_url,
+        link: space.url
+      })));
     } catch (error) {
       console.error('Error loading spaces:', error);
       toast({
@@ -161,8 +118,6 @@ export const useSpaces = () => {
         description: "Impossible de charger les espaces existants",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -170,7 +125,6 @@ export const useSpaces = () => {
     selectedSpace,
     ownedSpaces,
     isProcessing,
-    isLoading,
     handleSpaceSelection,
     handleInputChange,
     handleImageUpload,
