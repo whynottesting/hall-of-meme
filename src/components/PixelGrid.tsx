@@ -41,8 +41,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         ? owned.image 
         : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
 
-      console.log('Tentative de chargement de l\'image:', imageUrl);
-
       return (
         <div
           key={`owned-${owned.x}-${owned.y}`}
@@ -58,25 +56,17 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           title={owned.link}
         >
           <div 
-            className="w-full h-full relative"
+            className="w-full h-full flex items-center justify-center"
             style={{
-              border: '2px solid #1a2b3c',
+              border: '1px solid rgba(26, 43, 60, 0.5)',
               overflow: 'hidden',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
             }}
           >
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt=""
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  padding: '2px'
-                }}
+                className="max-w-full max-h-full object-contain p-1"
                 onError={(e) => {
                   console.error('Erreur de chargement de l\'image:', {
                     url: imageUrl,
