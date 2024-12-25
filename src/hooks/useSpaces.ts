@@ -8,14 +8,7 @@ import { createSolanaTransaction } from '@/utils/solana';
 export const useSpaces = () => {
   const { selectedSpace, handleSpaceSelection, handleInputChange } = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
-  const [ownedSpaces, setOwnedSpaces] = useState<any[]>([{
-    x: 10,
-    y: 10,
-    width: 5,
-    height: 4,
-    image: '/lovable-uploads/6771e3f4-bdc3-484b-81c6-1ddf44b3523b.png',
-    link: 'https://www.pudgypenguins.com/'
-  }]);
+  const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
@@ -110,27 +103,14 @@ export const useSpaces = () => {
       
       if (error) throw error;
       
-      // Combine pre-existing space with database spaces
-      const dbSpaces = data.map(space => ({
+      setOwnedSpaces(data.map(space => ({
         x: space.x,
         y: space.y,
         width: space.width,
         height: space.height,
         image: space.image_url,
         link: space.url
-      }));
-
-      setOwnedSpaces([
-        {
-          x: 10,
-          y: 10,
-          width: 5,
-          height: 4,
-          image: '/lovable-uploads/6771e3f4-bdc3-484b-81c6-1ddf44b3523b.png',
-          link: 'https://www.pudgypenguins.com/'
-        },
-        ...dbSpaces
-      ]);
+      })));
     } catch (error) {
       console.error('Error loading spaces:', error);
       toast({
