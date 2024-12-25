@@ -37,7 +37,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderOwnedCells = () => {
     return ownedCells.map(owned => {
-      // Vérifier si l'image est une URL complète ou juste un nom de fichier
       const imageUrl = owned.image?.startsWith('http') 
         ? owned.image 
         : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
@@ -47,15 +46,16 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       return (
         <div
           key={`owned-${owned.x}-${owned.y}`}
+          className="relative"
           style={{
             gridColumn: `${owned.x + 1} / span ${owned.width}`,
             gridRow: `${owned.y + 1} / span ${owned.height}`,
-            position: 'relative',
             width: '100%',
             height: '100%',
             cursor: 'pointer',
             border: '1px solid #1a2b3c',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            aspectRatio: `${owned.width} / ${owned.height}`
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
@@ -64,21 +64,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             <img
               src={imageUrl}
               alt=""
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                display: 'block'
-              }}
+              className="absolute inset-0 w-full h-full object-cover"
               onError={(e) => {
                 console.error('Erreur de chargement de l\'image:', {
                   url: imageUrl,
                   error: e
                 });
-                // Afficher une image par défaut en cas d'erreur
                 e.currentTarget.src = '/placeholder.svg';
               }}
               onLoad={() => {
