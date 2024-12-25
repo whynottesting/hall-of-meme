@@ -6,21 +6,20 @@ export const usePhantomInstance = () => {
     try {
       if (typeof window === 'undefined') return null;
 
+      // Vérification de l'instance Phantom sur desktop d'abord
       // @ts-ignore
-      const provider = window?.phantom?.solana;
+      if (window?.phantom?.solana?.isPhantom) {
+        console.log("✅ Instance Phantom desktop trouvée via window.phantom.solana");
+        // @ts-ignore
+        return window.phantom.solana;
+      }
       
-      // Vérification spécifique pour mobile d'abord
+      // Fallback pour mobile
       // @ts-ignore
       if (window?.solana?.isPhantom) {
         console.log("✅ Instance Phantom mobile trouvée via window.solana");
         // @ts-ignore
         return window.solana;
-      }
-      
-      // Fallback sur l'instance standard
-      if (provider?.isPhantom) {
-        console.log("✅ Instance Phantom trouvée");
-        return provider;
       }
 
       console.log("❌ Pas d'instance Phantom trouvée");
