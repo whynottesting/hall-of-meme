@@ -18,7 +18,6 @@ export const useSpaces = () => {
 
       if (error) throw error;
 
-      // Transformer les données pour correspondre au format attendu par PixelGrid
       const formattedSpaces = data.map(space => ({
         x: space.x,
         y: space.y,
@@ -48,22 +47,29 @@ export const useSpaces = () => {
     try {
       if (!selectedSpace) throw new Error("Aucun espace sélectionné");
 
-      const spaceData = {
-        wallet_address: walletAddress,
-        x: selectedSpace.x,
-        y: selectedSpace.y,
-        width: selectedSpace.width,
-        height: selectedSpace.height,
-        url: selectedSpace.link,
-        image_url: imageUrl,
-        price: selectedSpace.width * selectedSpace.height * 0.01
-      };
+      const price = selectedSpace.width * selectedSpace.height * 0.01;
 
-      const { error } = await supabase
-        .from('spaces')
-        .insert(spaceData);
+      const response = await fetch('/api/process-space-purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          walletAddress,
+          x: selectedSpace.x,
+          y: selectedSpace.y,
+          width: selectedSpace.width,
+          height: selectedSpace.height,
+          link: selectedSpace.link,
+          imageUrl,
+          price
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la réservation de l'espace");
+      }
 
       await loadOwnedSpaces();
       toast({
