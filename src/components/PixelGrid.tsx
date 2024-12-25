@@ -36,12 +36,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const relativeY = y - owned.y;
 
     // Calculate background-position in percentage
-    const bgPosX = -(relativeX * (100 / owned.width));
-    const bgPosY = -(relativeY * (100 / owned.height));
+    const bgPosX = -(relativeX * (100 / (owned.width - 1)));
+    const bgPosY = -(relativeY * (100 / (owned.height - 1)));
 
     return {
       backgroundImage: `url(${owned.image})`,
-      backgroundSize: `${owned.width * 100}% ${owned.height * 100}%`,
+      backgroundSize: 'cover',
       backgroundPosition: `${bgPosX}% ${bgPosY}%`,
       backgroundRepeat: 'no-repeat'
     };
