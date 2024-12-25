@@ -37,14 +37,16 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderOwnedCells = () => {
     return ownedCells.map(owned => {
-      console.log('Rendering owned cell with image:', owned.image);
+      // Log pour débugger
+      console.log('Rendering owned cell:', owned);
       
-      // Vérifier si l'image est une URL complète ou juste un nom de fichier
-      const imageUrl = owned.image?.startsWith('http') 
-        ? owned.image 
-        : owned.image?.startsWith('public/') 
-          ? owned.image 
-          : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
+      // Construction de l'URL de l'image
+      let imageUrl = owned.image;
+      if (imageUrl) {
+        if (!imageUrl.startsWith('http') && !imageUrl.startsWith('public/')) {
+          imageUrl = `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${imageUrl}`;
+        }
+      }
 
       console.log('URL finale de l\'image:', imageUrl);
 
@@ -58,34 +60,31 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             width: `${owned.width}%`,
             height: `${owned.height}%`,
             cursor: 'pointer',
+            backgroundColor: '#ffffff',
+            border: '1px solid rgba(26, 43, 60, 0.1)',
+            overflow: 'hidden',
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
         >
-          <div 
-            className="w-full h-full bg-white relative"
-            style={{
-              border: '1px solid rgba(26, 43, 60, 0.1)',
-            }}
-          >
-            {imageUrl && (
-              <img
-                src={imageUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-                onError={(e) => {
-                  console.error('Erreur de chargement de l\'image:', {
-                    url: imageUrl,
-                    error: e
-                  });
-                  e.currentTarget.src = '/placeholder.svg';
-                }}
-                onLoad={() => {
-                  console.log('Image chargée avec succès:', imageUrl);
-                }}
-              />
-            )}
-          </div>
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              style={{ display: 'block' }}
+              onError={(e) => {
+                console.error('Erreur de chargement de l\'image:', {
+                  url: imageUrl,
+                  error: e
+                });
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+              onLoad={() => {
+                console.log('Image chargée avec succès:', imageUrl);
+              }}
+            />
+          )}
         </div>
       );
     });
