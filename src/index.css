@@ -60,7 +60,7 @@
     width: 100vw;
     max-height: 100vw;
     margin: 0 auto;
-    border: 0.1px solid rgba(26, 43, 60, 0.02);
+    border: 0.05px solid rgba(26, 43, 60, 0.01);
     background: #f0f0f0;
     position: relative;
     left: 50%;
@@ -77,7 +77,7 @@
 
   .pixel-cell {
     aspect-ratio: 1;
-    border: 0.1px solid rgba(26, 43, 60, 0.02);
+    border: 0.05px solid rgba(26, 43, 60, 0.01);
     transition: all 0.2s ease-in-out;
     position: relative;
 
