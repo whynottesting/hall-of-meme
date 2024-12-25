@@ -8,7 +8,7 @@ interface PixelGridProps {
 }
 
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
-  console.log('Owned cells:', ownedCells); // Debug log
+  console.log('Rendering PixelGrid with owned cells:', ownedCells);
 
   const isSelected = (x: number, y: number) => {
     if (!selectedCells) return false;
@@ -27,8 +27,9 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       y >= cell.y &&
       y < cell.y + cell.height
     );
+    
     if (cell) {
-      console.log('Found owned cell at', x, y, ':', cell); // Debug log
+      console.log('Found owned cell at', x, y, 'with image:', cell.image);
     }
     return cell;
   };
@@ -45,12 +46,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const owned = getOwnedCell(x, y);
     const selected = isSelected(x, y);
     
-    // Check if this is the top-left cell of an owned space
     const isMainCell = owned && x === owned.x && y === owned.y;
     
     if (!owned || isMainCell || selected) {
       const cellStyle = owned && isMainCell ? {
-        backgroundImage: `url(${owned.image})`,
+        backgroundImage: `url('${owned.image}')`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         width: `${owned.width * 100}%`,
@@ -64,7 +64,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       } : {};
 
       if (owned && isMainCell) {
-        console.log('Rendering owned cell with style:', cellStyle); // Debug log
+        console.log('Rendering owned cell with style:', cellStyle);
       }
 
       return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
@@ -10,6 +10,10 @@ export const useSpaces = () => {
   const { handleImageUpload } = useImageUpload();
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    loadOwnedSpaces();
+  }, []);
 
   const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
@@ -97,20 +101,35 @@ export const useSpaces = () => {
 
   const loadOwnedSpaces = async () => {
     try {
+      console.log('Loading owned spaces...');
       const { data, error } = await supabase
         .from('spaces')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching spaces:', error);
+        throw error;
+      }
       
-      setOwnedSpaces(data.map(space => ({
+      console.log('Fetched spaces data:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('No spaces found in database');
+        setOwnedSpaces([]);
+        return;
+      }
+      
+      const formattedSpaces = data.map(space => ({
         x: space.x,
         y: space.y,
         width: space.width,
         height: space.height,
         image: space.image_url,
         link: space.url
-      })));
+      }));
+      
+      console.log('Formatted spaces:', formattedSpaces);
+      setOwnedSpaces(formattedSpaces);
     } catch (error) {
       console.error('Error loading spaces:', error);
       toast({
