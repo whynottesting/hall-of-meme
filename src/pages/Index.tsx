@@ -68,11 +68,9 @@ const Index = () => {
       <Header connected={connected} onConnectWallet={handleConnectWallet} />
 
       <div className="retro-container pt-32">
-        <div className="flex items-center justify-between mb-8">
-          <p className="retro-subtitle text-center flex-grow">Your Meme, Your Space, Your Legacy</p>
-          <div className="flex items-center gap-4">
-            <InfoDialog />
-          </div>
+        <div className="flex items-center justify-between">
+          <p className="retro-subtitle mb-0 text-center flex-grow">Your Meme, Your Space, Your Legacy</p>
+          <InfoDialog />
         </div>
         
         {!showForm ? (
