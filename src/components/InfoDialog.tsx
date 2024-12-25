@@ -10,7 +10,7 @@ import {
 
 const InfoDialog = () => {
   const handleShareOnX = () => {
-    const text = "🚨 Don't miss out! Secure your space on Hall Of Meme now and be eligible for the upcoming airdrop! 🎯\n\nhttps://hallofmeme.xyz";
+    const text = "🚨 Don't miss out! Secure your space on Hall Of Meme now and be eligible for the upcoming airdrop! 🎯\n\nhttps://hallofme.me";
     const encodedText = encodeURIComponent(text);
     window.open(`https://x.com/intent/tweet?text=${encodedText}`, '_blank');
   };
