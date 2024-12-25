@@ -46,7 +46,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       return (
         <div
           key={`owned-${owned.x}-${owned.y}`}
-          className="relative"
+          className="absolute"
           style={{
             gridColumn: `${owned.x + 1} / span ${owned.width}`,
             gridRow: `${owned.y + 1} / span ${owned.height}`,
@@ -54,29 +54,29 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             height: '100%',
             cursor: 'pointer',
             border: '1px solid #1a2b3c',
-            overflow: 'hidden',
-            aspectRatio: `${owned.width} / ${owned.height}`
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
         >
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover"
-              onError={(e) => {
-                console.error('Erreur de chargement de l\'image:', {
-                  url: imageUrl,
-                  error: e
-                });
-                e.currentTarget.src = '/placeholder.svg';
-              }}
-              onLoad={() => {
-                console.log('Image chargée avec succès:', imageUrl);
-              }}
-            />
-          )}
+          <div className="w-full h-full relative overflow-hidden">
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt=""
+                className="absolute inset-0 w-full h-full object-contain"
+                onError={(e) => {
+                  console.error('Erreur de chargement de l\'image:', {
+                    url: imageUrl,
+                    error: e
+                  });
+                  e.currentTarget.src = '/placeholder.svg';
+                }}
+                onLoad={() => {
+                  console.log('Image chargée avec succès:', imageUrl);
+                }}
+              />
+            )}
+          </div>
         </div>
       );
     });
@@ -132,7 +132,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         width: '100%',
         aspectRatio: '1/1',
         backgroundColor: '#f5f5f5',
-        border: '1px solid #e2e8f0'
+        border: '1px solid #e2e8f0',
+        position: 'relative'
       }}
     >
       {renderEmptyCells()}
