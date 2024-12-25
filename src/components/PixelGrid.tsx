@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -8,7 +8,62 @@ interface PixelGridProps {
   onCellClick: (x: number, y: number) => void;
 }
 
+interface ProcessedCell extends Omit<PixelGridProps['ownedCells'][0], 'image'> {
+  processedImageUrl: string;
+}
+
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
+  const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
+
+  useEffect(() => {
+    const processImages = async () => {
+      const processed = await Promise.all(
+        ownedCells.map(async (owned) => {
+          console.log('Owned cell data:', owned);
+          
+          let imageUrl = owned.image;
+          console.log('Initial image URL:', imageUrl);
+
+          if (imageUrl) {
+            if (imageUrl.startsWith('http')) {
+              console.log('URL complète détectée:', imageUrl);
+            } else {
+              console.log('URL relative détectée, construction de l\'URL Supabase...');
+              const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
+              console.log('Chemin nettoyé:', cleanPath);
+              
+              // Vérifier si le fichier existe dans le bucket
+              const { data: fileExists } = await supabase.storage
+                .from('space-images')
+                .list('', {
+                  search: cleanPath
+                });
+              
+              console.log('Vérification existence fichier:', fileExists);
+              
+              const { data: { publicUrl } } = supabase.storage
+                .from('space-images')
+                .getPublicUrl(cleanPath);
+              
+              imageUrl = publicUrl;
+              console.log('URL Supabase construite:', imageUrl);
+            }
+          } else {
+            console.log('Aucune URL d\'image trouvée pour cette cellule');
+          }
+
+          return {
+            ...owned,
+            processedImageUrl: imageUrl
+          };
+        })
+      );
+      setProcessedCells(processed);
+    };
+
+    processImages();
+  }, [ownedCells]);
+
   const isSelected = (x: number, y: number) => {
     if (!selectedCells) return false;
     return (
@@ -20,7 +75,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const getOwnedCell = (x: number, y: number) => {
-    return ownedCells.find(cell => 
+    return processedCells.find(cell => 
       x >= cell.x &&
       x < cell.x + cell.width &&
       y >= cell.y &&
@@ -28,7 +83,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     );
   };
 
-  const handleCellClick = (x: number, y: number, ownedCell: typeof ownedCells[0] | undefined) => {
+  const handleCellClick = (x: number, y: number, ownedCell: ProcessedCell | undefined) => {
     if (ownedCell && ownedCell.link) {
       window.open(ownedCell.link, '_blank', 'noopener,noreferrer');
     } else {
@@ -37,79 +92,43 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const renderOwnedCells = () => {
-    return ownedCells.map(async (owned) => {
-      console.log('Owned cell data:', owned);
-      
-      let imageUrl = owned.image;
-      console.log('Initial image URL:', imageUrl);
-
-      if (imageUrl) {
-        if (imageUrl.startsWith('http')) {
-          console.log('URL complète détectée:', imageUrl);
-        } else {
-          console.log('URL relative détectée, construction de l\'URL Supabase...');
-          const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
-          console.log('Chemin nettoyé:', cleanPath);
-          
-          // Vérifier si le fichier existe dans le bucket
-          const { data: fileExists } = await supabase.storage
-            .from('space-images')
-            .list('', {
-              search: cleanPath
-            });
-          
-          console.log('Vérification existence fichier:', fileExists);
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('space-images')
-            .getPublicUrl(cleanPath);
-          
-          imageUrl = publicUrl;
-          console.log('URL Supabase construite:', imageUrl);
-        }
-      } else {
-        console.log('Aucune URL d\'image trouvée pour cette cellule');
-      }
-
-      return (
-        <div
-          key={`owned-${owned.x}-${owned.y}`}
-          className="absolute"
-          style={{
-            left: `${owned.x}%`,
-            top: `${owned.y}%`,
-            width: `${owned.width}%`,
-            height: `${owned.height}%`,
-            backgroundColor: '#ffffff',
-            border: '1px solid rgba(26, 43, 60, 0.1)',
-            overflow: 'hidden',
-            cursor: 'pointer',
-          }}
-          onClick={() => handleCellClick(owned.x, owned.y, owned)}
-          title={owned.link}
-        >
-          {imageUrl && (
-            <img
-              src={imageUrl}
-              alt=""
-              className="w-full h-full object-cover"
-              style={{ display: 'block' }}
-              onError={(e) => {
-                console.error('Erreur de chargement de l\'image:', {
-                  url: imageUrl,
-                  error: e,
-                  exists: fileExists
-                });
-                e.currentTarget.src = '/placeholder.svg';
-              }}
-              onLoad={() => {
-                console.log('Image chargée avec succès:', imageUrl);
-              }}
-            />
-          )}
-        </div>
-      );
-    });
+    return processedCells.map((owned) => (
+      <div
+        key={`owned-${owned.x}-${owned.y}`}
+        className="absolute"
+        style={{
+          left: `${owned.x}%`,
+          top: `${owned.y}%`,
+          width: `${owned.width}%`,
+          height: `${owned.height}%`,
+          backgroundColor: '#ffffff',
+          border: '1px solid rgba(26, 43, 60, 0.1)',
+          overflow: 'hidden',
+          cursor: 'pointer',
+        }}
+        onClick={() => handleCellClick(owned.x, owned.y, owned)}
+        title={owned.link}
+      >
+        {owned.processedImageUrl && (
+          <img
+            src={owned.processedImageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ display: 'block' }}
+            onError={(e) => {
+              console.error('Erreur de chargement de l\'image:', {
+                url: owned.processedImageUrl,
+                error: e
+              });
+              e.currentTarget.src = '/placeholder.svg';
+            }}
+            onLoad={() => {
+              console.log('Image chargée avec succès:', owned.processedImageUrl);
+            }}
+          />
+        )}
+      </div>
+    ));
   };
 
   const renderEmptyCells = () => {
