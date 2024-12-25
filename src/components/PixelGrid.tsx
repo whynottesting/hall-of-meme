@@ -38,39 +38,31 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   const renderCell = (x: number, y: number) => {
     const owned = getOwnedCell(x, y);
     const selected = isSelected(x, y);
-    
-    // Check if this is the top-left cell of an owned space
     const isMainCell = owned && x === owned.x && y === owned.y;
-    
-    // Only render cells that are either:
-    // 1. Not part of an owned space
-    // 2. The main cell of an owned space
-    // 3. Selected cells
-    if (!owned || isMainCell || selected) {
-      return (
-        <div
-          key={`${x}-${y}`}
-          className={cn(
-            "pixel-cell",
-            selected && "selected",
-            owned && "owned"
-          )}
-          style={owned && isMainCell ? {
-            backgroundImage: `url(${owned.image})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            width: `${owned.width * 100}%`,
-            height: `${owned.height * 100}%`,
-            gridColumn: `span ${owned.width}`,
-            gridRow: `span ${owned.height}`,
-            cursor: owned.link ? 'pointer' : 'default'
-          } : {}}
-          onClick={() => handleCellClick(x, y, owned)}
-          title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
-        />
-      );
-    }
-    return null;
+
+    // Always render a cell, but with different properties based on conditions
+    return (
+      <div
+        key={`${x}-${y}`}
+        className={cn(
+          "pixel-cell",
+          selected && "selected",
+          owned && "owned"
+        )}
+        style={isMainCell ? {
+          backgroundImage: owned.image ? `url(${owned.image})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          width: `${owned.width * 100}%`,
+          height: `${owned.height * 100}%`,
+          gridColumn: `span ${owned.width}`,
+          gridRow: `span ${owned.height}`,
+          cursor: owned.link ? 'pointer' : 'default'
+        } : {}}
+        onClick={() => handleCellClick(x, y, owned)}
+        title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
+      />
+    );
   };
 
   return (
