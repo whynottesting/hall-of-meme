@@ -46,10 +46,10 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           key={`owned-${owned.x}-${owned.y}`}
           className="absolute"
           style={{
-            gridColumn: `${owned.x + 1} / span ${owned.width}`,
-            gridRow: `${owned.y + 1} / span ${owned.height}`,
-            width: '100%',
-            height: '100%',
+            left: `${owned.x * 1}%`,
+            top: `${owned.y * 1}%`,
+            width: `${owned.width * 1}%`,
+            height: `${owned.height * 1}%`,
             cursor: 'pointer',
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
@@ -106,13 +106,16 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             <div
               key={cellKey}
               style={{
-                gridColumn: x + 1,
-                gridRow: y + 1,
+                position: 'absolute',
+                left: `${x}%`,
+                top: `${y}%`,
+                width: '1%',
+                height: '1%',
+                border: '1px solid rgba(26, 43, 60, 0.1)',
               }}
               className={cn(
                 "pixel-cell",
-                selected && "selected",
-                "transition-colors duration-200",
+                selected && "bg-blue-100",
                 "hover:bg-gray-100"
               )}
               onClick={() => handleCellClick(x, y, undefined)}
@@ -126,21 +129,18 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   return (
     <div 
-      className="pixel-grid"
+      className="pixel-grid relative"
       style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(100, 1fr)',
-        gridTemplateRows: 'repeat(100, 1fr)',
-        gap: '0px',
         width: '100%',
-        aspectRatio: '1/1',
+        paddingTop: '100%',
         backgroundColor: '#f5f5f5',
         border: '1px solid #e2e8f0',
-        position: 'relative'
       }}
     >
-      {renderEmptyCells()}
-      {renderOwnedCells()}
+      <div className="absolute inset-0">
+        {renderEmptyCells()}
+        {renderOwnedCells()}
+      </div>
     </div>
   );
 };
