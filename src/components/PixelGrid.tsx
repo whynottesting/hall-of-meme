@@ -57,7 +57,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               style={{
                 gridColumn: `span ${owned.width}`,
                 gridRow: `span ${owned.height}`,
-                backgroundImage: owned.image ? `url(${owned.image})` : undefined,
+                backgroundImage: `url(${owned.image})`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 border: '1px solid #1a2b3c'
