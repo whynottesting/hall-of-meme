@@ -39,7 +39,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     if (!imageUrl) return undefined;
     
     if (imageUrl.startsWith('public/')) {
-      const baseUrl = import.meta.env.VITE_SUPABASE_URL;
+      // Utilisation directe de l'URL Supabase
+      const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co";
       const fullUrl = `${baseUrl}/storage/v1/object/public/space-images/${imageUrl}`;
       console.log('Generated image URL:', fullUrl);
       return fullUrl;
@@ -72,7 +73,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 gridColumn: `${x + 1} / span ${owned.width}`,
                 gridRow: `${y + 1} / span ${owned.height}`,
                 backgroundImage: imageUrl ? `url(${imageUrl})` : undefined,
-                backgroundSize: '100% 100%', // Changed to ensure image fills exactly
+                backgroundSize: '100% 100%',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 border: '1px solid #1a2b3c',
