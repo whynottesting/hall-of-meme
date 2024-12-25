@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
+import { createSolanaTransaction } from '@/utils/solana';
+
+const OWNER_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
 
 export const useSpaces = () => {
   const { selectedSpace, handleSpaceSelection, handleInputChange } = useSpaceSelection();
@@ -44,7 +47,6 @@ export const useSpaces = () => {
 
   const checkSpaceOverlap = (newSpace: any) => {
     return ownedSpaces.some(existingSpace => {
-      // Check if the new space overlaps with any existing space
       const xOverlap = (
         (newSpace.x >= existingSpace.x && newSpace.x < existingSpace.x + existingSpace.width) ||
         (existingSpace.x >= newSpace.x && existingSpace.x < newSpace.x + newSpace.width)
@@ -59,7 +61,7 @@ export const useSpaces = () => {
     });
   };
 
-  const processSpacePurchase = async (walletAddress: string, imageUrl: string) => {
+  const processSpacePurchase = async (phantomWallet: any, walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
     try {
       if (!selectedSpace) throw new Error("Aucun espace sélectionné");
@@ -69,7 +71,20 @@ export const useSpaces = () => {
         throw new Error("Cet espace chevauche un espace déjà réservé");
       }
 
-      const price = selectedSpace.width * selectedSpace.height * 0.01;
+      // Calculate price in SOL (each cell is 10x10 pixels, and each pixel costs 0.01 SOL)
+      const price = selectedSpace.width * selectedSpace.height * 100 * 0.01;
+      
+      // Convert SOL to lamports (1 SOL = 1,000,000,000 lamports)
+      const lamports = Math.floor(price * 1000000000);
+
+      try {
+        // Process the Solana transaction
+        const signature = await createSolanaTransaction(phantomWallet, OWNER_WALLET, lamports);
+        console.log("Transaction signature:", signature);
+      } catch (error: any) {
+        console.error("Transaction error:", error);
+        throw new Error("La transaction Solana a échoué. Vérifiez votre solde et réessayez.");
+      }
 
       const response = await fetch('/api/process-space-purchase', {
         method: 'POST',
