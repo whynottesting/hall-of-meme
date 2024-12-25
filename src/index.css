@@ -76,7 +76,7 @@
 
   .pixel-cell {
     aspect-ratio: 1;
-    border: 0.25px solid rgba(26, 43, 60, 0.05);
+    border: 0.1px solid rgba(26, 43, 60, 0.02);
     transition: all 0.2s ease-in-out;
     position: relative;
 
