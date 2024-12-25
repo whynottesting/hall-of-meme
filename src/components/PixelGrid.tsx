@@ -35,56 +35,65 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   };
 
-  const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return undefined;
-    const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images";
-    return `${baseUrl}/${imageUrl}`;
-  };
-
   const renderGrid = () => {
     const grid = [];
-    const processedCells = new Set(); // Pour suivre les cellules déjà traitées
+    const processedCells = new Set();
 
-    // D'abord, ajoutons les cellules occupées
-    for (const owned of ownedCells) {
-      const imageUrl = owned.image ? getImageUrl(owned.image) : undefined;
+    // Render owned cells first
+    ownedCells.forEach(owned => {
+      const imageUrl = owned.image 
+        ? `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`
+        : undefined;
+
+      console.log('Rendering owned cell:', {
+        coordinates: `(${owned.x}, ${owned.y})`,
+        dimensions: `${owned.width}x${owned.height}`,
+        imageUrl
+      });
+
       grid.push(
         <div
-          key={`${owned.x}-${owned.y}`}
-          className={cn(
-            "relative cursor-pointer",
-            "transition-all duration-200",
-            "hover:opacity-90"
-          )}
+          key={`owned-${owned.x}-${owned.y}`}
           style={{
             gridColumn: `${owned.x + 1} / span ${owned.width}`,
             gridRow: `${owned.y + 1} / span ${owned.height}`,
-            backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            border: '1px solid #1a2b3c',
-            backgroundColor: imageUrl ? undefined : '#e5e7eb',
+            position: 'relative',
             width: '100%',
             height: '100%',
-            position: 'relative',
-            overflow: 'hidden',
-            objectFit: 'cover'
+            cursor: 'pointer',
+            border: '1px solid #1a2b3c',
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
-        />
+        >
+          {imageUrl && (
+            <img
+              src={imageUrl}
+              alt=""
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+              }}
+              onError={(e) => console.error('Image loading error:', e)}
+              onLoad={() => console.log('Image loaded successfully:', imageUrl)}
+            />
+          )}
+        </div>
       );
 
-      // Marquer toutes les cellules de cet espace comme traitées
+      // Mark cells as processed
       for (let y = owned.y; y < owned.y + owned.height; y++) {
         for (let x = owned.x; x < owned.x + owned.width; x++) {
           processedCells.add(`${x}-${y}`);
         }
       }
-    }
+    });
 
-    // Ensuite, ajoutons les cellules vides
+    // Render empty cells
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const cellKey = `${x}-${y}`;
