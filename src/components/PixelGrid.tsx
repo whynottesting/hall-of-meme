@@ -21,12 +21,16 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const getOwnedCell = (x: number, y: number) => {
-    return ownedCells.find(cell => 
+    const cell = ownedCells.find(cell => 
       x >= cell.x &&
       x < cell.x + cell.width &&
       y >= cell.y &&
       y < cell.y + cell.height
     );
+    if (cell) {
+      console.log(`Found owned cell at ${x},${y}:`, cell);
+    }
+    return cell;
   };
 
   const handleCellClick = (x: number, y: number, ownedCell: typeof ownedCells[0] | undefined) => {
@@ -50,7 +54,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         console.log('Rendering owned cell at', x, y, 'with image:', owned.image);
         cellStyle = {
           backgroundImage: owned.image ? `url(${owned.image})` : 'none',
-          backgroundSize: `${owned.width * 100}% ${owned.height * 100}%`,
+          backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
           width: `${owned.width * 100}%`,
