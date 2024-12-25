@@ -38,14 +38,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return undefined;
     
-    if (imageUrl.startsWith('public/')) {
-      // Utilisation directe de l'URL Supabase
-      const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co";
-      const fullUrl = `${baseUrl}/storage/v1/object/public/space-images/${imageUrl}`;
-      console.log('Generated image URL:', fullUrl);
-      return fullUrl;
-    }
-    return imageUrl;
+    // Construction directe de l'URL complète
+    const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images";
+    const fullUrl = `${baseUrl}/${imageUrl}`;
+    console.log('Image URL:', fullUrl);
+    return fullUrl;
   };
 
   const renderGrid = () => {
@@ -72,8 +69,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               style={{
                 gridColumn: `${x + 1} / span ${owned.width}`,
                 gridRow: `${y + 1} / span ${owned.height}`,
-                backgroundImage: imageUrl ? `url(${imageUrl})` : undefined,
-                backgroundSize: '100% 100%',
+                backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined,
+                backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 border: '1px solid #1a2b3c',
@@ -81,7 +78,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 width: '100%',
                 height: '100%',
                 position: 'relative',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                objectFit: 'cover'
               }}
               onClick={() => handleCellClick(x, y, owned)}
               title={owned.link}
