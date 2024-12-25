@@ -55,6 +55,7 @@
   .pixel-grid {
     display: grid;
     grid-template-columns: repeat(100, 1fr);
+    grid-template-rows: repeat(100, 1fr);
     aspect-ratio: 1;
     width: calc(100vw - 16px);
     max-height: calc(100vw - 16px);
@@ -77,6 +78,7 @@
     aspect-ratio: 1;
     border: 1px solid rgba(26, 43, 60, 0.1);
     transition: all 0.2s ease-in-out;
+    position: relative;
 
     @media (max-width: 767px) {
       border-width: 0.5px;
