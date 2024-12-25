@@ -57,7 +57,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               style={{
                 gridColumn: `span ${owned.width}`,
                 gridRow: `span ${owned.height}`,
-                backgroundImage: `url(${owned.image})`,
+                backgroundImage: owned.image ? `url(${owned.image})` : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 border: '1px solid #1a2b3c'
@@ -74,11 +74,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             <div
               key={`${x}-${y}`}
               className={cn(
-                "w-full h-full",
+                "pixel-cell",
+                selected && "selected",
                 "border border-gray-200",
                 "transition-colors duration-200",
-                "hover:bg-gray-100",
-                selected && "bg-blue-200 hover:bg-blue-300"
+                "hover:bg-gray-100"
               )}
               onClick={() => handleCellClick(x, y, owned)}
             />
