@@ -37,6 +37,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return undefined;
+    
+    // Construction directe de l'URL complète
     const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images";
     const fullUrl = `${baseUrl}/${imageUrl}`;
     console.log('Image URL:', fullUrl);
@@ -64,36 +66,24 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 "transition-all duration-200",
                 "hover:opacity-90"
               )}
-            >
-              <div
-                style={{
-                  gridColumn: `${x + 1} / span ${owned.width}`,
-                  gridRow: `${y + 1} / span ${owned.height}`,
-                  border: '1px solid #1a2b3c',
-                  backgroundColor: '#e5e7eb',
-                  width: '100%',
-                  height: '100%',
-                  position: 'relative',
-                }}
-                onClick={() => handleCellClick(x, y, owned)}
-                title={owned.link}
-              >
-                {imageUrl && (
-                  <img
-                    src={imageUrl}
-                    alt=""
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                    }}
-                  />
-                )}
-              </div>
-            </div>
+              style={{
+                gridColumn: `${x + 1} / span ${owned.width}`,
+                gridRow: `${y + 1} / span ${owned.height}`,
+                backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                border: '1px solid #1a2b3c',
+                backgroundColor: imageUrl ? undefined : '#e5e7eb',
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                overflow: 'hidden',
+                objectFit: 'cover'
+              }}
+              onClick={() => handleCellClick(x, y, owned)}
+              title={owned.link}
+            />
           );
           x += owned.width - 1; // Skip cells covered by this space
         } else if (!owned) {
