@@ -55,6 +55,7 @@ const SpaceFormMedia = ({
           onChange={(e) => e.target.files && onImageUpload(e.target.files[0])}
           className="retro-input h-8"
           accept="image/*"
+          aria-label="Choose a file"
           disabled={isProcessing}
         />
       </div>
