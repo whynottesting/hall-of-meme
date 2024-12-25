@@ -25,13 +25,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   useEffect(() => {
     const processImages = async () => {
+      const debugMessages: string[] = [];
       try {
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
             let imageUrl = cell.image;
             
             if (imageUrl) {
-              // Si l'URL commence par 'public/lovable-uploads/', on la traite comme une image Supabase
               if (imageUrl.startsWith('public/lovable-uploads/')) {
                 const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
                 const { data: { publicUrl } } = supabase.storage
@@ -39,10 +39,10 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                   .getPublicUrl(cleanPath);
                 
                 imageUrl = publicUrl;
-                setDebug(prev => [...prev, `URL publique générée: ${publicUrl}`]);
+                debugMessages.push(`URL publique générée: ${publicUrl}`);
               }
               
-              setDebug(prev => [...prev, `Image traitée: ${imageUrl}`]);
+              debugMessages.push(`Image traitée: ${imageUrl}`);
             }
 
             return {
@@ -52,9 +52,10 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           })
         );
         setProcessedCells(processed);
+        setDebug(debugMessages);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
-        setDebug(prev => [...prev, `Erreur: ${error.message}`]);
+        setDebug([`Erreur: ${error.message}`]);
       }
     };
 
