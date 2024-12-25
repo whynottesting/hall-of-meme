@@ -22,7 +22,7 @@ const Header = ({ connected, onConnectWallet }: HeaderProps) => {
           <div className="flex-1 flex justify-end">
             <Button
               onClick={onConnectWallet}
-              className={`retro-button ${connected ? 'border-2 border-accent animate-glow' : ''}`}
+              className={`retro-button px-2 md:px-6 ${connected ? 'border-2 border-accent animate-glow' : ''}`}
             >
               {connected ? "Wallet Connected" : isMobile ? "Connect Wallet" : "Connect Phantom Wallet"}
             </Button>
