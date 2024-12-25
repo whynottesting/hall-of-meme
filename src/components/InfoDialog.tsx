@@ -33,7 +33,7 @@ const InfoDialog = () => {
 
           <div className="space-y-2">
             <h3 className="font-bold">3. How can I benefit from the airdrop?</h3>
-            <p>By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you share the page on X/Twitter, we'll track it—and that will also make you eligible for the airdrop.</p>
+            <p>By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you share the page on X it and that will also make you eligible for the airdrop.</p>
           </div>
         </div>
       </DialogContent>
