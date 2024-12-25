@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, X } from "lucide-react";
+import { Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,24 +20,22 @@ const InfoDialog = () => {
         <DialogHeader>
           <DialogTitle className="text-2xl font-pixel text-center">Hall of Meme</DialogTitle>
         </DialogHeader>
-        <div className="mt-4 space-y-4">
-          <p>
-            Bienvenue dans le Hall of Meme, un espace unique où chaque pixel raconte une histoire !
-          </p>
-          <p>
-            Ici, vous pouvez acquérir votre propre espace sur notre grille et y afficher le meme de votre choix. 
-            Chaque espace est unique et vous appartient, vous permettant de partager votre créativité avec le monde.
-          </p>
-          <p>
-            Pour commencer :
-          </p>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>Connectez votre wallet Phantom</li>
-            <li>Sélectionnez un espace sur la grille</li>
-            <li>Uploadez votre image</li>
-            <li>Ajoutez un lien (optionnel)</li>
-            <li>Confirmez votre achat</li>
-          </ul>
+        <div className="mt-4 space-y-6">
+          <div className="space-y-2">
+            <h3 className="font-bold">1. Will there be a token?</h3>
+            <p>Yes.</p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-bold">2. Will there be an airdrop?</h3>
+            <p>Yes.</p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-bold">3. How can I benefit from the airdrop?</h3>
+            <p>By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you share the page on X/Twitter, we'll track it—and that will also make you eligible for the airdrop.</p>
+          </div>
+
           <p className="text-sm text-muted-foreground mt-4">
             Prix : 0.01 SOL par pixel
           </p>
