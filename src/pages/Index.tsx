@@ -3,6 +3,7 @@ import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
+import InfoDialog from '@/components/InfoDialog';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 import { useSpaces } from '@/hooks/useSpaces';
 import { toast } from "@/hooks/use-toast";
@@ -67,7 +68,12 @@ const Index = () => {
       <Header connected={connected} onConnectWallet={handleConnectWallet} />
 
       <div className="retro-container pt-32">
-        <p className="retro-subtitle text-center">Your Meme, Your Space, Your Legacy</p>
+        <div className="flex items-center justify-between mb-8">
+          <p className="retro-subtitle text-center flex-grow">Your Meme, Your Space, Your Legacy</p>
+          <div className="flex items-center gap-4">
+            <InfoDialog />
+          </div>
+        </div>
         
         {!showForm ? (
           <button 
