@@ -82,24 +82,25 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderGrid = () => {
     const grid = [];
-    const processedPositions = new Set(
-      processedCells.flatMap(owned => 
-        Array.from({ length: owned.height }, (_, dy) =>
-          Array.from({ length: owned.width }, (_, dx) =>
-            `${owned.x + dx}-${owned.y + dy}`
-          )
-        ).flat()
-      )
-    );
+    const occupiedPositions = new Set();
+
+    // Marquer d'abord toutes les positions occupées
+    processedCells.forEach(cell => {
+      for (let dy = 0; dy < cell.height; dy++) {
+        for (let dx = 0; dx < cell.width; dx++) {
+          occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
+        }
+      }
+    });
 
     // Rendu des cellules vides
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
-        const cellKey = `${x}-${y}`;
-        if (!processedPositions.has(cellKey)) {
+        const key = `${x}-${y}`;
+        if (!occupiedPositions.has(key)) {
           grid.push(
             <EmptyCell
-              key={cellKey}
+              key={key}
               x={x}
               y={y}
               isSelected={isSelected(x, y)}
