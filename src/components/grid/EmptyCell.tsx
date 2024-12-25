@@ -21,8 +21,8 @@ const EmptyCell: React.FC<EmptyCellProps> = ({ x, y, isSelected, onClick }) => {
       }}
       className={cn(
         "pixel-cell",
-        isSelected && "bg-blue-100",
-        "hover:bg-gray-100"
+        isSelected && "bg-accent/40",
+        "hover:bg-accent/20"
       )}
       onClick={() => onClick(x, y)}
     />
