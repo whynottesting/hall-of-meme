@@ -35,23 +35,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   };
 
-  const renderGrid = () => {
-    const grid = [];
-    const processedCells = new Set();
-
-    // Render owned cells first
-    ownedCells.forEach(owned => {
+  const renderOwnedCells = () => {
+    return ownedCells.map(owned => {
       const imageUrl = owned.image 
         ? `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`
         : undefined;
 
-      console.log('Rendering owned cell:', {
-        coordinates: `(${owned.x}, ${owned.y})`,
-        dimensions: `${owned.width}x${owned.height}`,
-        imageUrl
-      });
-
-      grid.push(
+      return (
         <div
           key={`owned-${owned.x}-${owned.y}`}
           style={{
@@ -84,16 +74,21 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           )}
         </div>
       );
-
-      // Mark cells as processed
-      for (let y = owned.y; y < owned.y + owned.height; y++) {
-        for (let x = owned.x; x < owned.x + owned.width; x++) {
-          processedCells.add(`${x}-${y}`);
-        }
-      }
     });
+  };
 
-    // Render empty cells
+  const renderEmptyCells = () => {
+    const grid = [];
+    const processedCells = new Set(
+      ownedCells.flatMap(owned => 
+        Array.from({ length: owned.height }, (_, dy) =>
+          Array.from({ length: owned.width }, (_, dx) =>
+            `${owned.x + dx}-${owned.y + dy}`
+          )
+        ).flat()
+      )
+    );
+
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const cellKey = `${x}-${y}`;
@@ -118,7 +113,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         }
       }
     }
-
     return grid;
   };
 
@@ -136,7 +130,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         border: '1px solid #e2e8f0'
       }}
     >
-      {renderGrid()}
+      {renderEmptyCells()}
+      {renderOwnedCells()}
     </div>
   );
 };
