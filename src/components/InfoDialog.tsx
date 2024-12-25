@@ -50,6 +50,17 @@ const InfoDialog = () => {
               {" "}it will also make you eligible for the airdrop.
             </p>
           </div>
+
+          <div className="text-center mt-6">
+            <a 
+              href="https://x.com/HallOfMe_me" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-accent hover:underline"
+            >
+              @HallOfMe_me
+            </a>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
