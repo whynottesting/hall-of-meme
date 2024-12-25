@@ -37,59 +37,62 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return undefined;
-    
-    // Construction directe de l'URL complète
     const baseUrl = "https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images";
-    const fullUrl = `${baseUrl}/${imageUrl}`;
-    console.log('Image URL:', fullUrl);
-    return fullUrl;
+    return `${baseUrl}/${imageUrl}`;
   };
 
   const renderGrid = () => {
     const grid = [];
+    const processedCells = new Set(); // Pour suivre les cellules déjà traitées
+
+    // D'abord, ajoutons les cellules occupées
+    for (const owned of ownedCells) {
+      const imageUrl = owned.image ? getImageUrl(owned.image) : undefined;
+      grid.push(
+        <div
+          key={`${owned.x}-${owned.y}`}
+          className={cn(
+            "relative cursor-pointer",
+            "transition-all duration-200",
+            "hover:opacity-90"
+          )}
+          style={{
+            gridColumn: `${owned.x + 1} / span ${owned.width}`,
+            gridRow: `${owned.y + 1} / span ${owned.height}`,
+            backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            border: '1px solid #1a2b3c',
+            backgroundColor: imageUrl ? undefined : '#e5e7eb',
+            width: '100%',
+            height: '100%',
+            position: 'relative',
+            overflow: 'hidden',
+            objectFit: 'cover'
+          }}
+          onClick={() => handleCellClick(owned.x, owned.y, owned)}
+          title={owned.link}
+        />
+      );
+
+      // Marquer toutes les cellules de cet espace comme traitées
+      for (let y = owned.y; y < owned.y + owned.height; y++) {
+        for (let x = owned.x; x < owned.x + owned.width; x++) {
+          processedCells.add(`${x}-${y}`);
+        }
+      }
+    }
+
+    // Ensuite, ajoutons les cellules vides
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
-        const owned = getOwnedCell(x, y);
-        const selected = isSelected(x, y);
-        const isMainCell = owned && x === owned.x && y === owned.y;
-
-        if (isMainCell) {
-          const imageUrl = owned.image ? getImageUrl(owned.image) : undefined;
-          console.log('Cell data:', owned);
-          console.log('Cell image URL:', imageUrl);
-
+        const cellKey = `${x}-${y}`;
+        if (!processedCells.has(cellKey)) {
+          const selected = isSelected(x, y);
           grid.push(
             <div
-              key={`${x}-${y}`}
-              className={cn(
-                "relative cursor-pointer",
-                "transition-all duration-200",
-                "hover:opacity-90"
-              )}
-              style={{
-                gridColumn: `${x + 1} / span ${owned.width}`,
-                gridRow: `${y + 1} / span ${owned.height}`,
-                backgroundImage: imageUrl ? `url('${imageUrl}')` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                border: '1px solid #1a2b3c',
-                backgroundColor: imageUrl ? undefined : '#e5e7eb',
-                width: '100%',
-                height: '100%',
-                position: 'relative',
-                overflow: 'hidden',
-                objectFit: 'cover'
-              }}
-              onClick={() => handleCellClick(x, y, owned)}
-              title={owned.link}
-            />
-          );
-          x += owned.width - 1; // Skip cells covered by this space
-        } else if (!owned) {
-          grid.push(
-            <div
-              key={`${x}-${y}`}
+              key={cellKey}
               style={{
                 gridColumn: x + 1,
                 gridRow: y + 1,
@@ -100,12 +103,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 "transition-colors duration-200",
                 "hover:bg-gray-100"
               )}
-              onClick={() => handleCellClick(x, y, owned)}
+              onClick={() => handleCellClick(x, y, undefined)}
             />
           );
         }
       }
     }
+
     return grid;
   };
 
