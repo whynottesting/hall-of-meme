@@ -74,11 +74,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             <div
               key={`${x}-${y}`}
               className={cn(
-                "pixel-cell",
-                selected && "selected",
+                "w-full h-full",
                 "border border-gray-200",
                 "transition-colors duration-200",
-                "hover:bg-gray-100"
+                "hover:bg-gray-100",
+                selected && "bg-blue-200 hover:bg-blue-300"
               )}
               onClick={() => handleCellClick(x, y, owned)}
             />
