@@ -21,17 +21,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const getOwnedCell = (x: number, y: number) => {
-    const cell = ownedCells.find(cell => 
+    return ownedCells.find(cell => 
       x >= cell.x &&
       x < cell.x + cell.width &&
       y >= cell.y &&
       y < cell.y + cell.height
     );
-    
-    if (cell) {
-      console.log('Found owned cell at', x, y, 'with image:', cell.image);
-    }
-    return cell;
   };
 
   const handleCellClick = (x: number, y: number, ownedCell: typeof ownedCells[0] | undefined) => {
@@ -49,22 +44,24 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const isMainCell = owned && x === owned.x && y === owned.y;
     
     if (!owned || isMainCell || selected) {
-      const cellStyle = owned && isMainCell ? {
-        backgroundImage: `url('${owned.image}')`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        width: `${owned.width * 100}%`,
-        height: `${owned.height * 100}%`,
-        gridColumn: `span ${owned.width}`,
-        gridRow: `span ${owned.height}`,
-        cursor: owned.link ? 'pointer' : 'default',
-        border: '1px solid rgba(26, 43, 60, 0.1)',
-        position: 'relative' as const,
-        zIndex: 1
-      } : {};
-
+      let cellStyle: React.CSSProperties = {};
+      
       if (owned && isMainCell) {
-        console.log('Rendering owned cell with style:', cellStyle);
+        console.log('Rendering owned cell at', x, y, 'with image:', owned.image);
+        cellStyle = {
+          backgroundImage: owned.image ? `url(${owned.image})` : 'none',
+          backgroundSize: `${owned.width * 100}% ${owned.height * 100}%`,
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          width: `${owned.width * 100}%`,
+          height: `${owned.height * 100}%`,
+          gridColumn: `span ${owned.width}`,
+          gridRow: `span ${owned.height}`,
+          cursor: owned.link ? 'pointer' : 'default',
+          border: '1px solid rgba(26, 43, 60, 0.1)',
+          position: 'relative',
+          zIndex: 1
+        };
       }
 
       return (
@@ -73,12 +70,19 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           className={cn(
             "pixel-cell",
             selected && "selected",
-            owned && "owned"
+            owned && "owned",
+            "relative"
           )}
           style={cellStyle}
           onClick={() => handleCellClick(x, y, owned)}
           title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
-        />
+        >
+          {owned && isMainCell && !owned.image && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              No image
+            </div>
+          )}
+        </div>
       );
     }
     return null;
