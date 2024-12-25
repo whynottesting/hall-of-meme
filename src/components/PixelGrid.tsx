@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import EmptyCell from './grid/EmptyCell';
 import OwnedCell from './grid/OwnedCell';
-import DebugPanel from './grid/DebugPanel';
 
 interface PixelGridProps {
   selectedCells: { x: number; y: number; width: number; height: number } | null;
@@ -21,11 +20,9 @@ interface ProcessedCell {
 
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
-  const [debug, setDebug] = useState<string[]>([]);
 
   useEffect(() => {
     const processImages = async () => {
-      const debugMessages: string[] = [];
       try {
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
@@ -39,10 +36,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                   .getPublicUrl(cleanPath);
                 
                 imageUrl = publicUrl;
-                debugMessages.push(`URL publique générée: ${publicUrl}`);
               }
-              
-              debugMessages.push(`Image traitée: ${imageUrl}`);
             }
 
             return {
@@ -52,10 +46,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           })
         );
         setProcessedCells(processed);
-        setDebug(debugMessages);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
-        setDebug([`Erreur: ${error.message}`]);
       }
     };
 
@@ -131,22 +123,18 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   return (
-    <div className="space-y-4">
-      <div 
-        className="pixel-grid relative"
-        style={{
-          width: '100%',
-          paddingTop: '100%',
-          backgroundColor: '#f5f5f5',
-          border: '1px solid #e2e8f0',
-        }}
-      >
-        <div className="absolute inset-0">
-          {renderGrid()}
-        </div>
+    <div 
+      className="pixel-grid relative"
+      style={{
+        width: '100%',
+        paddingTop: '100%',
+        backgroundColor: '#f5f5f5',
+        border: '1px solid #e2e8f0',
+      }}
+    >
+      <div className="absolute inset-0">
+        {renderGrid()}
       </div>
-      
-      <DebugPanel messages={debug} />
     </div>
   );
 };
