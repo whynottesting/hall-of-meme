@@ -39,39 +39,40 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     return ownedCells.map(owned => {
       console.log('Rendering owned cell with image:', owned.image);
       
-      // Ensure we have a valid image URL
+      // Vérifier si l'image est une URL complète ou juste un nom de fichier
       const imageUrl = owned.image?.startsWith('http') 
         ? owned.image 
-        : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
+        : owned.image?.startsWith('public/') 
+          ? owned.image 
+          : `https://jkfkzqxmqxognavlbcng.supabase.co/storage/v1/object/public/space-images/${owned.image}`;
 
-      console.log('Processed image URL:', imageUrl);
+      console.log('URL finale de l\'image:', imageUrl);
 
       return (
         <div
           key={`owned-${owned.x}-${owned.y}`}
           className="absolute"
           style={{
-            left: `${owned.x * 1}%`,
-            top: `${owned.y * 1}%`,
-            width: `${owned.width * 1}%`,
-            height: `${owned.height * 1}%`,
+            left: `${owned.x}%`,
+            top: `${owned.y}%`,
+            width: `${owned.width}%`,
+            height: `${owned.height}%`,
             cursor: 'pointer',
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
         >
           <div 
-            className="w-full h-full bg-white"
+            className="w-full h-full bg-white relative"
             style={{
               border: '1px solid rgba(26, 43, 60, 0.1)',
-              overflow: 'hidden',
             }}
           >
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt=""
-                className="w-full h-full object-contain p-1"
+                className="absolute inset-0 w-full h-full object-cover"
                 onError={(e) => {
                   console.error('Erreur de chargement de l\'image:', {
                     url: imageUrl,
