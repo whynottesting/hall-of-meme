@@ -74,10 +74,15 @@ export default {
             boxShadow: "0 0 10px #00ff9d, 0 0 20px #00ff9d, 0 0 30px #00ff9d",
           },
         },
+        blink: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
       },
       animation: {
         "pixel-fade": "pixel-fade 0.3s ease-in-out",
         glow: "glow 2s ease-in-out infinite",
+        blink: "blink 2s ease-in-out infinite",
       },
     },
   },

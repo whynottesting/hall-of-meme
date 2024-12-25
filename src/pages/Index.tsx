@@ -72,7 +72,7 @@ const Index = () => {
         {!showForm ? (
           <button 
             onClick={() => setShowForm(true)}
-            className="text-primary underline hover:text-accent transition-colors duration-200 mx-auto block mt-4"
+            className="text-primary text-xl md:text-2xl font-bold underline hover:text-accent transition-colors duration-200 mx-auto block mt-4 animate-blink"
           >
             Claim Your Space Before It's Gone!
           </button>
