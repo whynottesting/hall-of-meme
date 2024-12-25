@@ -35,6 +35,14 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   };
 
+  const getImageUrl = (imageUrl: string) => {
+    // Si l'URL commence par 'public/', on ajoute l'URL de Supabase Storage
+    if (imageUrl.startsWith('public/')) {
+      return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/space-images/${imageUrl}`;
+    }
+    return imageUrl;
+  };
+
   const renderGrid = () => {
     const grid = [];
     for (let y = 0; y < 100; y++) {
@@ -44,6 +52,9 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         const isMainCell = owned && x === owned.x && y === owned.y;
 
         if (isMainCell) {
+          const imageUrl = owned.image ? getImageUrl(owned.image) : undefined;
+          console.log('Cell image URL:', imageUrl); // Pour le débogage
+
           grid.push(
             <div
               key={`${x}-${y}`}
@@ -55,10 +66,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               style={{
                 gridColumn: `${x + 1} / span ${owned.width}`,
                 gridRow: `${y + 1} / span ${owned.height}`,
-                backgroundImage: owned.image ? `url(${owned.image})` : undefined,
+                backgroundImage: imageUrl ? `url(${imageUrl})` : undefined,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
-                border: '1px solid #1a2b3c'
+                border: '1px solid #1a2b3c',
+                backgroundColor: imageUrl ? undefined : '#e5e7eb'
               }}
               onClick={() => handleCellClick(x, y, owned)}
               title={owned.link}
