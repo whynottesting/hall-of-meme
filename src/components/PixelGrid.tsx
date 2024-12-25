@@ -53,17 +53,30 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             width: '100%',
             height: '100%',
             cursor: 'pointer',
-            border: '1px solid #1a2b3c',
           }}
           onClick={() => handleCellClick(owned.x, owned.y, owned)}
           title={owned.link}
         >
-          <div className="w-full h-full relative overflow-hidden">
+          <div 
+            className="w-full h-full relative"
+            style={{
+              border: '2px solid #1a2b3c',
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             {imageUrl && (
               <img
                 src={imageUrl}
                 alt=""
-                className="absolute inset-0 w-full h-full object-contain"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  padding: '2px'
+                }}
                 onError={(e) => {
                   console.error('Erreur de chargement de l\'image:', {
                     url: imageUrl,
