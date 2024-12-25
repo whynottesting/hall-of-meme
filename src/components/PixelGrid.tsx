@@ -27,40 +27,23 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     );
   };
 
-  const handleCellClick = (x: number, y: number, ownedCell?: typeof ownedCells[0]) => {
-    if (ownedCell) {
-      window.open(ownedCell.link, '_blank');
-    } else {
-      onCellClick(x, y);
-    }
-  };
-
-  const getCellStyle = (x: number, y: number, ownedCell?: typeof ownedCells[0]) => {
-    if (!ownedCell) return {};
+  const getCellStyle = (x: number, y: number) => {
+    const owned = getOwnedCell(x, y);
+    if (!owned) return {};
 
     // Calculate the position of this cell within its owned space
-    const relativeX = x - ownedCell.x;
-    const relativeY = y - ownedCell.y;
+    const relativeX = x - owned.x;
+    const relativeY = y - owned.y;
 
-    // Only apply background image to the top-left cell of the owned space
-    if (relativeX === 0 && relativeY === 0) {
-      return {
-        backgroundImage: `url(${ownedCell.image})`,
-        backgroundSize: `${ownedCell.width * 100}% ${ownedCell.height * 100}%`,
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        cursor: 'pointer',
-        width: `${ownedCell.width * 100}%`,
-        height: `${ownedCell.height * 100}%`,
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        zIndex: 1
-      };
-    }
+    // Calculate background-position in percentage
+    const bgPosX = -(relativeX * (100 / (owned.width - 1)));
+    const bgPosY = -(relativeY * (100 / (owned.height - 1)));
 
     return {
-      opacity: 0
+      backgroundImage: `url(${owned.image})`,
+      backgroundSize: 'cover',
+      backgroundPosition: `${bgPosX}% ${bgPosY}%`,
+      backgroundRepeat: 'no-repeat'
     };
   };
 
@@ -79,11 +62,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 selected && "selected",
                 owned && "owned"
               )}
-              style={{
-                position: 'relative',
-                ...getCellStyle(x, y, owned)
-              }}
-              onClick={() => handleCellClick(x, y, owned)}
+              style={getCellStyle(x, y)}
+              onClick={() => onCellClick(x, y)}
               title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
             />
           );
