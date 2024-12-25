@@ -9,7 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 const Index = () => {
-  const { connected, handleConnectWallet, publicKey } = usePhantomWallet();
+  const { connected, handleConnectWallet, publicKey, phantomWallet } = usePhantomWallet();
   const {
     selectedSpace,
     ownedSpaces,
@@ -28,7 +28,7 @@ const Index = () => {
   }, []);
 
   const handleSubmit = async () => {
-    if (!connected || !publicKey) {
+    if (!connected || !publicKey || !phantomWallet) {
       toast({
         title: "Wallet Non Connecté",
         description: "Veuillez d'abord connecter votre Phantom wallet",
@@ -59,7 +59,7 @@ const Index = () => {
     const imageUrl = await handleImageUpload(imageInput.files[0]);
     if (!imageUrl) return;
 
-    await processSpacePurchase(publicKey, imageUrl);
+    await processSpacePurchase(phantomWallet, publicKey, imageUrl);
   };
 
   return (
