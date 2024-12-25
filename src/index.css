@@ -76,12 +76,12 @@
 
   .pixel-cell {
     aspect-ratio: 1;
-    border: 1px solid rgba(26, 43, 60, 0.1);
+    border: 0.5px solid rgba(26, 43, 60, 0.1);
     transition: all 0.2s ease-in-out;
     position: relative;
 
-    @media (max-width: 767px) {
-      border-width: 0.5px;
+    @media (min-width: 768px) {
+      border-width: 1px;
     }
   }
 
