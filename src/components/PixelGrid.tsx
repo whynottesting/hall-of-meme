@@ -27,26 +27,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     );
   };
 
-  const getCellStyle = (x: number, y: number) => {
-    const owned = getOwnedCell(x, y);
-    if (!owned) return {};
-
-    // Calculate the position of this cell within its owned space
-    const relativeX = x - owned.x;
-    const relativeY = y - owned.y;
-
-    // Calculate background-position in percentage
-    const bgPosX = -(relativeX * (100 / (owned.width - 1)));
-    const bgPosY = -(relativeY * (100 / (owned.height - 1)));
-
-    return {
-      backgroundImage: `url(${owned.image})`,
-      backgroundSize: 'cover',
-      backgroundPosition: `${bgPosX}% ${bgPosY}%`,
-      backgroundRepeat: 'no-repeat'
-    };
-  };
-
   return (
     <div className="pixel-grid">
       {Array.from({ length: 100 }, (_, y) =>
@@ -62,7 +42,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 selected && "selected",
                 owned && "owned"
               )}
-              style={getCellStyle(x, y)}
+              style={owned ? {
+                backgroundImage: `url(${owned.image})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              } : {}}
               onClick={() => onCellClick(x, y)}
               title={owned ? `Click to visit: ${owned.link}` : `Position: ${x},${y}`}
             />
