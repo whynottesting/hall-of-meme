@@ -38,7 +38,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return undefined;
     
-    // Si l'URL commence par 'public/', on ajoute l'URL de Supabase Storage
     if (imageUrl.startsWith('public/')) {
       const baseUrl = import.meta.env.VITE_SUPABASE_URL;
       const fullUrl = `${baseUrl}/storage/v1/object/public/space-images/${imageUrl}`;
@@ -58,8 +57,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
         if (isMainCell) {
           const imageUrl = owned.image ? getImageUrl(owned.image) : undefined;
-          console.log('Cell image URL:', imageUrl);
           console.log('Cell data:', owned);
+          console.log('Cell image URL:', imageUrl);
 
           grid.push(
             <div
@@ -73,13 +72,15 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
                 gridColumn: `${x + 1} / span ${owned.width}`,
                 gridRow: `${y + 1} / span ${owned.height}`,
                 backgroundImage: imageUrl ? `url(${imageUrl})` : undefined,
-                backgroundSize: 'cover',
+                backgroundSize: '100% 100%', // Changed to ensure image fills exactly
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 border: '1px solid #1a2b3c',
                 backgroundColor: imageUrl ? undefined : '#e5e7eb',
                 width: '100%',
-                height: '100%'
+                height: '100%',
+                position: 'relative',
+                overflow: 'hidden'
               }}
               onClick={() => handleCellClick(x, y, owned)}
               title={owned.link}
