@@ -44,14 +44,25 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       let imageUrl = owned.image;
       console.log('Initial image URL:', imageUrl);
 
-      // Construct the full Supabase Storage URL
-      if (imageUrl && !imageUrl.startsWith('http')) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('space-images')
-          .getPublicUrl(imageUrl.replace('public/lovable-uploads/', ''));
-        imageUrl = publicUrl;
+      // Vérification détaillée de l'URL de l'image
+      if (imageUrl) {
+        if (imageUrl.startsWith('http')) {
+          console.log('URL complète détectée:', imageUrl);
+        } else {
+          console.log('URL relative détectée, construction de l\'URL Supabase...');
+          const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
+          console.log('Chemin nettoyé:', cleanPath);
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('space-images')
+            .getPublicUrl(cleanPath);
+          
+          imageUrl = publicUrl;
+          console.log('URL Supabase construite:', imageUrl);
+        }
+      } else {
+        console.log('Aucune URL d\'image trouvée pour cette cellule');
       }
-      console.log('Final image URL:', imageUrl);
 
       return (
         <div
@@ -77,14 +88,14 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               className="w-full h-full object-cover"
               style={{ display: 'block' }}
               onError={(e) => {
-                console.error('Image loading error:', {
+                console.error('Erreur de chargement de l\'image:', {
                   url: imageUrl,
                   error: e
                 });
                 e.currentTarget.src = '/placeholder.svg';
               }}
               onLoad={() => {
-                console.log('Image loaded successfully:', imageUrl);
+                console.log('Image chargée avec succès:', imageUrl);
               }}
             />
           )}
