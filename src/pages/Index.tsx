@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 import { useSpaces } from '@/hooks/useSpaces';
 import { toast } from "@/hooks/use-toast";
+import { X } from "lucide-react";
 
 const Index = () => {
   const { connected, handleConnectWallet, publicKey } = usePhantomWallet();
@@ -19,6 +20,8 @@ const Index = () => {
     processSpacePurchase,
     loadOwnedSpaces
   } = useSpaces();
+
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     loadOwnedSpaces();
@@ -65,15 +68,33 @@ const Index = () => {
 
       <div className="retro-container pt-32">
         <p className="retro-subtitle text-center">Your Meme, Your Space, Your Legacy</p>
-
-        <SpaceForm
-          {...selectedSpace}
-          onInputChange={handleInputChange}
-          onImageUpload={handleImageUpload}
-          onSubmit={handleSubmit}
-          price={selectedSpace.width * selectedSpace.height * 0.01}
-          isProcessing={isProcessing}
-        />
+        
+        {!showForm ? (
+          <button 
+            onClick={() => setShowForm(true)}
+            className="text-primary underline hover:text-accent transition-colors duration-200 mx-auto block mt-4"
+          >
+            Claim Your Space Before It's Gone!
+          </button>
+        ) : (
+          <div className="relative">
+            <button 
+              onClick={() => setShowForm(false)}
+              className="absolute right-2 top-2 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+              aria-label="Fermer le formulaire"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <SpaceForm
+              {...selectedSpace}
+              onInputChange={handleInputChange}
+              onImageUpload={handleImageUpload}
+              onSubmit={handleSubmit}
+              price={selectedSpace.width * selectedSpace.height * 0.01}
+              isProcessing={isProcessing}
+            />
+          </div>
+        )}
 
         <div className="mt-4 mb-4">
           <SolPrice />
