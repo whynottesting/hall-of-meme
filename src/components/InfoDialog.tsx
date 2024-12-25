@@ -9,6 +9,12 @@ import {
 } from "@/components/ui/dialog";
 
 const InfoDialog = () => {
+  const handleShareOnX = () => {
+    const text = "🚨 Don't miss out! Secure your space on Hall Of Meme now and be eligible for the upcoming airdrop! 🎯\n\nhttps://hallofmeme.xyz";
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://x.com/intent/tweet?text=${encodedText}`, '_blank');
+  };
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -33,7 +39,16 @@ const InfoDialog = () => {
 
           <div className="space-y-2">
             <h3 className="font-bold">3. How can I benefit from the airdrop?</h3>
-            <p>By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you share the page on X it and that will also make you eligible for the airdrop.</p>
+            <p>
+              By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if your wallet is connected and you{" "}
+              <button 
+                onClick={handleShareOnX}
+                className="text-accent hover:underline cursor-pointer"
+              >
+                share the page on X
+              </button>
+              {" "}it and that will also make you eligible for the airdrop.
+            </p>
           </div>
         </div>
       </DialogContent>
