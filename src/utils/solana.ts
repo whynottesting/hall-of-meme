@@ -12,8 +12,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser Helius RPC endpoint pour le mainnet
-const connection = new Connection('https://rpc.helius.xyz/?api-key=7d06e432-f71c-4b39-a0c3-1f20f8c065ab', {
+// Utiliser GenesysGo RPC endpoint pour le mainnet
+const connection = new Connection('https://ssc-dao.genesysgo.net', {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
@@ -36,19 +36,8 @@ export const createSolanaTransaction = async (
 
     // Créer la transaction
     const transaction = new Transaction();
-    
-    // Obtenir le dernier blockhash de manière fiable
-    try {
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-      transaction.recentBlockhash = blockhash;
-      transaction.feePayer = fromPubkey;
-      console.log("✅ Blockhash obtenu:", blockhash);
-    } catch (error) {
-      console.error("❌ Erreur lors de l'obtention du blockhash:", error);
-      throw new Error("Impossible d'obtenir le blockhash - Veuillez réessayer");
-    }
 
-    // Ajouter l'instruction de transfert
+    // Ajouter l'instruction de transfert avant d'obtenir le blockhash
     transaction.add(
       SystemProgram.transfer({
         fromPubkey,
@@ -57,13 +46,14 @@ export const createSolanaTransaction = async (
       })
     );
 
+    // Laisser Phantom gérer le blockhash
     console.log("📝 Transaction créée, en attente de signature...");
     
     // Signer et envoyer la transaction via Phantom
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
     
-    // Attendre la confirmation avec un timeout plus long
+    // Attendre la confirmation
     try {
       const confirmation = await connection.confirmTransaction(signature, 'confirmed');
       console.log("🎉 Confirmation reçue:", confirmation);
