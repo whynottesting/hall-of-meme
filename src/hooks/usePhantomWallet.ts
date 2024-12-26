@@ -23,6 +23,7 @@ export const usePhantomWallet = () => {
       setPublicKey(key);
       setConnected(true);
       console.log("✅ Connecté avec la clé:", key);
+      console.log("💳 Adresse du wallet:", key);
     } else {
       resetWalletState();
     }
@@ -43,6 +44,7 @@ export const usePhantomWallet = () => {
       const response = await wallet.connect();
       
       if (response.publicKey) {
+        console.log("🎯 Clé publique obtenue:", response.publicKey.toString());
         updateConnectionState(wallet);
         
         try {
@@ -57,7 +59,7 @@ export const usePhantomWallet = () => {
           
           toast({
             title: "Wallet Connecté",
-            description: "Connexion réussie à Phantom wallet",
+            description: `Connecté à l'adresse: ${response.publicKey.toString().slice(0, 8)}...`,
           });
           return true;
         } catch (permError) {
@@ -93,6 +95,7 @@ export const usePhantomWallet = () => {
       setPhantomWallet(wallet);
       
       if (wallet.publicKey) {
+        console.log("🔍 Wallet déjà connecté, mise à jour de l'état...");
         updateConnectionState(wallet);
       }
       
@@ -109,6 +112,8 @@ export const usePhantomWallet = () => {
           description: "Déconnexion du Phantom wallet",
         });
       });
+    } else {
+      console.log("❌ Aucune instance Phantom trouvée");
     }
   }, [getPhantomInstance, resetWalletState, updateConnectionState]);
 

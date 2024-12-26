@@ -13,10 +13,10 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser l'endpoint public de Solana mainnet au lieu de GenesysGo
+// Utiliser l'endpoint public de Solana mainnet
 const connection = new Connection(clusterApiUrl('mainnet-beta'), {
-  commitment: 'confirmed',
-  confirmTransactionInitialTimeout: 60000,
+  commitment: 'processed',
+  confirmTransactionInitialTimeout: 120000, // 2 minutes
 });
 
 export const createSolanaTransaction = async (
@@ -31,6 +31,7 @@ export const createSolanaTransaction = async (
 
     console.log("🔄 Démarrage de la transaction...");
     console.log("💰 Montant demandé en lamports:", lamports);
+    console.log("📍 Adresse du wallet:", provider.publicKey.toString());
     
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
@@ -43,31 +44,31 @@ export const createSolanaTransaction = async (
       throw new Error("Solde insuffisant pour effectuer la transaction");
     }
 
-    // Créer la transaction
-    const transaction = new Transaction();
-
     // Obtenir le dernier blockhash avec plusieurs tentatives
     let blockhash;
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = 5;
 
-    while (attempts < maxAttempts) {
+    while (!blockhash && attempts < maxAttempts) {
       try {
-        const blockHashResult = await connection.getLatestBlockhash('confirmed');
-        blockhash = blockHashResult.blockhash;
-        console.log(`📝 Blockhash obtenu (tentative ${attempts + 1}):`, blockhash);
-        break;
+        console.log(`Tentative ${attempts + 1} d'obtention du blockhash...`);
+        const { blockhash: newBlockhash, lastValidBlockHeight } = 
+          await connection.getLatestBlockhash('processed');
+        blockhash = newBlockhash;
+        console.log("✅ Blockhash obtenu:", blockhash);
+        console.log("📊 Hauteur du dernier bloc valide:", lastValidBlockHeight);
       } catch (error) {
         attempts++;
+        console.error(`❌ Échec de la tentative ${attempts}:`, error);
         if (attempts === maxAttempts) {
           throw new Error("Impossible d'obtenir un blockhash valide après plusieurs tentatives");
         }
-        console.log(`Tentative ${attempts} échouée, nouvelle tentative...`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1s entre les tentatives
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
     }
 
-    // Définir le blockhash et le feePayer
+    // Créer et configurer la transaction
+    const transaction = new Transaction();
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -82,21 +83,33 @@ export const createSolanaTransaction = async (
 
     console.log("📝 Transaction créée, en attente de signature...");
     
-    // Signer et envoyer la transaction via Phantom
+    // Signer et envoyer la transaction
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
     
-    // Attendre la confirmation
-    try {
-      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-      console.log("🎉 Confirmation reçue:", confirmation);
-      
-      if (confirmation.value.err) {
-        throw new Error("La transaction a échoué lors de la confirmation");
+    // Attendre la confirmation avec plusieurs tentatives
+    let confirmed = false;
+    attempts = 0;
+
+    while (!confirmed && attempts < maxAttempts) {
+      try {
+        console.log(`Tentative ${attempts + 1} de confirmation...`);
+        const confirmation = await connection.confirmTransaction(signature, 'processed');
+        
+        if (confirmation.value.err) {
+          throw new Error("La transaction a échoué lors de la confirmation");
+        }
+        
+        confirmed = true;
+        console.log("🎉 Transaction confirmée!");
+      } catch (error) {
+        attempts++;
+        console.error(`❌ Échec de la confirmation, tentative ${attempts}:`, error);
+        if (attempts === maxAttempts) {
+          throw new Error("Impossible de confirmer la transaction après plusieurs tentatives");
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
       }
-    } catch (error) {
-      console.error("❌ Erreur lors de la confirmation:", error);
-      throw new Error("Erreur lors de la confirmation de la transaction");
     }
     
     return signature;
