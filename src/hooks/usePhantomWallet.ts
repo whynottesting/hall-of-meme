@@ -15,17 +15,39 @@ export const usePhantomWallet = () => {
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
-      const response = await wallet.connect();
+      // Request specific permissions when connecting
+      const response = await wallet.connect({
+        onlyIfTrusted: false
+      });
       
       if (response.publicKey) {
         const key = response.publicKey.toString();
         console.log("✅ Connecté avec succès! Clé publique:", key);
         setPublicKey(key);
         setConnected(true);
-        toast({
-          title: "Wallet Connecté",
-          description: "Connexion réussie à Phantom wallet",
-        });
+        
+        // Request transaction permissions explicitly
+        try {
+          await wallet.request({ 
+            method: "connect",
+            params: {
+              permissions: ["sign_transaction", "sign_message"]
+            }
+          });
+          console.log("✅ Permissions de transaction accordées");
+          toast({
+            title: "Wallet Connecté",
+            description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
+          });
+        } catch (permError) {
+          console.error("❌ Erreur lors de la demande des permissions:", permError);
+          toast({
+            title: "Attention",
+            description: "Veuillez accorder les permissions de transaction pour pouvoir effectuer des achats",
+            variant: "destructive",
+          });
+          return false;
+        }
         return true;
       }
     } catch (error) {
@@ -51,6 +73,19 @@ export const usePhantomWallet = () => {
           console.log("🔄 Wallet déjà connecté");
           setPublicKey(wallet.publicKey.toString());
           setConnected(true);
+          
+          // Verify/request permissions for existing connection
+          try {
+            await wallet.request({ 
+              method: "connect",
+              params: {
+                permissions: ["sign_transaction", "sign_message"]
+              }
+            });
+            console.log("✅ Permissions de transaction vérifiées/accordées");
+          } catch (error) {
+            console.warn("⚠️ Permissions de transaction non accordées:", error);
+          }
         }
         
         wallet.on('connect', () => {

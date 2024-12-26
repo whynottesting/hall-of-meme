@@ -1,7 +1,8 @@
 export type PhantomWallet = {
   isPhantom?: boolean;
   publicKey?: { toString: () => string };
-  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  connect: (options?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: { toString: () => string } }>;
+  request: (params: { method: string; params?: any }) => Promise<any>;
   on: (event: string, callback: () => void) => void;
   disconnect: () => Promise<void>;
 };
