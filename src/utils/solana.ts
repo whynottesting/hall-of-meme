@@ -3,10 +3,9 @@ import {
   Connection, 
   PublicKey, 
   SystemProgram, 
-  Transaction, 
-  LAMPORTS_PER_SOL, 
-  clusterApiUrl,
-  sendAndConfirmTransaction
+  Transaction,
+  LAMPORTS_PER_SOL,
+  clusterApiUrl
 } from '@solana/web3.js';
 
 // Polyfill pour Buffer
@@ -14,9 +13,11 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser le réseau mainnet au lieu de devnet
-const SOLANA_NETWORK = clusterApiUrl('mainnet-beta');
-const connection = new Connection(SOLANA_NETWORK, 'confirmed');
+// Utiliser un endpoint RPC public fiable
+const connection = new Connection('https://api.mainnet-beta.solana.com', {
+  commitment: 'confirmed',
+  wsEndpoint: 'wss://api.mainnet-beta.solana.com',
+});
 
 export const createSolanaTransaction = async (
   provider: any,
@@ -30,7 +31,6 @@ export const createSolanaTransaction = async (
 
     console.log("🔄 Démarrage de la transaction...");
     console.log("💰 Montant demandé en lamports:", lamports);
-    console.log("📍 Réseau Solana:", SOLANA_NETWORK);
     
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
@@ -54,7 +54,7 @@ export const createSolanaTransaction = async (
     const transaction = new Transaction();
     
     // Obtenir le dernier blockhash
-    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -73,8 +73,13 @@ export const createSolanaTransaction = async (
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
     
-    // Attendre la confirmation
-    const confirmation = await connection.confirmTransaction(signature);
+    // Attendre la confirmation avec un timeout plus long
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight
+    });
+    
     console.log("🎉 Confirmation reçue:", confirmation);
     
     if (confirmation.value.err) {
