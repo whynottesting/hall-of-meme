@@ -23,6 +23,7 @@ export const usePhantomWallet = () => {
   const checkWalletBalance = useCallback(async (walletAddress: string) => {
     try {
       const balanceInSol = await checkBalance(walletAddress);
+      console.log("💰 Solde vérifié:", balanceInSol, "SOL");
       setBalance(balanceInSol);
       return balanceInSol;
     } catch (error) {
@@ -39,8 +40,6 @@ export const usePhantomWallet = () => {
         setPublicKey(key);
         setConnected(true);
         console.log("✅ Connecté avec la clé:", key);
-        
-        // Vérifier le solde immédiatement après la connexion
         await checkWalletBalance(key);
       } else {
         resetWalletState();
@@ -50,6 +49,26 @@ export const usePhantomWallet = () => {
       resetWalletState();
     }
   }, [checkWalletBalance, resetWalletState]);
+
+  // Gérer les événements de changement de compte
+  useEffect(() => {
+    const wallet = getPhantomInstance();
+    if (!wallet) return;
+
+    const handleAccountChanged = (publicKey: any) => {
+      console.log("👤 Changement de compte détecté");
+      if (publicKey) {
+        updateConnectionState(wallet);
+      } else {
+        resetWalletState();
+      }
+    };
+
+    wallet.on('accountChanged', handleAccountChanged);
+    return () => {
+      wallet.off('accountChanged', handleAccountChanged);
+    };
+  }, [getPhantomInstance, updateConnectionState, resetWalletState]);
 
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
@@ -63,8 +82,8 @@ export const usePhantomWallet = () => {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
-      // Demander la connexion
-      const response = await wallet.connect();
+      // Demander la connexion avec onlyIfTrusted à false pour forcer l'approbation
+      const response = await wallet.connect({ onlyIfTrusted: false });
       
       if (response.publicKey) {
         console.log("🎯 Clé publique obtenue:", response.publicKey.toString());
@@ -72,39 +91,21 @@ export const usePhantomWallet = () => {
         // Mettre à jour l'état de connexion
         await updateConnectionState(wallet);
         
-        // Demander les permissions nécessaires
-        try {
-          await wallet.request({ 
-            method: "connect",
-            params: {
-              cluster: "mainnet-beta"
-            }
-          });
-          
-          toast({
-            title: "Wallet Connecté",
-            description: `Connecté à l'adresse: ${response.publicKey.toString().slice(0, 8)}...`,
-          });
-          return true;
-        } catch (permError) {
-          console.error("❌ Erreur lors de la demande des permissions:", permError);
-          resetWalletState();
-          toast({
-            title: "Attention",
-            description: "Veuillez accorder les permissions de connexion",
-            variant: "destructive",
-          });
-          return false;
-        }
+        toast({
+          title: "Wallet Connecté",
+          description: `Connecté à l'adresse: ${response.publicKey.toString().slice(0, 8)}...`,
+        });
+        return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Échec de la tentative de connexion:", error);
       resetWalletState();
+      
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
-          description: "Impossible de se connecter à Phantom wallet",
+          description: error.message || "Impossible de se connecter à Phantom wallet",
           variant: "destructive",
         });
       }
