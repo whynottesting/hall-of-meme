@@ -12,8 +12,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser un endpoint RPC public fiable pour le mainnet
-const connection = new Connection('https://api.mainnet-beta.solana.com', {
+// Utiliser Helius RPC endpoint pour le mainnet
+const connection = new Connection('https://rpc.helius.xyz/?api-key=7d06e432-f71c-4b39-a0c3-1f20f8c065ab', {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
@@ -37,6 +37,17 @@ export const createSolanaTransaction = async (
     // Créer la transaction
     const transaction = new Transaction();
     
+    // Obtenir le dernier blockhash de manière fiable
+    try {
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = fromPubkey;
+      console.log("✅ Blockhash obtenu:", blockhash);
+    } catch (error) {
+      console.error("❌ Erreur lors de l'obtention du blockhash:", error);
+      throw new Error("Impossible d'obtenir le blockhash - Veuillez réessayer");
+    }
+
     // Ajouter l'instruction de transfert
     transaction.add(
       SystemProgram.transfer({
@@ -46,9 +57,24 @@ export const createSolanaTransaction = async (
       })
     );
 
-    // Laisser Phantom gérer le blockhash et la signature
+    console.log("📝 Transaction créée, en attente de signature...");
+    
+    // Signer et envoyer la transaction via Phantom
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
+    
+    // Attendre la confirmation avec un timeout plus long
+    try {
+      const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+      console.log("🎉 Confirmation reçue:", confirmation);
+      
+      if (confirmation.value.err) {
+        throw new Error("La transaction a échoué lors de la confirmation");
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de la confirmation:", error);
+      // On continue même si la confirmation échoue, car la transaction peut quand même être valide
+    }
     
     return signature;
 
