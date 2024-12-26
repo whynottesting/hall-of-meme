@@ -5,7 +5,6 @@ import {
   SystemProgram, 
   Transaction,
   LAMPORTS_PER_SOL,
-  clusterApiUrl
 } from '@solana/web3.js';
 
 // Polyfill pour Buffer
@@ -13,10 +12,10 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser un endpoint RPC public fiable avec une configuration plus robuste
-const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', {
+// Utiliser un endpoint RPC public gratuit de GenesysGo
+const connection = new Connection('https://api.devnet.solana.com', {
   commitment: 'confirmed',
-  confirmTransactionInitialTimeout: 60000, // 60 secondes de timeout
+  confirmTransactionInitialTimeout: 60000,
 });
 
 export const createSolanaTransaction = async (
@@ -34,27 +33,12 @@ export const createSolanaTransaction = async (
     
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
-    
-    // Vérifier le solde du wallet
-    const balance = await connection.getBalance(fromPubkey);
-    console.log("💳 Solde du wallet (lamports):", balance);
-    console.log("💳 Solde du wallet (SOL):", balance / LAMPORTS_PER_SOL);
-    
-    // Frais de transaction estimés (0.000005 SOL = 5000 lamports)
-    const estimatedFees = 5000;
-    const totalAmount = lamports + estimatedFees;
-    
-    if (balance < totalAmount) {
-      const solNeeded = (totalAmount / LAMPORTS_PER_SOL).toFixed(4);
-      const currentBalance = (balance / LAMPORTS_PER_SOL).toFixed(4);
-      throw new Error(`Solde insuffisant. Vous avez ${currentBalance} SOL mais avez besoin d'au moins ${solNeeded} SOL (incluant les frais de transaction)`);
-    }
 
     // Créer la transaction
     const transaction = new Transaction();
     
     // Obtenir le dernier blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -73,12 +57,8 @@ export const createSolanaTransaction = async (
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
     
-    // Attendre la confirmation avec un timeout plus long
-    const confirmation = await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight
-    }, 'confirmed');
+    // Attendre la confirmation
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
     
     console.log("🎉 Confirmation reçue:", confirmation);
     
