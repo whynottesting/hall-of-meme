@@ -12,8 +12,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser un endpoint RPC public gratuit de GenesysGo
-const connection = new Connection('https://api.devnet.solana.com', {
+// Utiliser un endpoint RPC public gratuit pour le mainnet
+const connection = new Connection('https://api.mainnet-beta.solana.com', {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
