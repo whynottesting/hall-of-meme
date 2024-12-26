@@ -13,10 +13,10 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser l'endpoint public de Solana mainnet
-const connection = new Connection(clusterApiUrl('mainnet-beta'), {
-  commitment: 'processed',
-  confirmTransactionInitialTimeout: 120000, // 2 minutes
+// Utiliser l'endpoint public de devnet pour les tests
+const connection = new Connection('https://api.devnet.solana.com', {
+  commitment: 'confirmed',
+  confirmTransactionInitialTimeout: 60000,
 });
 
 export const createSolanaTransaction = async (
@@ -37,35 +37,17 @@ export const createSolanaTransaction = async (
     const toPubkey = new PublicKey(recipientAddress);
 
     // Vérifier le solde avant la transaction
+    console.log("🔍 Vérification du solde...");
     const balance = await connection.getBalance(fromPubkey);
     console.log("💰 Solde actuel:", balance / LAMPORTS_PER_SOL, "SOL");
     
     if (balance < lamports) {
-      throw new Error("Solde insuffisant pour effectuer la transaction");
+      throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
-    // Obtenir le dernier blockhash avec plusieurs tentatives
-    let blockhash;
-    let attempts = 0;
-    const maxAttempts = 5;
-
-    while (!blockhash && attempts < maxAttempts) {
-      try {
-        console.log(`Tentative ${attempts + 1} d'obtention du blockhash...`);
-        const { blockhash: newBlockhash, lastValidBlockHeight } = 
-          await connection.getLatestBlockhash('processed');
-        blockhash = newBlockhash;
-        console.log("✅ Blockhash obtenu:", blockhash);
-        console.log("📊 Hauteur du dernier bloc valide:", lastValidBlockHeight);
-      } catch (error) {
-        attempts++;
-        console.error(`❌ Échec de la tentative ${attempts}:`, error);
-        if (attempts === maxAttempts) {
-          throw new Error("Impossible d'obtenir un blockhash valide après plusieurs tentatives");
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
+    console.log("🔄 Obtention du dernier blockhash...");
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    console.log("✅ Blockhash obtenu:", blockhash);
 
     // Créer et configurer la transaction
     const transaction = new Transaction();
@@ -84,34 +66,25 @@ export const createSolanaTransaction = async (
     console.log("📝 Transaction créée, en attente de signature...");
     
     // Signer et envoyer la transaction
-    const { signature } = await provider.signAndSendTransaction(transaction);
-    console.log("✍️ Transaction signée et envoyée, signature:", signature);
+    const signed = await provider.signTransaction(transaction);
+    console.log("✍️ Transaction signée");
     
-    // Attendre la confirmation avec plusieurs tentatives
-    let confirmed = false;
-    attempts = 0;
-
-    while (!confirmed && attempts < maxAttempts) {
-      try {
-        console.log(`Tentative ${attempts + 1} de confirmation...`);
-        const confirmation = await connection.confirmTransaction(signature, 'processed');
-        
-        if (confirmation.value.err) {
-          throw new Error("La transaction a échoué lors de la confirmation");
-        }
-        
-        confirmed = true;
-        console.log("🎉 Transaction confirmée!");
-      } catch (error) {
-        attempts++;
-        console.error(`❌ Échec de la confirmation, tentative ${attempts}:`, error);
-        if (attempts === maxAttempts) {
-          throw new Error("Impossible de confirmer la transaction après plusieurs tentatives");
-        }
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
+    const signature = await connection.sendRawTransaction(signed.serialize());
+    console.log("📤 Transaction envoyée, signature:", signature);
+    
+    // Attendre la confirmation
+    console.log("⏳ Attente de la confirmation...");
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight
+    });
+    
+    if (confirmation.value.err) {
+      throw new Error("La transaction a échoué lors de la confirmation");
     }
     
+    console.log("🎉 Transaction confirmée!");
     return signature;
 
   } catch (error: any) {
