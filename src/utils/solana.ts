@@ -4,6 +4,7 @@ import {
   SystemProgram, 
   Transaction,
   LAMPORTS_PER_SOL,
+  clusterApiUrl,
 } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 
@@ -12,8 +13,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser GenesysGo RPC endpoint pour le mainnet
-const connection = new Connection('https://ssc-dao.genesysgo.net', {
+// Utiliser l'endpoint public de Solana mainnet au lieu de GenesysGo
+const connection = new Connection(clusterApiUrl('mainnet-beta'), {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
@@ -34,12 +35,37 @@ export const createSolanaTransaction = async (
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
 
+    // Vérifier le solde avant la transaction
+    const balance = await connection.getBalance(fromPubkey);
+    console.log("💰 Solde actuel:", balance / LAMPORTS_PER_SOL, "SOL");
+    
+    if (balance < lamports) {
+      throw new Error("Solde insuffisant pour effectuer la transaction");
+    }
+
     // Créer la transaction
     const transaction = new Transaction();
 
-    // Obtenir le dernier blockhash
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
-    console.log("📝 Blockhash obtenu:", blockhash);
+    // Obtenir le dernier blockhash avec plusieurs tentatives
+    let blockhash;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        const blockHashResult = await connection.getLatestBlockhash('confirmed');
+        blockhash = blockHashResult.blockhash;
+        console.log(`📝 Blockhash obtenu (tentative ${attempts + 1}):`, blockhash);
+        break;
+      } catch (error) {
+        attempts++;
+        if (attempts === maxAttempts) {
+          throw new Error("Impossible d'obtenir un blockhash valide après plusieurs tentatives");
+        }
+        console.log(`Tentative ${attempts} échouée, nouvelle tentative...`);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Attendre 1s entre les tentatives
+      }
+    }
 
     // Définir le blockhash et le feePayer
     transaction.recentBlockhash = blockhash;
@@ -70,7 +96,7 @@ export const createSolanaTransaction = async (
       }
     } catch (error) {
       console.error("❌ Erreur lors de la confirmation:", error);
-      // On continue même si la confirmation échoue, car la transaction peut quand même être valide
+      throw new Error("Erreur lors de la confirmation de la transaction");
     }
     
     return signature;
