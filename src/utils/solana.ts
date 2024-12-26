@@ -15,21 +15,29 @@ export const createSolanaTransaction = async (
   lamports: number
 ) => {
   try {
+    console.log("🔄 Démarrage de la transaction...");
+    console.log("💰 Montant en lamports:", lamports);
+    
     // Vérifier le solde du wallet
     const balance = await connection.getBalance(provider.publicKey);
+    console.log("💳 Solde du wallet (lamports):", balance);
     
-    // Ajouter une marge pour les frais de transaction (0.000005 SOL)
+    // Ajouter une marge pour les frais de transaction (0.000005 SOL = 5000 lamports)
     const requiredBalance = lamports + 5000;
+    console.log("💰 Solde requis avec frais (lamports):", requiredBalance);
     
     if (balance < requiredBalance) {
-      throw new Error(`Solde insuffisant. Vous avez besoin d'au moins ${(requiredBalance / 1000000000).toFixed(4)} SOL`);
+      const solNeeded = (requiredBalance / 1000000000).toFixed(4);
+      throw new Error(`Solde insuffisant. Vous avez besoin d'au moins ${solNeeded} SOL`);
     }
 
     // Créer une nouvelle transaction
     const transaction = new Transaction();
     
     // Obtenir un blockhash récent
-    const { blockhash } = await connection.getLatestBlockhash();
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    console.log("🔑 Blockhash obtenu:", blockhash);
+    
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = provider.publicKey;
 
@@ -38,15 +46,24 @@ export const createSolanaTransaction = async (
       SystemProgram.transfer({
         fromPubkey: provider.publicKey,
         toPubkey: new PublicKey(recipientAddress),
-        lamports
+        lamports: Math.floor(lamports) // S'assurer que le montant est un entier
       })
     );
 
+    console.log("📝 Transaction créée, en attente de signature...");
+    
     // Signer et envoyer la transaction
     const { signature } = await provider.signAndSendTransaction(transaction);
+    console.log("✍️ Transaction signée, signature:", signature);
     
-    // Attendre la confirmation
-    const confirmation = await connection.confirmTransaction(signature);
+    // Attendre la confirmation avec un timeout plus long
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight: await connection.getBlockHeight()
+    }, 'confirmed');
+    
+    console.log("🎉 Confirmation reçue:", confirmation);
     
     if (confirmation.value.err) {
       throw new Error("La transaction a échoué lors de la confirmation");
@@ -54,7 +71,17 @@ export const createSolanaTransaction = async (
     
     return signature;
   } catch (error: any) {
-    console.error("Erreur lors de la création de la transaction:", error);
+    console.error("❌ Erreur détaillée de la transaction:", error);
+    
+    // Améliorer les messages d'erreur
+    if (error.message.includes("insufficient funds")) {
+      throw new Error("Solde insuffisant pour effectuer la transaction");
+    } else if (error.message.includes("blockhash")) {
+      throw new Error("Erreur de blockhash - Veuillez réessayer");
+    } else if (error.message.includes("timeout")) {
+      throw new Error("La transaction a expiré - Veuillez réessayer");
+    }
+    
     throw new Error(error.message || "Erreur lors de la transaction Solana");
   }
 };

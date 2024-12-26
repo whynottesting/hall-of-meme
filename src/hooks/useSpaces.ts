@@ -73,46 +73,50 @@ export const useSpaces = () => {
 
       // Calculate price in SOL (each cell is 10x10 pixels, and each pixel costs 0.01 SOL)
       const price = selectedSpace.width * selectedSpace.height * 100 * 0.01;
+      console.log("💰 Prix en SOL:", price);
       
       // Convert SOL to lamports (1 SOL = 1,000,000,000 lamports)
+      // Use Math.floor to ensure we get a whole number
       const lamports = Math.floor(price * 1000000000);
+      console.log("💰 Prix en lamports:", lamports);
 
       try {
         // Process the Solana transaction
         const signature = await createSolanaTransaction(phantomWallet, OWNER_WALLET, lamports);
-        console.log("Transaction signature:", signature);
+        console.log("✅ Transaction réussie, signature:", signature);
+
+        const response = await fetch('/api/process-space-purchase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            walletAddress,
+            x: selectedSpace.x,
+            y: selectedSpace.y,
+            width: selectedSpace.width,
+            height: selectedSpace.height,
+            link: selectedSpace.link,
+            imageUrl,
+            price
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || "Erreur lors de la réservation de l'espace");
+        }
+
+        await loadOwnedSpaces();
+        toast({
+          title: "Succès",
+          description: "Votre espace a été réservé avec succès!",
+        });
+
       } catch (error: any) {
-        console.error("Transaction error:", error);
-        throw new Error("La transaction Solana a échoué. Vérifiez votre solde et réessayez.");
+        console.error('Erreur transaction:', error);
+        throw error; // Propager l'erreur pour qu'elle soit gérée par le catch parent
       }
-
-      const response = await fetch('/api/process-space-purchase', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          walletAddress,
-          x: selectedSpace.x,
-          y: selectedSpace.y,
-          width: selectedSpace.width,
-          height: selectedSpace.height,
-          link: selectedSpace.link,
-          imageUrl,
-          price
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erreur lors de la réservation de l'espace");
-      }
-
-      await loadOwnedSpaces();
-      toast({
-        title: "Succès",
-        description: "Votre espace a été réservé avec succès!",
-      });
 
     } catch (error: any) {
       console.error('Error processing space purchase:', error);
