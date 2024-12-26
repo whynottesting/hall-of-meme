@@ -3,57 +3,69 @@ import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhantomWallet, PHANTOM_CONSTANTS } from '@/types/phantom';
 import { usePhantomInstance } from './usePhantomInstance';
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
+import { Connection, LAMPORTS_PER_SOL, PublicKey, clusterApiUrl } from '@solana/web3.js';
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number | null>(null);
   const isMobile = useIsMobile();
   const getPhantomInstance = usePhantomInstance();
+
+  // Créer une nouvelle connexion RPC avec un commitment "finalized"
+  const connection = new Connection(clusterApiUrl('mainnet-beta'), 'finalized');
 
   const resetWalletState = useCallback(() => {
     setConnected(false);
     setPublicKey(null);
+    setBalance(null);
     console.log("🔄 État du wallet réinitialisé");
   }, []);
 
-  const checkWalletBalance = async (walletAddress: string) => {
+  const checkWalletBalance = useCallback(async (walletAddress: string) => {
     try {
-      const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
+      console.log("🔍 Vérification du solde pour l'adresse:", walletAddress);
       const pubKey = new PublicKey(walletAddress);
-      const balance = await connection.getBalance(pubKey, 'confirmed');
-      const balanceInSol = balance / LAMPORTS_PER_SOL;
+      
+      // Utiliser getBalance avec le commitment "finalized"
+      const balanceInLamports = await connection.getBalance(pubKey);
+      const balanceInSol = balanceInLamports / LAMPORTS_PER_SOL;
+      
       console.log("💰 Solde du wallet:", balanceInSol, "SOL");
+      setBalance(balanceInSol);
       return balanceInSol;
     } catch (error) {
       console.error("❌ Erreur lors de la vérification du solde:", error);
+      setBalance(null);
       return null;
     }
-  };
+  }, [connection]);
 
   const updateConnectionState = useCallback(async (wallet: PhantomWallet) => {
-    if (wallet.publicKey) {
-      const key = wallet.publicKey.toString();
-      setPublicKey(key);
-      setConnected(true);
-      console.log("✅ Connecté avec la clé:", key);
-      console.log("💳 Adresse du wallet:", key);
-      
-      // Vérifier le solde après la connexion
-      await checkWalletBalance(key);
-      
-      // Vérifier le réseau
-      console.log("🌐 Réseau: Mainnet");
-    } else {
+    try {
+      if (wallet.publicKey) {
+        const key = wallet.publicKey.toString();
+        setPublicKey(key);
+        setConnected(true);
+        console.log("✅ Connecté avec la clé:", key);
+        
+        // Vérifier le solde immédiatement après la connexion
+        await checkWalletBalance(key);
+      } else {
+        resetWalletState();
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de la mise à jour de l'état:", error);
       resetWalletState();
     }
-  }, [resetWalletState]);
+  }, [checkWalletBalance, resetWalletState]);
 
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
       
+      // Déconnecter d'abord pour assurer une connexion propre
       try {
         await wallet.disconnect();
         console.log("🔌 Déconnexion réussie pour une connexion propre");
@@ -61,23 +73,23 @@ export const usePhantomWallet = () => {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
-      console.log("🔄 Demande de connexion au wallet...");
+      // Demander la connexion
       const response = await wallet.connect();
       
       if (response.publicKey) {
         console.log("🎯 Clé publique obtenue:", response.publicKey.toString());
+        
+        // Mettre à jour l'état de connexion
         await updateConnectionState(wallet);
         
+        // Demander les permissions nécessaires
         try {
-          console.log("🔄 Demande des permissions de transaction...");
           await wallet.request({ 
             method: "connect",
             params: {
-              cluster: "mainnet-beta",
-              permissions: ["sign_transaction", "sign_message"]
+              cluster: "mainnet-beta"
             }
           });
-          console.log("✅ Permissions de transaction accordées");
           
           toast({
             title: "Wallet Connecté",
@@ -89,7 +101,7 @@ export const usePhantomWallet = () => {
           resetWalletState();
           toast({
             title: "Attention",
-            description: "Veuillez accorder les permissions de transaction",
+            description: "Veuillez accorder les permissions de connexion",
             variant: "destructive",
           });
           return false;
@@ -134,8 +146,6 @@ export const usePhantomWallet = () => {
           description: "Déconnexion du Phantom wallet",
         });
       });
-
-      console.log("🌐 Réseau: Mainnet");
     } else {
       console.log("❌ Aucune instance Phantom trouvée");
     }
@@ -151,7 +161,6 @@ export const usePhantomWallet = () => {
       const encodedRef = encodeURIComponent(currentUrl);
       const phantomDeepLink = `https://phantom.app/ul/browse/${encodedUrl}?ref=${encodedRef}`;
       
-      console.log("🔗 Deep link généré:", phantomDeepLink);
       window.location.href = phantomDeepLink;
       return;
     }
@@ -170,5 +179,5 @@ export const usePhantomWallet = () => {
     await attemptConnection(phantomWallet);
   }, [isMobile, phantomWallet, attemptConnection]);
 
-  return { connected, phantomWallet, handleConnectWallet, publicKey };
+  return { connected, phantomWallet, handleConnectWallet, publicKey, balance };
 };

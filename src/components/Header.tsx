@@ -6,9 +6,10 @@ import InfoDialog from "@/components/InfoDialog";
 interface HeaderProps {
   connected: boolean;
   onConnectWallet: () => void;
+  balance?: number | null;
 }
 
-const Header = ({ connected, onConnectWallet }: HeaderProps) => {
+const Header = ({ connected, onConnectWallet, balance }: HeaderProps) => {
   const isMobile = useIsMobile();
 
   return (
@@ -19,7 +20,12 @@ const Header = ({ connected, onConnectWallet }: HeaderProps) => {
             <InfoDialog />
           </div>
           <h1 className="retro-title rainbow-title mb-0 flex-1 animate-bounce whitespace-nowrap text-2xl md:text-6xl text-left md:text-center">HALL OF MEME</h1>
-          <div className="flex-1 flex justify-end">
+          <div className="flex-1 flex justify-end items-center gap-4">
+            {connected && balance !== null && (
+              <span className="text-sm font-medium hidden md:inline-block">
+                💰 {balance.toFixed(2)} SOL
+              </span>
+            )}
             <Button
               onClick={onConnectWallet}
               className={`retro-button px-1 md:px-6 ${connected ? 'border-2 border-accent animate-glow' : ''}`}

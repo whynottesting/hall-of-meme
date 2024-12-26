@@ -3,14 +3,13 @@ import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
-import InfoDialog from '@/components/InfoDialog';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 import { useSpaces } from '@/hooks/useSpaces';
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 
 const Index = () => {
-  const { connected, handleConnectWallet, publicKey, phantomWallet } = usePhantomWallet();
+  const { connected, handleConnectWallet, publicKey, phantomWallet, balance } = usePhantomWallet();
   const {
     selectedSpace,
     ownedSpaces,
@@ -65,7 +64,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header connected={connected} onConnectWallet={handleConnectWallet} />
+      <Header 
+        connected={connected} 
+        onConnectWallet={handleConnectWallet}
+        balance={balance}
+      />
 
       <div className="retro-container pt-32">
         <div className="max-w-4xl mx-auto">
