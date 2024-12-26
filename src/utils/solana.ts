@@ -13,10 +13,10 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser un endpoint RPC public fiable
-const connection = new Connection('https://api.mainnet-beta.solana.com', {
+// Utiliser un endpoint RPC public fiable avec une configuration plus robuste
+const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/demo', {
   commitment: 'confirmed',
-  wsEndpoint: 'wss://api.mainnet-beta.solana.com',
+  confirmTransactionInitialTimeout: 60000, // 60 secondes de timeout
 });
 
 export const createSolanaTransaction = async (
@@ -78,7 +78,7 @@ export const createSolanaTransaction = async (
       signature,
       blockhash,
       lastValidBlockHeight
-    });
+    }, 'confirmed');
     
     console.log("🎉 Confirmation reçue:", confirmation);
     
