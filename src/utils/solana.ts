@@ -1,4 +1,3 @@
-import { Buffer } from 'buffer';
 import { 
   Connection, 
   PublicKey, 
@@ -6,6 +5,7 @@ import {
   Transaction,
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
+import { Buffer } from 'buffer';
 
 // Polyfill pour Buffer
 if (typeof window !== 'undefined') {
@@ -37,7 +37,15 @@ export const createSolanaTransaction = async (
     // Créer la transaction
     const transaction = new Transaction();
 
-    // Ajouter l'instruction de transfert avant d'obtenir le blockhash
+    // Obtenir le dernier blockhash
+    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    console.log("📝 Blockhash obtenu:", blockhash);
+
+    // Définir le blockhash et le feePayer
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = fromPubkey;
+
+    // Ajouter l'instruction de transfert
     transaction.add(
       SystemProgram.transfer({
         fromPubkey,
@@ -46,7 +54,6 @@ export const createSolanaTransaction = async (
       })
     );
 
-    // Laisser Phantom gérer le blockhash
     console.log("📝 Transaction créée, en attente de signature...");
     
     // Signer et envoyer la transaction via Phantom
