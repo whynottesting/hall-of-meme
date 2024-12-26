@@ -31,7 +31,6 @@ export const usePhantomWallet = () => {
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
-      resetWalletState();
       
       try {
         await wallet.disconnect();
@@ -92,7 +91,10 @@ export const usePhantomWallet = () => {
     if (wallet) {
       console.log("🔄 Initialisation du wallet...");
       setPhantomWallet(wallet);
-      updateConnectionState(wallet);
+      
+      if (wallet.publicKey) {
+        updateConnectionState(wallet);
+      }
       
       wallet.on('connect', () => {
         console.log("🔌 Événement connect détecté");

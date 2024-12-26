@@ -1,13 +1,22 @@
 import { Buffer } from 'buffer';
-import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
+import { 
+  Connection, 
+  PublicKey, 
+  SystemProgram, 
+  Transaction, 
+  LAMPORTS_PER_SOL, 
+  clusterApiUrl,
+  sendAndConfirmTransaction
+} from '@solana/web3.js';
 
 // Polyfill pour Buffer
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-const SOLANA_NETWORK = clusterApiUrl('devnet');
-const connection = new Connection(SOLANA_NETWORK);
+// Utiliser le réseau mainnet au lieu de devnet
+const SOLANA_NETWORK = clusterApiUrl('mainnet-beta');
+const connection = new Connection(SOLANA_NETWORK, 'confirmed');
 
 export const createSolanaTransaction = async (
   provider: any,
@@ -23,58 +32,49 @@ export const createSolanaTransaction = async (
     console.log("💰 Montant demandé en lamports:", lamports);
     console.log("📍 Réseau Solana:", SOLANA_NETWORK);
     
+    const fromPubkey = new PublicKey(provider.publicKey.toString());
+    const toPubkey = new PublicKey(recipientAddress);
+    
     // Vérifier le solde du wallet
-    const walletPubKey = new PublicKey(provider.publicKey.toString());
-    const balance = await connection.getBalance(walletPubKey);
+    const balance = await connection.getBalance(fromPubkey);
     console.log("💳 Solde du wallet (lamports):", balance);
     console.log("💳 Solde du wallet (SOL):", balance / LAMPORTS_PER_SOL);
     
     // Frais de transaction estimés (0.000005 SOL = 5000 lamports)
     const estimatedFees = 5000;
-    const requiredBalance = lamports + estimatedFees;
-    console.log("💰 Solde requis avec frais (lamports):", requiredBalance);
+    const totalAmount = lamports + estimatedFees;
     
-    if (balance < requiredBalance) {
-      const solNeeded = (requiredBalance / LAMPORTS_PER_SOL).toFixed(4);
+    if (balance < totalAmount) {
+      const solNeeded = (totalAmount / LAMPORTS_PER_SOL).toFixed(4);
       const currentBalance = (balance / LAMPORTS_PER_SOL).toFixed(4);
       throw new Error(`Solde insuffisant. Vous avez ${currentBalance} SOL mais avez besoin d'au moins ${solNeeded} SOL (incluant les frais de transaction)`);
     }
 
-    // Créer une nouvelle transaction
+    // Créer la transaction
     const transaction = new Transaction();
     
-    // Obtenir un blockhash récent
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
-    console.log("🔑 Blockhash obtenu:", blockhash);
-    
+    // Obtenir le dernier blockhash
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubKey;
+    transaction.feePayer = fromPubkey;
 
     // Ajouter l'instruction de transfert
     transaction.add(
       SystemProgram.transfer({
-        fromPubkey: walletPubKey,
-        toPubkey: new PublicKey(recipientAddress),
+        fromPubkey,
+        toPubkey,
         lamports: Math.floor(lamports)
       })
     );
 
     console.log("📝 Transaction créée, en attente de signature...");
     
-    // Signer et envoyer la transaction
-    const signed = await provider.signTransaction(transaction);
-    console.log("✍️ Transaction signée");
-    
-    const signature = await connection.sendRawTransaction(signed.serialize());
-    console.log("🚀 Transaction envoyée, signature:", signature);
+    // Signer et envoyer la transaction via Phantom
+    const { signature } = await provider.signAndSendTransaction(transaction);
+    console.log("✍️ Transaction signée et envoyée, signature:", signature);
     
     // Attendre la confirmation
-    const confirmation = await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight
-    });
-    
+    const confirmation = await connection.confirmTransaction(signature);
     console.log("🎉 Confirmation reçue:", confirmation);
     
     if (confirmation.value.err) {
@@ -82,6 +82,7 @@ export const createSolanaTransaction = async (
     }
     
     return signature;
+
   } catch (error: any) {
     console.error("❌ Erreur détaillée de la transaction:", error);
     
