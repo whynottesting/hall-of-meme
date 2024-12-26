@@ -9,11 +9,18 @@ import {
   TransactionMessage
 } from '@solana/web3.js';
 
-// Utiliser l'endpoint public de mainnet via clusterApiUrl
-const connection = new Connection(clusterApiUrl('mainnet-beta'), {
-  commitment: 'confirmed',
-  confirmTransactionInitialTimeout: 60000,
-});
+// Utiliser un endpoint RPC public avec une configuration plus robuste
+const connection = new Connection(
+  "https://api.mainnet-beta.solana.com",
+  {
+    commitment: 'confirmed',
+    confirmTransactionInitialTimeout: 60000,
+    wsEndpoint: "wss://api.mainnet-beta.solana.com",
+    httpHeaders: {
+      'Content-Type': 'application/json',
+    }
+  }
+);
 
 export const createSolanaTransaction = async (
   provider: any,
@@ -95,15 +102,29 @@ export const createSolanaTransaction = async (
   }
 };
 
-// Fonction pour vérifier le solde
 export const checkBalance = async (walletAddress: string): Promise<number> => {
   try {
     console.log("🔍 Vérification du solde pour l'adresse:", walletAddress);
     const pubKey = new PublicKey(walletAddress);
-    const balance = await connection.getBalance(pubKey, 'confirmed');
-    const balanceInSol = balance / LAMPORTS_PER_SOL;
-    console.log("💰 Solde trouvé:", balanceInSol, "SOL");
-    return balanceInSol;
+    
+    // Utiliser getBalance avec un retry
+    const getBalanceWithRetry = async (attempts = 3): Promise<number> => {
+      try {
+        const balance = await connection.getBalance(pubKey);
+        const balanceInSol = balance / LAMPORTS_PER_SOL;
+        console.log("💰 Solde trouvé:", balanceInSol, "SOL");
+        return balanceInSol;
+      } catch (error) {
+        if (attempts > 1) {
+          console.log(`Tentative échouée, reste ${attempts - 1} essais...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return getBalanceWithRetry(attempts - 1);
+        }
+        throw error;
+      }
+    };
+
+    return await getBalanceWithRetry();
   } catch (error) {
     console.error("❌ Erreur lors de la vérification du solde:", error);
     throw error;

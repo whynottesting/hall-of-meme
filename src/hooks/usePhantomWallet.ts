@@ -28,10 +28,16 @@ export const usePhantomWallet = () => {
       return balanceInSol;
     } catch (error) {
       console.error("❌ Erreur lors de la vérification du solde:", error);
-      setBalance(null);
-      return null;
+      // Ne pas mettre le solde à null en cas d'erreur pour éviter un flash UI
+      // setBalance(null);
+      toast({
+        title: "Erreur de Solde",
+        description: "Impossible de récupérer le solde du wallet. Réessayez plus tard.",
+        variant: "destructive",
+      });
+      return balance; // Retourner le dernier solde connu
     }
-  }, []);
+  }, [balance]);
 
   const updateConnectionState = useCallback(async (wallet: PhantomWallet) => {
     try {
@@ -103,7 +109,6 @@ export const usePhantomWallet = () => {
       
       let errorMessage = "Impossible de se connecter à Phantom wallet";
       
-      // Gérer les codes d'erreur spécifiques
       if (error.code === PHANTOM_ERROR_CODES.USER_REJECTED) {
         errorMessage = "Connexion refusée par l'utilisateur";
       } else if (error.code === PHANTOM_ERROR_CODES.UNAUTHORIZED) {
