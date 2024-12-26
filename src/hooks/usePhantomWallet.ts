@@ -12,11 +12,11 @@ export const usePhantomWallet = () => {
 
   const getPhantomInstance = usePhantomInstance();
 
-  const resetWalletState = () => {
+  const resetWalletState = useCallback(() => {
     setConnected(false);
     setPublicKey(null);
     console.log("🔄 État du wallet réinitialisé");
-  };
+  }, []);
 
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
@@ -33,8 +33,8 @@ export const usePhantomWallet = () => {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
-      // Vérifier si le wallet est réellement connecté
-      if (!wallet.isConnected) {
+      // Vérifier si le wallet a une clé publique
+      if (!wallet.publicKey) {
         console.log("🔄 Demande de connexion au wallet...");
         const response = await wallet.connect();
         
@@ -95,7 +95,7 @@ export const usePhantomWallet = () => {
       }
       return false;
     }
-  }, [isMobile]);
+  }, [isMobile, resetWalletState]);
 
   useEffect(() => {
     const initializeWallet = async () => {
@@ -105,7 +105,7 @@ export const usePhantomWallet = () => {
         setPhantomWallet(wallet);
         
         // Vérifier l'état de connexion réel
-        if (wallet.publicKey && wallet.isConnected) {
+        if (wallet.publicKey) {
           console.log("🔄 Wallet déjà connecté, clé:", wallet.publicKey.toString());
           setPublicKey(wallet.publicKey.toString());
           setConnected(true);
@@ -151,7 +151,7 @@ export const usePhantomWallet = () => {
     };
 
     initializeWallet();
-  }, [getPhantomInstance, attemptConnection]);
+  }, [getPhantomInstance, attemptConnection, resetWalletState]);
 
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
