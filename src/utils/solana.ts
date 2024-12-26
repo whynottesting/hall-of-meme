@@ -12,7 +12,7 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser un endpoint RPC public gratuit pour le mainnet
+// Utiliser un endpoint RPC public fiable pour le mainnet
 const connection = new Connection('https://api.mainnet-beta.solana.com', {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
@@ -37,11 +37,6 @@ export const createSolanaTransaction = async (
     // Créer la transaction
     const transaction = new Transaction();
     
-    // Obtenir le dernier blockhash
-    const { blockhash } = await connection.getLatestBlockhash('finalized');
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = fromPubkey;
-
     // Ajouter l'instruction de transfert
     transaction.add(
       SystemProgram.transfer({
@@ -51,20 +46,9 @@ export const createSolanaTransaction = async (
       })
     );
 
-    console.log("📝 Transaction créée, en attente de signature...");
-    
-    // Signer et envoyer la transaction via Phantom
+    // Laisser Phantom gérer le blockhash et la signature
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée et envoyée, signature:", signature);
-    
-    // Attendre la confirmation
-    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-    
-    console.log("🎉 Confirmation reçue:", confirmation);
-    
-    if (confirmation.value.err) {
-      throw new Error("La transaction a échoué lors de la confirmation");
-    }
     
     return signature;
 
