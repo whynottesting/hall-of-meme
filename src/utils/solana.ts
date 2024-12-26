@@ -35,13 +35,15 @@ export const createSolanaTransaction = async (
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
 
-    // Vérifier le solde avant la transaction
+    // Vérifier le solde avant la transaction en utilisant directement l'adresse publique
     console.log("🔍 Vérification du solde...");
-    const balance = await connection.getBalance(fromPubkey);
-    console.log("💰 Solde actuel:", balance / LAMPORTS_PER_SOL, "SOL");
+    const balance = await connection.getBalance(fromPubkey, 'confirmed');
+    const balanceInSol = balance / LAMPORTS_PER_SOL;
+    console.log("💰 Solde actuel:", balanceInSol, "SOL");
     
     if (balance < lamports) {
-      throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
+      const requiredSol = lamports / LAMPORTS_PER_SOL;
+      throw new Error(`Solde insuffisant. Nécessaire: ${requiredSol} SOL, Disponible: ${balanceInSol} SOL`);
     }
 
     console.log("🔄 Obtention du dernier blockhash...");
