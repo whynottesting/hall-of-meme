@@ -7,9 +7,9 @@ export type PhantomWallet = {
   signTransaction: (transaction: any) => Promise<any>;
   signAllTransactions: (transactions: any[]) => Promise<any[]>;
   signMessage: (message: Uint8Array, encoding?: string) => Promise<{ signature: Uint8Array }>;
-  request: (params: { method: string; params?: any }) => Promise<any>;
-  on: (event: string, callback: any) => void;
-  off: (event: string, callback: any) => void;
+  request: (params: { method: PhantomRequestMethod; params?: any }) => Promise<any>;
+  on: (event: PhantomEvent, callback: (args?: any) => void) => void;
+  off: (event: PhantomEvent, callback: (args?: any) => void) => void;
 };
 
 export const PHANTOM_CONSTANTS = {

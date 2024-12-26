@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { PhantomWallet, PHANTOM_CONSTANTS } from '@/types/phantom';
+import { PhantomWallet, PHANTOM_CONSTANTS, PHANTOM_ERROR_CODES } from '@/types/phantom';
 import { usePhantomInstance } from './usePhantomInstance';
 import { checkBalance } from '@/utils/solana';
 
@@ -50,7 +50,6 @@ export const usePhantomWallet = () => {
     }
   }, [checkWalletBalance, resetWalletState]);
 
-  // Gérer les événements de changement de compte
   useEffect(() => {
     const wallet = getPhantomInstance();
     if (!wallet) return;
@@ -102,10 +101,19 @@ export const usePhantomWallet = () => {
       console.error("❌ Échec de la tentative de connexion:", error);
       resetWalletState();
       
+      let errorMessage = "Impossible de se connecter à Phantom wallet";
+      
+      // Gérer les codes d'erreur spécifiques
+      if (error.code === PHANTOM_ERROR_CODES.USER_REJECTED) {
+        errorMessage = "Connexion refusée par l'utilisateur";
+      } else if (error.code === PHANTOM_ERROR_CODES.UNAUTHORIZED) {
+        errorMessage = "Autorisation refusée";
+      }
+      
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
-          description: error.message || "Impossible de se connecter à Phantom wallet",
+          description: error.message || errorMessage,
           variant: "destructive",
         });
       }
@@ -124,19 +132,27 @@ export const usePhantomWallet = () => {
         updateConnectionState(wallet);
       }
       
-      wallet.on('connect', () => {
+      const handleConnect = () => {
         console.log("🔌 Événement connect détecté");
         updateConnectionState(wallet);
-      });
+      };
       
-      wallet.on('disconnect', () => {
+      const handleDisconnect = () => {
         console.log("🔌 Événement disconnect détecté");
         resetWalletState();
         toast({
           title: "Wallet Déconnecté",
           description: "Déconnexion du Phantom wallet",
         });
-      });
+      };
+      
+      wallet.on('connect', handleConnect);
+      wallet.on('disconnect', handleDisconnect);
+      
+      return () => {
+        wallet.off('connect', handleConnect);
+        wallet.off('disconnect', handleDisconnect);
+      };
     } else {
       console.log("❌ Aucune instance Phantom trouvée");
     }

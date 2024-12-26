@@ -12,7 +12,10 @@ declare global {
 
 export const usePhantomInstance = () => {
   return useCallback((): PhantomWallet | null => {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      console.log("❌ Window n'est pas défini (SSR)");
+      return null;
+    }
 
     // Vérifier d'abord si Phantom est installé via window.phantom
     if ('phantom' in window && window.phantom?.solana?.isPhantom) {
