@@ -12,9 +12,18 @@ export const usePhantomWallet = () => {
 
   const getPhantomInstance = usePhantomInstance();
 
+  const resetWalletState = () => {
+    setConnected(false);
+    setPublicKey(null);
+    console.log("🔄 État du wallet réinitialisé");
+  };
+
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
+      
+      // Réinitialiser l'état avant la tentative de connexion
+      resetWalletState();
       
       // Déconnecter d'abord pour s'assurer d'une connexion propre
       try {
@@ -24,55 +33,59 @@ export const usePhantomWallet = () => {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
-      // Demander la connexion avec les permissions
-      console.log("🔄 Demande de connexion au wallet...");
-      const response = await wallet.connect();
-      
-      if (response.publicKey) {
-        const key = response.publicKey.toString();
-        console.log("✅ Connecté avec succès! Clé publique:", key);
-        setPublicKey(key);
-        setConnected(true);
+      // Vérifier si le wallet est réellement connecté
+      if (!wallet.isConnected) {
+        console.log("🔄 Demande de connexion au wallet...");
+        const response = await wallet.connect();
         
-        // Demander explicitement les permissions de transaction
-        try {
-          console.log("🔄 Demande des permissions de transaction...");
-          await wallet.request({ 
-            method: "connect",
-            params: {
-              permissions: ["sign_transaction", "sign_message"]
-            }
-          });
-          console.log("✅ Permissions de transaction accordées");
+        if (response.publicKey) {
+          const key = response.publicKey.toString();
+          console.log("✅ Connecté avec succès! Clé publique:", key);
+          setPublicKey(key);
+          setConnected(true);
           
-          // Vérifier le solde pour confirmer l'accès
+          // Demander explicitement les permissions de transaction
           try {
-            const balance = await wallet.request({
-              method: 'getBalance',
+            console.log("🔄 Demande des permissions de transaction...");
+            await wallet.request({ 
+              method: "connect",
+              params: {
+                permissions: ["sign_transaction", "sign_message"]
+              }
             });
-            console.log("💰 Solde du wallet:", balance);
-          } catch (balanceError) {
-            console.warn("⚠️ Impossible de vérifier le solde:", balanceError);
+            console.log("✅ Permissions de transaction accordées");
+            
+            // Vérifier le solde pour confirmer l'accès
+            try {
+              const balance = await wallet.request({
+                method: 'getBalance',
+              });
+              console.log("💰 Solde du wallet:", balance);
+            } catch (balanceError) {
+              console.warn("⚠️ Impossible de vérifier le solde:", balanceError);
+            }
+            
+            toast({
+              title: "Wallet Connecté",
+              description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
+            });
+            return true;
+          } catch (permError) {
+            console.error("❌ Erreur lors de la demande des permissions:", permError);
+            resetWalletState();
+            toast({
+              title: "Attention",
+              description: "Veuillez accorder les permissions de transaction pour pouvoir effectuer des achats",
+              variant: "destructive",
+            });
+            return false;
           }
-          
-          toast({
-            title: "Wallet Connecté",
-            description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
-          });
-          return true;
-        } catch (permError) {
-          console.error("❌ Erreur lors de la demande des permissions:", permError);
-          toast({
-            title: "Attention",
-            description: "Veuillez accorder les permissions de transaction pour pouvoir effectuer des achats",
-            variant: "destructive",
-          });
-          return false;
         }
       }
       return false;
     } catch (error) {
       console.error("❌ Échec de la tentative de connexion:", error);
+      resetWalletState();
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
@@ -91,7 +104,8 @@ export const usePhantomWallet = () => {
         console.log("🔄 Initialisation du wallet...");
         setPhantomWallet(wallet);
         
-        if (wallet.publicKey) {
+        // Vérifier l'état de connexion réel
+        if (wallet.publicKey && wallet.isConnected) {
           console.log("🔄 Wallet déjà connecté, clé:", wallet.publicKey.toString());
           setPublicKey(wallet.publicKey.toString());
           setConnected(true);
@@ -110,6 +124,9 @@ export const usePhantomWallet = () => {
             // Forcer une nouvelle connexion pour obtenir les permissions
             await attemptConnection(wallet);
           }
+        } else {
+          console.log("❌ Wallet non connecté lors de l'initialisation");
+          resetWalletState();
         }
         
         wallet.on('connect', () => {
@@ -124,8 +141,7 @@ export const usePhantomWallet = () => {
         
         wallet.on('disconnect', () => {
           console.log("🔌 Événement disconnect détecté");
-          setConnected(false);
-          setPublicKey(null);
+          resetWalletState();
           toast({
             title: "Wallet Déconnecté",
             description: "Déconnexion du Phantom wallet",
