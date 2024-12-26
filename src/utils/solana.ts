@@ -4,14 +4,10 @@ import {
   SystemProgram, 
   Transaction,
   LAMPORTS_PER_SOL,
-  clusterApiUrl
+  clusterApiUrl,
+  VersionedTransaction,
+  TransactionMessage
 } from '@solana/web3.js';
-import { Buffer } from 'buffer';
-
-// Polyfill pour Buffer
-if (typeof window !== 'undefined') {
-  window.Buffer = Buffer;
-}
 
 // Utiliser l'endpoint public de mainnet via clusterApiUrl
 const connection = new Connection(clusterApiUrl('mainnet-beta'), {
@@ -47,23 +43,27 @@ export const createSolanaTransaction = async (
       throw new Error(`Solde insuffisant. Nécessaire: ${requiredSol} SOL, Disponible: ${balanceInSol} SOL`);
     }
 
-    console.log("🔄 Obtention du dernier blockhash...");
+    console.log("🔄 Création de la transaction...");
+    
+    // Obtenir le dernier blockhash
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-    console.log("✅ Blockhash obtenu:", blockhash);
+    
+    // Créer l'instruction de transfert
+    const transferInstruction = SystemProgram.transfer({
+      fromPubkey,
+      toPubkey,
+      lamports: Math.floor(lamports)
+    });
 
-    // Créer et configurer la transaction
-    const transaction = new Transaction();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = fromPubkey;
+    // Créer le message de la transaction
+    const messageV0 = new TransactionMessage({
+      payerKey: fromPubkey,
+      recentBlockhash: blockhash,
+      instructions: [transferInstruction]
+    }).compileToV0Message();
 
-    // Ajouter l'instruction de transfert
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey,
-        toPubkey,
-        lamports: Math.floor(lamports)
-      })
-    );
+    // Créer la transaction versionnée
+    const transaction = new VersionedTransaction(messageV0);
 
     console.log("📝 Transaction créée, en attente de signature...");
     
@@ -91,20 +91,11 @@ export const createSolanaTransaction = async (
 
   } catch (error: any) {
     console.error("❌ Erreur détaillée de la transaction:", error);
-    
-    if (error.message.includes("insufficient funds")) {
-      throw new Error("Solde insuffisant pour effectuer la transaction");
-    } else if (error.message.includes("blockhash")) {
-      throw new Error("Erreur de blockhash - Veuillez réessayer");
-    } else if (error.message.includes("timeout")) {
-      throw new Error("La transaction a expiré - Veuillez réessayer");
-    }
-    
     throw error;
   }
 };
 
-// Nouvelle fonction pour vérifier le solde
+// Fonction pour vérifier le solde
 export const checkBalance = async (walletAddress: string): Promise<number> => {
   try {
     console.log("🔍 Vérification du solde pour l'adresse:", walletAddress);

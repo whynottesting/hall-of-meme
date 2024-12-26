@@ -1,12 +1,14 @@
 export type PhantomWallet = {
   isPhantom?: boolean;
   publicKey: { toString: () => string } | null;
-  connect: () => Promise<{ publicKey: { toString: () => string } }>;
+  connect: (params?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: { toString: () => string } }>;
   disconnect: () => Promise<void>;
-  signAndSendTransaction: (transaction: any) => Promise<{ signature: string }>;
+  signAndSendTransaction: (transaction: any, options?: any) => Promise<{ signature: string }>;
   signTransaction: (transaction: any) => Promise<any>;
+  signAllTransactions: (transactions: any[]) => Promise<any[]>;
   request: (params: { method: string; params?: any }) => Promise<any>;
-  on: (event: string, callback: () => void) => void;
+  on: (event: string, callback: any) => void;
+  off: (event: string, callback: any) => void;
 };
 
 export const PHANTOM_CONSTANTS = {
