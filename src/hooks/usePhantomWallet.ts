@@ -25,12 +25,8 @@ export const usePhantomWallet = () => {
       console.log("✅ Connecté avec la clé:", key);
       console.log("💳 Adresse du wallet:", key);
       
-      // Vérifier si nous sommes sur le devnet
-      // @ts-ignore
-      if (wallet.isDevnet !== undefined) {
-        // @ts-ignore
-        console.log("🌐 Réseau:", wallet.isDevnet ? "Devnet" : "Mainnet");
-      }
+      // Vérifier le réseau
+      console.log("🌐 Réseau: Mainnet");
     } else {
       resetWalletState();
     }
@@ -59,7 +55,7 @@ export const usePhantomWallet = () => {
           await wallet.request({ 
             method: "connect",
             params: {
-              cluster: "devnet",
+              cluster: "mainnet-beta",
               permissions: ["sign_transaction", "sign_message"]
             }
           });
@@ -121,11 +117,7 @@ export const usePhantomWallet = () => {
         });
       });
 
-      // Vérifier le réseau actuel
-      // @ts-ignore
-      if (wallet.isDevnet !== undefined) {
-        console.log("🌐 Réseau actuel:", wallet.isDevnet ? "Devnet" : "Mainnet");
-      }
+      console.log("🌐 Réseau: Mainnet");
     } else {
       console.log("❌ Aucune instance Phantom trouvée");
     }

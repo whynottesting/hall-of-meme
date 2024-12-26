@@ -4,7 +4,6 @@ import {
   SystemProgram, 
   Transaction,
   LAMPORTS_PER_SOL,
-  clusterApiUrl,
 } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 
@@ -13,8 +12,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser l'endpoint public de devnet pour les tests
-const connection = new Connection('https://api.devnet.solana.com', {
+// Utiliser l'endpoint public de mainnet
+const connection = new Connection('https://api.mainnet-beta.solana.com', {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
@@ -29,7 +28,7 @@ export const createSolanaTransaction = async (
       throw new Error("Wallet non connecté");
     }
 
-    console.log("🔄 Démarrage de la transaction...");
+    console.log("🔄 Démarrage de la transaction sur mainnet...");
     console.log("💰 Montant demandé en lamports:", lamports);
     console.log("📍 Adresse du wallet:", provider.publicKey.toString());
     
@@ -46,7 +45,7 @@ export const createSolanaTransaction = async (
     }
 
     console.log("🔄 Obtention du dernier blockhash...");
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     console.log("✅ Blockhash obtenu:", blockhash);
 
     // Créer et configurer la transaction
@@ -84,7 +83,7 @@ export const createSolanaTransaction = async (
       throw new Error("La transaction a échoué lors de la confirmation");
     }
     
-    console.log("🎉 Transaction confirmée!");
+    console.log("🎉 Transaction confirmée sur mainnet!");
     return signature;
 
   } catch (error: any) {
