@@ -51,7 +51,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
         />
         <div className="flex items-center gap-4">
           <div className="text-right font-pixel text-xs whitespace-nowrap">
-            Prix : {actualPrice.toFixed(2)} SOL
+            Price: {actualPrice.toFixed(2)} SOL
             <div className="text-[10px] text-muted-foreground">
               ({width * height} squares = {width * height * 100} pixels)
             </div>
