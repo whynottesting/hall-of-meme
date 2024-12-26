@@ -1,12 +1,12 @@
 import { Buffer } from 'buffer';
-import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
 
 // Polyfill pour Buffer
 if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-const SOLANA_NETWORK = 'https://api.devnet.solana.com';
+const SOLANA_NETWORK = clusterApiUrl('devnet');
 const connection = new Connection(SOLANA_NETWORK);
 
 export const createSolanaTransaction = async (
@@ -21,6 +21,7 @@ export const createSolanaTransaction = async (
 
     console.log("🔄 Démarrage de la transaction...");
     console.log("💰 Montant demandé en lamports:", lamports);
+    console.log("📍 Réseau Solana:", SOLANA_NETWORK);
     
     // Vérifier le solde du wallet
     const walletPubKey = new PublicKey(provider.publicKey.toString());

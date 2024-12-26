@@ -19,14 +19,14 @@ export const usePhantomWallet = () => {
       // Déconnecter d'abord pour s'assurer d'une connexion propre
       try {
         await wallet.disconnect();
+        console.log("🔌 Déconnexion réussie pour une connexion propre");
       } catch (e) {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
       // Demander la connexion avec les permissions
-      const response = await wallet.connect({
-        onlyIfTrusted: false
-      });
+      console.log("🔄 Demande de connexion au wallet...");
+      const response = await wallet.connect();
       
       if (response.publicKey) {
         const key = response.publicKey.toString();
@@ -36,6 +36,7 @@ export const usePhantomWallet = () => {
         
         // Demander explicitement les permissions de transaction
         try {
+          console.log("🔄 Demande des permissions de transaction...");
           await wallet.request({ 
             method: "connect",
             params: {
@@ -43,6 +44,17 @@ export const usePhantomWallet = () => {
             }
           });
           console.log("✅ Permissions de transaction accordées");
+          
+          // Vérifier le solde pour confirmer l'accès
+          try {
+            const balance = await wallet.request({
+              method: 'getBalance',
+            });
+            console.log("💰 Solde du wallet:", balance);
+          } catch (balanceError) {
+            console.warn("⚠️ Impossible de vérifier le solde:", balanceError);
+          }
+          
           toast({
             title: "Wallet Connecté",
             description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
@@ -64,7 +76,7 @@ export const usePhantomWallet = () => {
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
-          description: "Impossible de se connecter à Phantom wallet. Assurez-vous que l'extension est installée et déverrouillée.",
+          description: "Impossible de se connecter à Phantom wallet. Assurez-vous que l'extension est installée, déverrouillée et en mode Devnet.",
           variant: "destructive",
         });
       }
@@ -76,10 +88,11 @@ export const usePhantomWallet = () => {
     const initializeWallet = async () => {
       const wallet = getPhantomInstance();
       if (wallet) {
+        console.log("🔄 Initialisation du wallet...");
         setPhantomWallet(wallet);
         
         if (wallet.publicKey) {
-          console.log("🔄 Wallet déjà connecté");
+          console.log("🔄 Wallet déjà connecté, clé:", wallet.publicKey.toString());
           setPublicKey(wallet.publicKey.toString());
           setConnected(true);
           
