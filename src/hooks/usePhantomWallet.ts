@@ -3,7 +3,7 @@ import { toast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { PhantomWallet, PHANTOM_CONSTANTS } from '@/types/phantom';
 import { usePhantomInstance } from './usePhantomInstance';
-import { Connection, LAMPORTS_PER_SOL, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { checkBalance } from '@/utils/solana';
 
 export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
@@ -12,9 +12,6 @@ export const usePhantomWallet = () => {
   const [balance, setBalance] = useState<number | null>(null);
   const isMobile = useIsMobile();
   const getPhantomInstance = usePhantomInstance();
-
-  // Créer une nouvelle connexion RPC avec un commitment "finalized"
-  const connection = new Connection(clusterApiUrl('mainnet-beta'), 'finalized');
 
   const resetWalletState = useCallback(() => {
     setConnected(false);
@@ -25,14 +22,7 @@ export const usePhantomWallet = () => {
 
   const checkWalletBalance = useCallback(async (walletAddress: string) => {
     try {
-      console.log("🔍 Vérification du solde pour l'adresse:", walletAddress);
-      const pubKey = new PublicKey(walletAddress);
-      
-      // Utiliser getBalance avec le commitment "finalized"
-      const balanceInLamports = await connection.getBalance(pubKey);
-      const balanceInSol = balanceInLamports / LAMPORTS_PER_SOL;
-      
-      console.log("💰 Solde du wallet:", balanceInSol, "SOL");
+      const balanceInSol = await checkBalance(walletAddress);
       setBalance(balanceInSol);
       return balanceInSol;
     } catch (error) {
@@ -40,7 +30,7 @@ export const usePhantomWallet = () => {
       setBalance(null);
       return null;
     }
-  }, [connection]);
+  }, []);
 
   const updateConnectionState = useCallback(async (wallet: PhantomWallet) => {
     try {

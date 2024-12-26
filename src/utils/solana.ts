@@ -4,6 +4,7 @@ import {
   SystemProgram, 
   Transaction,
   LAMPORTS_PER_SOL,
+  clusterApiUrl
 } from '@solana/web3.js';
 import { Buffer } from 'buffer';
 
@@ -12,8 +13,8 @@ if (typeof window !== 'undefined') {
   window.Buffer = Buffer;
 }
 
-// Utiliser l'endpoint public de mainnet
-const connection = new Connection('https://api.mainnet-beta.solana.com', {
+// Utiliser l'endpoint public de mainnet via clusterApiUrl
+const connection = new Connection(clusterApiUrl('mainnet-beta'), {
   commitment: 'confirmed',
   confirmTransactionInitialTimeout: 60000,
 });
@@ -35,7 +36,7 @@ export const createSolanaTransaction = async (
     const fromPubkey = new PublicKey(provider.publicKey.toString());
     const toPubkey = new PublicKey(recipientAddress);
 
-    // Vérifier le solde avant la transaction en utilisant directement l'adresse publique
+    // Vérifier le solde avant la transaction
     console.log("🔍 Vérification du solde...");
     const balance = await connection.getBalance(fromPubkey, 'confirmed');
     const balanceInSol = balance / LAMPORTS_PER_SOL;
@@ -99,6 +100,21 @@ export const createSolanaTransaction = async (
       throw new Error("La transaction a expiré - Veuillez réessayer");
     }
     
+    throw error;
+  }
+};
+
+// Nouvelle fonction pour vérifier le solde
+export const checkBalance = async (walletAddress: string): Promise<number> => {
+  try {
+    console.log("🔍 Vérification du solde pour l'adresse:", walletAddress);
+    const pubKey = new PublicKey(walletAddress);
+    const balance = await connection.getBalance(pubKey, 'confirmed');
+    const balanceInSol = balance / LAMPORTS_PER_SOL;
+    console.log("💰 Solde trouvé:", balanceInSol, "SOL");
+    return balanceInSol;
+  } catch (error) {
+    console.error("❌ Erreur lors de la vérification du solde:", error);
     throw error;
   }
 };
