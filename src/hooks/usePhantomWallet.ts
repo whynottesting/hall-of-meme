@@ -9,7 +9,6 @@ export const usePhantomWallet = () => {
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const isMobile = useIsMobile();
-
   const getPhantomInstance = usePhantomInstance();
 
   const resetWalletState = useCallback(() => {
@@ -18,14 +17,22 @@ export const usePhantomWallet = () => {
     console.log("🔄 État du wallet réinitialisé");
   }, []);
 
+  const updateConnectionState = useCallback((wallet: PhantomWallet) => {
+    if (wallet.publicKey) {
+      const key = wallet.publicKey.toString();
+      setPublicKey(key);
+      setConnected(true);
+      console.log("✅ Connecté avec la clé:", key);
+    } else {
+      resetWalletState();
+    }
+  }, [resetWalletState]);
+
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
-      
-      // Réinitialiser l'état avant la tentative de connexion
       resetWalletState();
       
-      // Déconnecter d'abord pour s'assurer d'une connexion propre
       try {
         await wallet.disconnect();
         console.log("🔌 Déconnexion réussie pour une connexion propre");
@@ -33,53 +40,36 @@ export const usePhantomWallet = () => {
         console.log("Info: Pas de déconnexion nécessaire");
       }
       
-      // Vérifier si le wallet a une clé publique
-      if (!wallet.publicKey) {
-        console.log("🔄 Demande de connexion au wallet...");
-        const response = await wallet.connect();
+      console.log("🔄 Demande de connexion au wallet...");
+      const response = await wallet.connect();
+      
+      if (response.publicKey) {
+        updateConnectionState(wallet);
         
-        if (response.publicKey) {
-          const key = response.publicKey.toString();
-          console.log("✅ Connecté avec succès! Clé publique:", key);
-          setPublicKey(key);
-          setConnected(true);
-          
-          // Demander explicitement les permissions de transaction
-          try {
-            console.log("🔄 Demande des permissions de transaction...");
-            await wallet.request({ 
-              method: "connect",
-              params: {
-                permissions: ["sign_transaction", "sign_message"]
-              }
-            });
-            console.log("✅ Permissions de transaction accordées");
-            
-            // Vérifier le solde pour confirmer l'accès
-            try {
-              const balance = await wallet.request({
-                method: 'getBalance',
-              });
-              console.log("💰 Solde du wallet:", balance);
-            } catch (balanceError) {
-              console.warn("⚠️ Impossible de vérifier le solde:", balanceError);
+        try {
+          console.log("🔄 Demande des permissions de transaction...");
+          await wallet.request({ 
+            method: "connect",
+            params: {
+              permissions: ["sign_transaction", "sign_message"]
             }
-            
-            toast({
-              title: "Wallet Connecté",
-              description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
-            });
-            return true;
-          } catch (permError) {
-            console.error("❌ Erreur lors de la demande des permissions:", permError);
-            resetWalletState();
-            toast({
-              title: "Attention",
-              description: "Veuillez accorder les permissions de transaction pour pouvoir effectuer des achats",
-              variant: "destructive",
-            });
-            return false;
-          }
+          });
+          console.log("✅ Permissions de transaction accordées");
+          
+          toast({
+            title: "Wallet Connecté",
+            description: "Connexion réussie à Phantom wallet",
+          });
+          return true;
+        } catch (permError) {
+          console.error("❌ Erreur lors de la demande des permissions:", permError);
+          resetWalletState();
+          toast({
+            title: "Attention",
+            description: "Veuillez accorder les permissions de transaction",
+            variant: "destructive",
+          });
+          return false;
         }
       }
       return false;
@@ -89,69 +79,36 @@ export const usePhantomWallet = () => {
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
-          description: "Impossible de se connecter à Phantom wallet. Assurez-vous que l'extension est installée, déverrouillée et en mode Devnet.",
+          description: "Impossible de se connecter à Phantom wallet",
           variant: "destructive",
         });
       }
       return false;
     }
-  }, [isMobile, resetWalletState]);
+  }, [isMobile, resetWalletState, updateConnectionState]);
 
   useEffect(() => {
-    const initializeWallet = async () => {
-      const wallet = getPhantomInstance();
-      if (wallet) {
-        console.log("🔄 Initialisation du wallet...");
-        setPhantomWallet(wallet);
-        
-        // Vérifier l'état de connexion réel
-        if (wallet.publicKey) {
-          console.log("🔄 Wallet déjà connecté, clé:", wallet.publicKey.toString());
-          setPublicKey(wallet.publicKey.toString());
-          setConnected(true);
-          
-          // Vérifier/demander les permissions pour la connexion existante
-          try {
-            await wallet.request({ 
-              method: "connect",
-              params: {
-                permissions: ["sign_transaction", "sign_message"]
-              }
-            });
-            console.log("✅ Permissions de transaction vérifiées/accordées");
-          } catch (error) {
-            console.warn("⚠️ Permissions de transaction non accordées:", error);
-            // Forcer une nouvelle connexion pour obtenir les permissions
-            await attemptConnection(wallet);
-          }
-        } else {
-          console.log("❌ Wallet non connecté lors de l'initialisation");
-          resetWalletState();
-        }
-        
-        wallet.on('connect', () => {
-          console.log("🔌 Événement connect détecté");
-          if (wallet.publicKey) {
-            const key = wallet.publicKey.toString();
-            console.log("✅ Connecté avec la clé:", key);
-            setPublicKey(key);
-            setConnected(true);
-          }
+    const wallet = getPhantomInstance();
+    if (wallet) {
+      console.log("🔄 Initialisation du wallet...");
+      setPhantomWallet(wallet);
+      updateConnectionState(wallet);
+      
+      wallet.on('connect', () => {
+        console.log("🔌 Événement connect détecté");
+        updateConnectionState(wallet);
+      });
+      
+      wallet.on('disconnect', () => {
+        console.log("🔌 Événement disconnect détecté");
+        resetWalletState();
+        toast({
+          title: "Wallet Déconnecté",
+          description: "Déconnexion du Phantom wallet",
         });
-        
-        wallet.on('disconnect', () => {
-          console.log("🔌 Événement disconnect détecté");
-          resetWalletState();
-          toast({
-            title: "Wallet Déconnecté",
-            description: "Déconnexion du Phantom wallet",
-          });
-        });
-      }
-    };
-
-    initializeWallet();
-  }, [getPhantomInstance, attemptConnection, resetWalletState]);
+      });
+    }
+  }, [getPhantomInstance, resetWalletState, updateConnectionState]);
 
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
@@ -159,9 +116,6 @@ export const usePhantomWallet = () => {
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
       const currentUrl = window.location.href;
-      console.log("URL actuelle:", currentUrl);
-      
-      // Construction du deep link selon la documentation Phantom
       const encodedUrl = encodeURIComponent(currentUrl);
       const encodedRef = encodeURIComponent(currentUrl);
       const phantomDeepLink = `https://phantom.app/ul/browse/${encodedUrl}?ref=${encodedRef}`;
@@ -172,7 +126,7 @@ export const usePhantomWallet = () => {
     }
 
     if (!phantomWallet) {
-      console.log("⚠️ Phantom non détecté, redirection vers la page de téléchargement");
+      console.log("⚠️ Phantom non détecté");
       toast({
         title: "Phantom Wallet Non Trouvé",
         description: "Veuillez installer Phantom Wallet pour continuer",
