@@ -15,7 +15,15 @@ export const usePhantomWallet = () => {
   const attemptConnection = useCallback(async (wallet: PhantomWallet): Promise<boolean> => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
-      // Request specific permissions when connecting
+      
+      // Déconnecter d'abord pour s'assurer d'une connexion propre
+      try {
+        await wallet.disconnect();
+      } catch (e) {
+        console.log("Info: Pas de déconnexion nécessaire");
+      }
+      
+      // Demander la connexion avec les permissions
       const response = await wallet.connect({
         onlyIfTrusted: false
       });
@@ -26,7 +34,7 @@ export const usePhantomWallet = () => {
         setPublicKey(key);
         setConnected(true);
         
-        // Request transaction permissions explicitly
+        // Demander explicitement les permissions de transaction
         try {
           await wallet.request({ 
             method: "connect",
@@ -39,6 +47,7 @@ export const usePhantomWallet = () => {
             title: "Wallet Connecté",
             description: "Connexion réussie à Phantom wallet avec les permissions de transaction",
           });
+          return true;
         } catch (permError) {
           console.error("❌ Erreur lors de la demande des permissions:", permError);
           toast({
@@ -48,19 +57,19 @@ export const usePhantomWallet = () => {
           });
           return false;
         }
-        return true;
       }
+      return false;
     } catch (error) {
       console.error("❌ Échec de la tentative de connexion:", error);
       if (!isMobile) {
         toast({
           title: "Échec de la Connexion",
-          description: "Impossible de se connecter à Phantom wallet",
+          description: "Impossible de se connecter à Phantom wallet. Assurez-vous que l'extension est installée et déverrouillée.",
           variant: "destructive",
         });
       }
+      return false;
     }
-    return false;
   }, [isMobile]);
 
   useEffect(() => {
@@ -74,7 +83,7 @@ export const usePhantomWallet = () => {
           setPublicKey(wallet.publicKey.toString());
           setConnected(true);
           
-          // Verify/request permissions for existing connection
+          // Vérifier/demander les permissions pour la connexion existante
           try {
             await wallet.request({ 
               method: "connect",
@@ -85,6 +94,8 @@ export const usePhantomWallet = () => {
             console.log("✅ Permissions de transaction vérifiées/accordées");
           } catch (error) {
             console.warn("⚠️ Permissions de transaction non accordées:", error);
+            // Forcer une nouvelle connexion pour obtenir les permissions
+            await attemptConnection(wallet);
           }
         }
         
@@ -111,7 +122,7 @@ export const usePhantomWallet = () => {
     };
 
     initializeWallet();
-  }, [getPhantomInstance]);
+  }, [getPhantomInstance, attemptConnection]);
 
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");

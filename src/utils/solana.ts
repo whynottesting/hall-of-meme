@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { Connection, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 // Polyfill pour Buffer
 if (typeof window !== 'undefined') {
@@ -15,12 +15,18 @@ export const createSolanaTransaction = async (
   lamports: number
 ) => {
   try {
+    if (!provider.publicKey) {
+      throw new Error("Wallet non connecté");
+    }
+
     console.log("🔄 Démarrage de la transaction...");
-    console.log("💰 Montant en lamports:", lamports);
+    console.log("💰 Montant demandé en lamports:", lamports);
     
     // Vérifier le solde du wallet
-    const balance = await connection.getBalance(provider.publicKey);
+    const walletPubKey = new PublicKey(provider.publicKey.toString());
+    const balance = await connection.getBalance(walletPubKey);
     console.log("💳 Solde du wallet (lamports):", balance);
+    console.log("💳 Solde du wallet (SOL):", balance / LAMPORTS_PER_SOL);
     
     // Frais de transaction estimés (0.000005 SOL = 5000 lamports)
     const estimatedFees = 5000;
@@ -28,8 +34,8 @@ export const createSolanaTransaction = async (
     console.log("💰 Solde requis avec frais (lamports):", requiredBalance);
     
     if (balance < requiredBalance) {
-      const solNeeded = (requiredBalance / 1000000000).toFixed(4);
-      const currentBalance = (balance / 1000000000).toFixed(4);
+      const solNeeded = (requiredBalance / LAMPORTS_PER_SOL).toFixed(4);
+      const currentBalance = (balance / LAMPORTS_PER_SOL).toFixed(4);
       throw new Error(`Solde insuffisant. Vous avez ${currentBalance} SOL mais avez besoin d'au moins ${solNeeded} SOL (incluant les frais de transaction)`);
     }
 
@@ -37,33 +43,36 @@ export const createSolanaTransaction = async (
     const transaction = new Transaction();
     
     // Obtenir un blockhash récent
-    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     console.log("🔑 Blockhash obtenu:", blockhash);
     
     transaction.recentBlockhash = blockhash;
-    transaction.feePayer = provider.publicKey;
+    transaction.feePayer = walletPubKey;
 
     // Ajouter l'instruction de transfert
     transaction.add(
       SystemProgram.transfer({
-        fromPubkey: provider.publicKey,
+        fromPubkey: walletPubKey,
         toPubkey: new PublicKey(recipientAddress),
-        lamports: Math.floor(lamports) // S'assurer que le montant est un entier
+        lamports: Math.floor(lamports)
       })
     );
 
     console.log("📝 Transaction créée, en attente de signature...");
     
     // Signer et envoyer la transaction
-    const { signature } = await provider.signAndSendTransaction(transaction);
-    console.log("✍️ Transaction signée, signature:", signature);
+    const signed = await provider.signTransaction(transaction);
+    console.log("✍️ Transaction signée");
+    
+    const signature = await connection.sendRawTransaction(signed.serialize());
+    console.log("🚀 Transaction envoyée, signature:", signature);
     
     // Attendre la confirmation
     const confirmation = await connection.confirmTransaction({
       signature,
       blockhash,
-      lastValidBlockHeight: await connection.getBlockHeight()
-    }, 'confirmed');
+      lastValidBlockHeight
+    });
     
     console.log("🎉 Confirmation reçue:", confirmation);
     
@@ -75,7 +84,6 @@ export const createSolanaTransaction = async (
   } catch (error: any) {
     console.error("❌ Erreur détaillée de la transaction:", error);
     
-    // Améliorer les messages d'erreur
     if (error.message.includes("insufficient funds")) {
       throw new Error("Solde insuffisant pour effectuer la transaction");
     } else if (error.message.includes("blockhash")) {
