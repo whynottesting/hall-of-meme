@@ -72,12 +72,12 @@ export const useSpaces = () => {
       }
 
       // Calculate price in SOL (each cell is 10x10 pixels, and each pixel costs 0.01 SOL)
-      const price = selectedSpace.width * selectedSpace.height * 100 * 0.01;
-      console.log("💰 Prix en SOL:", price);
+      const pixelCount = selectedSpace.width * selectedSpace.height * 100; // 100 = 10x10 pixels per cell
+      const priceInSol = pixelCount * 0.01;
+      console.log("💰 Prix en SOL:", priceInSol);
       
       // Convert SOL to lamports (1 SOL = 1,000,000,000 lamports)
-      // Use Math.floor to ensure we get a whole number
-      const lamports = Math.floor(price * 1000000000);
+      const lamports = Math.floor(priceInSol * 1000000000);
       console.log("💰 Prix en lamports:", lamports);
 
       try {
@@ -98,7 +98,7 @@ export const useSpaces = () => {
             height: selectedSpace.height,
             link: selectedSpace.link,
             imageUrl,
-            price
+            price: priceInSol
           }),
         });
 
@@ -115,7 +115,7 @@ export const useSpaces = () => {
 
       } catch (error: any) {
         console.error('Erreur transaction:', error);
-        throw error; // Propager l'erreur pour qu'elle soit gérée par le catch parent
+        throw error;
       }
 
     } catch (error: any) {

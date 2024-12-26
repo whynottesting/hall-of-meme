@@ -22,13 +22,15 @@ export const createSolanaTransaction = async (
     const balance = await connection.getBalance(provider.publicKey);
     console.log("💳 Solde du wallet (lamports):", balance);
     
-    // Ajouter une marge pour les frais de transaction (0.000005 SOL = 5000 lamports)
-    const requiredBalance = lamports + 5000;
+    // Frais de transaction estimés (0.000005 SOL = 5000 lamports)
+    const estimatedFees = 5000;
+    const requiredBalance = lamports + estimatedFees;
     console.log("💰 Solde requis avec frais (lamports):", requiredBalance);
     
     if (balance < requiredBalance) {
       const solNeeded = (requiredBalance / 1000000000).toFixed(4);
-      throw new Error(`Solde insuffisant. Vous avez besoin d'au moins ${solNeeded} SOL`);
+      const currentBalance = (balance / 1000000000).toFixed(4);
+      throw new Error(`Solde insuffisant. Vous avez ${currentBalance} SOL mais avez besoin d'au moins ${solNeeded} SOL (incluant les frais de transaction)`);
     }
 
     // Créer une nouvelle transaction
@@ -56,7 +58,7 @@ export const createSolanaTransaction = async (
     const { signature } = await provider.signAndSendTransaction(transaction);
     console.log("✍️ Transaction signée, signature:", signature);
     
-    // Attendre la confirmation avec un timeout plus long
+    // Attendre la confirmation
     const confirmation = await connection.confirmTransaction({
       signature,
       blockhash,
@@ -82,6 +84,6 @@ export const createSolanaTransaction = async (
       throw new Error("La transaction a expiré - Veuillez réessayer");
     }
     
-    throw new Error(error.message || "Erreur lors de la transaction Solana");
+    throw error;
   }
 };
