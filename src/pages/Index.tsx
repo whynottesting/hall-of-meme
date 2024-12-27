@@ -5,9 +5,19 @@ import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
+import { useSpaces } from '@/hooks/useSpaces';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
+  const { 
+    selectedSpace,
+    ownedSpaces,
+    isProcessing,
+    handleSpaceSelection,
+    handleInputChange,
+    handleImageUpload,
+    processSpacePurchase
+  } = useSpaces();
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,6 +45,13 @@ const Index = () => {
               <X className="h-4 w-4" />
             </button>
             <SpaceForm
+              x={selectedSpace.x}
+              y={selectedSpace.y}
+              width={selectedSpace.width}
+              height={selectedSpace.height}
+              link={selectedSpace.link}
+              onInputChange={handleInputChange}
+              onImageUpload={handleImageUpload}
               onSubmit={() => {
                 toast({
                   title: "Wallet Non Connecté",
@@ -42,7 +59,8 @@ const Index = () => {
                   variant: "destructive",
                 });
               }}
-              isProcessing={false}
+              price={selectedSpace.width * selectedSpace.height * 100 * 0.01}
+              isProcessing={isProcessing}
             />
           </div>
         )}
@@ -52,7 +70,11 @@ const Index = () => {
         </div>
 
         <div className="mt-4">
-          <PixelGrid />
+          <PixelGrid
+            selectedCells={selectedSpace}
+            ownedCells={ownedSpaces}
+            onCellClick={handleSpaceSelection}
+          />
         </div>
 
         <footer className="text-center text-xs text-gray-500 mt-8 mb-4">
