@@ -29,10 +29,14 @@ export const usePhantomWallet = () => {
     }
 
     try {
-      // Vérifie si le wallet est déverrouillé en essayant d'accéder à la clé publique
-      const response = await wallet.connect({ onlyIfTrusted: true });
-      const key = response.publicKey.toString();
-      console.log("✅ Wallet déverrouillé, clé publique:", key);
+      if (!wallet.publicKey) {
+        console.log("❌ Wallet non déverrouillé");
+        resetWalletState();
+        return false;
+      }
+
+      const key = wallet.publicKey.toString();
+      console.log("✅ Clé publique trouvée:", key);
       
       const balanceInSol = await checkBalance(key);
       console.log("💰 Solde vérifié:", balanceInSol, "SOL");
@@ -44,7 +48,7 @@ export const usePhantomWallet = () => {
       
       return true;
     } catch (error) {
-      console.log("❌ Wallet verrouillé ou non autorisé");
+      console.log("❌ Erreur lors de la vérification du wallet:", error);
       resetWalletState();
       return false;
     }
@@ -71,8 +75,13 @@ export const usePhantomWallet = () => {
       wallet.on('accountChanged', handleAccountChanged);
       wallet.on('disconnect', handleDisconnect);
       
-      // Vérification initiale
-      checkWalletConnection(wallet);
+      // Vérification initiale avec onlyIfTrusted pour ne pas afficher de popup
+      wallet.connect({ onlyIfTrusted: true })
+        .then(() => checkWalletConnection(wallet))
+        .catch(() => {
+          console.log("❌ Wallet non autorisé ou verrouillé");
+          resetWalletState();
+        });
     }
     
     return () => {
@@ -109,8 +118,8 @@ export const usePhantomWallet = () => {
     }
 
     try {
-      // Force une nouvelle connexion qui demandera le déverrouillage si nécessaire
       console.log("🔑 Demande de connexion au wallet...");
+      // Demande explicite de connexion qui déclenchera le déverrouillage si nécessaire
       await wallet.connect();
       
       const isConnected = await checkWalletConnection(wallet);
