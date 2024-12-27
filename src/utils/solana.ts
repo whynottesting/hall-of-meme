@@ -7,16 +7,36 @@ import {
   TransactionMessage
 } from '@solana/web3.js';
 
-// Utiliser Helius comme RPC provider (plus fiable que l'endpoint public)
-const RPC_ENDPOINT = "https://rpc.helius.xyz/?api-key=1ff71cd7-0e0f-4d4c-8c35-7794b790d3c5";
+// Liste de RPC endpoints de backup
+const RPC_ENDPOINTS = [
+  "https://api.mainnet-beta.solana.com",
+  "https://solana-api.projectserum.com",
+  "https://rpc.ankr.com/solana"
+];
 
-const connection = new Connection(RPC_ENDPOINT, {
-  commitment: 'confirmed',
-  confirmTransactionInitialTimeout: 60000,
-  httpHeaders: {
-    'Content-Type': 'application/json',
-  }
-});
+// Fonction pour créer une nouvelle connexion
+const createConnection = (endpoint: string) => {
+  return new Connection(endpoint, {
+    commitment: 'confirmed',
+    confirmTransactionInitialTimeout: 60000,
+    httpHeaders: {
+      'Content-Type': 'application/json',
+    }
+  });
+};
+
+// Initialiser avec le premier endpoint
+let currentEndpointIndex = 0;
+let connection = createConnection(RPC_ENDPOINTS[currentEndpointIndex]);
+
+// Fonction pour basculer vers le prochain endpoint disponible
+const switchToNextEndpoint = () => {
+  currentEndpointIndex = (currentEndpointIndex + 1) % RPC_ENDPOINTS.length;
+  const newEndpoint = RPC_ENDPOINTS[currentEndpointIndex];
+  console.log(`🔄 Basculement vers le RPC endpoint: ${newEndpoint}`);
+  connection = createConnection(newEndpoint);
+  return connection;
+};
 
 export const createSolanaTransaction = async (
   provider: any,
@@ -102,8 +122,14 @@ const getBalanceWithRetry = async (pubKey: PublicKey, attempts = 3): Promise<num
       const balance = await connection.getBalance(pubKey, 'confirmed');
       return balance;
     } catch (error) {
-      if (i === attempts - 1) throw error;
-      console.log(`Tentative de vérification du solde échouée, nouvel essai... (${i + 1}/${attempts})`);
+      console.error(`❌ Erreur lors de la tentative ${i + 1}/${attempts}:`, error);
+      if (i === attempts - 1) {
+        if (currentEndpointIndex < RPC_ENDPOINTS.length - 1) {
+          switchToNextEndpoint();
+          return getBalanceWithRetry(pubKey, attempts); // Réessayer avec le nouveau endpoint
+        }
+        throw error;
+      }
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
@@ -116,8 +142,14 @@ const getLatestBlockhashWithRetry = async (attempts = 3) => {
     try {
       return await connection.getLatestBlockhash('confirmed');
     } catch (error) {
-      if (i === attempts - 1) throw error;
-      console.log(`Tentative d'obtention du blockhash échouée, nouvel essai... (${i + 1}/${attempts})`);
+      console.error(`❌ Erreur lors de la tentative ${i + 1}/${attempts}:`, error);
+      if (i === attempts - 1) {
+        if (currentEndpointIndex < RPC_ENDPOINTS.length - 1) {
+          switchToNextEndpoint();
+          return getLatestBlockhashWithRetry(attempts); // Réessayer avec le nouveau endpoint
+        }
+        throw error;
+      }
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
@@ -139,8 +171,14 @@ const confirmTransactionWithRetry = async (
         lastValidBlockHeight
       });
     } catch (error) {
-      if (i === attempts - 1) throw error;
-      console.log(`Tentative de confirmation échouée, nouvel essai... (${i + 1}/${attempts})`);
+      console.error(`❌ Erreur lors de la tentative ${i + 1}/${attempts}:`, error);
+      if (i === attempts - 1) {
+        if (currentEndpointIndex < RPC_ENDPOINTS.length - 1) {
+          switchToNextEndpoint();
+          return confirmTransactionWithRetry(signature, blockhash, lastValidBlockHeight, attempts);
+        }
+        throw error;
+      }
       await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
     }
   }
