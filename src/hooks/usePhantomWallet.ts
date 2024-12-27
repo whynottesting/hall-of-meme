@@ -28,16 +28,12 @@ export const usePhantomWallet = () => {
       return false;
     }
 
-    if (!wallet.publicKey) {
-      console.log("❌ Pas de clé publique trouvée");
-      resetWalletState();
-      return false;
-    }
-
-    const key = wallet.publicKey.toString();
-    console.log("✅ Clé publique trouvée:", key);
-    
     try {
+      // Vérifie si le wallet est déverrouillé en essayant d'accéder à la clé publique
+      const response = await wallet.connect({ onlyIfTrusted: true });
+      const key = response.publicKey.toString();
+      console.log("✅ Wallet déverrouillé, clé publique:", key);
+      
       const balanceInSol = await checkBalance(key);
       console.log("💰 Solde vérifié:", balanceInSol, "SOL");
       
@@ -48,7 +44,7 @@ export const usePhantomWallet = () => {
       
       return true;
     } catch (error) {
-      console.error("❌ Erreur lors de la vérification du solde:", error);
+      console.log("❌ Wallet verrouillé ou non autorisé");
       resetWalletState();
       return false;
     }
@@ -90,7 +86,6 @@ export const usePhantomWallet = () => {
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
     
-    // Gestion spéciale pour mobile
     if (isMobile && !phantomWallet) {
       console.log("📱 Redirection vers Phantom mobile");
       const currentUrl = window.location.href;
@@ -114,11 +109,9 @@ export const usePhantomWallet = () => {
     }
 
     try {
-      // Forcer une nouvelle connexion
-      if (!wallet.publicKey) {
-        console.log("🔑 Demande de connexion au wallet...");
-        await wallet.connect();
-      }
+      // Force une nouvelle connexion qui demandera le déverrouillage si nécessaire
+      console.log("🔑 Demande de connexion au wallet...");
+      await wallet.connect();
       
       const isConnected = await checkWalletConnection(wallet);
       
