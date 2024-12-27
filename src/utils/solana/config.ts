@@ -10,3 +10,9 @@ export const RPC_CONFIG = {
   INITIAL_BACKOFF: 1000,
   DEFAULT_TIMEOUT: 120000,
 } as const;
+
+export const TRANSACTION_CONFIG = {
+  MAX_RETRIES: 3,
+  CONFIRMATION_TIMEOUT: 120000,
+  PREFLIGHT_COMMITMENT: 'confirmed' as const,
+} as const;
