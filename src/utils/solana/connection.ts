@@ -1,4 +1,4 @@
-import { Connection, ConnectionConfig } from '@solana/web3.js';
+import { Connection, ConnectionConfig, Commitment } from '@solana/web3.js';
 import { RPC_CONFIG } from './config';
 
 export class SolanaConnection {
@@ -8,7 +8,7 @@ export class SolanaConnection {
 
   private constructor() {
     const config: ConnectionConfig = {
-      commitment: 'confirmed',
+      commitment: 'confirmed' as Commitment,
       confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
     };
@@ -32,7 +32,7 @@ export class SolanaConnection {
     console.log(`🔄 Switching to RPC endpoint: ${newEndpoint}`);
     
     const config: ConnectionConfig = {
-      commitment: 'confirmed',
+      commitment: 'confirmed' as Commitment,
       confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
     };

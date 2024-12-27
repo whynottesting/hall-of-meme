@@ -1,4 +1,4 @@
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { RPC_CONFIG } from './config';
 import { toast } from "@/hooks/use-toast";
@@ -11,7 +11,9 @@ export const checkBalance = async (walletAddress: string): Promise<number> => {
     try {
       console.log(`🔍 Checking balance (attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES})`);
       const connection = solanaConnection.getConnection();
-      const balance = await connection.getBalance(pubKey);
+      
+      // Explicitly type the connection and use getBalance with proper types
+      const balance = await (connection as Connection).getBalance(pubKey, 'confirmed');
       const balanceInSol = balance / LAMPORTS_PER_SOL;
       console.log("💰 Balance found:", balanceInSol, "SOL");
       return balanceInSol;
@@ -24,7 +26,7 @@ export const checkBalance = async (walletAddress: string): Promise<number> => {
           description: "Impossible de vérifier le solde. Réessayez plus tard.",
           variant: "destructive",
         });
-        throw new Error(`Unable to check balance after ${RPC_CONFIG.MAX_RETRIES} attempts`);
+        throw new Error(`Unable to check balance after ${RPC_CONFIG.MAX_RETRIES} attempts: ${error.message}`);
       }
       
       await solanaConnection.switchToNextEndpoint();
