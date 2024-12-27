@@ -12,8 +12,7 @@ export const checkBalance = async (walletAddress: string): Promise<number> => {
       console.log(`🔍 Checking balance (attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES})`);
       const connection = solanaConnection.getConnection();
       
-      // Explicitly type the connection and use getBalance with proper types
-      const balance = await (connection as Connection).getBalance(pubKey, 'confirmed');
+      const balance = await connection.getBalance(pubKey, 'confirmed');
       const balanceInSol = balance / LAMPORTS_PER_SOL;
       console.log("💰 Balance found:", balanceInSol, "SOL");
       return balanceInSol;

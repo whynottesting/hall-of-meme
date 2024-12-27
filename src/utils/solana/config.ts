@@ -14,5 +14,5 @@ export const RPC_CONFIG = {
 export const TRANSACTION_CONFIG = {
   MAX_RETRIES: 3,
   CONFIRMATION_TIMEOUT: 120000,
-  PREFLIGHT_COMMITMENT: 'confirmed' as const,
+  PREFLIGHT_COMMITMENT: 'confirmed',
 } as const;
