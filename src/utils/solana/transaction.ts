@@ -14,17 +14,21 @@ export const createSolanaTransaction = async (
       throw new Error("Wallet non connecté");
     }
 
+    // Convert string public key to Solana PublicKey object
+    const fromPubkey = new PublicKey(wallet.publicKey.toString());
+    const toPubkey = new PublicKey(recipientAddress);
+
     const transaction = new Transaction().add(
       SystemProgram.transfer({
-        fromPubkey: wallet.publicKey,
-        toPubkey: new PublicKey(recipientAddress),
+        fromPubkey,
+        toPubkey,
         lamports,
       })
     );
 
     const { blockhash } = await connection.getLatestBlockhash();
     transaction.recentBlockhash = blockhash;
-    transaction.feePayer = wallet.publicKey;
+    transaction.feePayer = fromPubkey;
 
     const { signature } = await wallet.signAndSendTransaction(transaction);
     await connection.confirmTransaction(signature);

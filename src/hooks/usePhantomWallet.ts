@@ -9,6 +9,7 @@ export const usePhantomWallet = () => {
   const [connected, setConnected] = useState(false);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const isMobile = useIsMobile();
   const getPhantomInstance = usePhantomInstance();
 
@@ -17,6 +18,7 @@ export const usePhantomWallet = () => {
       setConnected(false);
       setPublicKey(null);
       setBalance(null);
+      setPhantomWallet(null);
       return;
     }
 
@@ -26,6 +28,7 @@ export const usePhantomWallet = () => {
     setPublicKey(key);
     setBalance(balanceInSol);
     setConnected(true);
+    setPhantomWallet(wallet);
   }, []);
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export const usePhantomWallet = () => {
       updateWalletState(provider);
     });
 
-    // Vérification initiale
+    // Initial check
     updateWalletState(provider);
 
     return () => {
@@ -94,5 +97,5 @@ export const usePhantomWallet = () => {
     }
   }, [getPhantomInstance, isMobile, updateWalletState]);
 
-  return { connected, handleConnectWallet, publicKey, balance };
+  return { connected, handleConnectWallet, publicKey, balance, phantomWallet };
 };
