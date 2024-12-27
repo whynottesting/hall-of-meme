@@ -1,40 +1,16 @@
 export type PhantomWallet = {
   isPhantom?: boolean;
-  publicKey: { toString: () => string } | null;
-  connect: (params?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: { toString: () => string } }>;
+  connect: (params?: { onlyIfTrusted?: boolean }) => Promise<{ publicKey: string }>;
   disconnect: () => Promise<void>;
   signAndSendTransaction: (transaction: any, options?: any) => Promise<{ signature: string }>;
   signTransaction: (transaction: any) => Promise<any>;
-  signAllTransactions: (transactions: any[]) => Promise<any[]>;
-  signMessage: (message: Uint8Array, encoding?: string) => Promise<{ signature: Uint8Array }>;
-  request: (params: { method: PhantomRequestMethod; params?: any }) => Promise<any>;
-  on: (event: PhantomEvent, callback: (args?: any) => void) => void;
-  off: (event: PhantomEvent, callback: (args?: any) => void) => void;
+  signMessage: (message: Uint8Array) => Promise<{ signature: Uint8Array; publicKey: string }>;
+  on: (event: string, callback: () => void) => void;
+  off: (event: string, callback: () => void) => void;
+  publicKey: { toString: () => string } | null;
 };
 
 export const PHANTOM_CONSTANTS = {
   MOBILE_LINK: "https://phantom.app/ul/browse/",
-  DOWNLOAD_LINK: "https://phantom.app/",
-  CHECK_INTERVAL: 1000,
-} as const;
-
-export type PhantomEvent = 'connect' | 'disconnect' | 'accountChanged';
-
-export type PhantomRequestMethod = 
-  | 'connect'
-  | 'disconnect'
-  | 'signTransaction'
-  | 'signAllTransactions'
-  | 'signMessage'
-  | 'signAndSendTransaction';
-
-export const PHANTOM_ERROR_CODES = {
-  DISCONNECTED: 4900,
-  UNAUTHORIZED: 4100,
-  USER_REJECTED: 4001,
-  INVALID_INPUT: -32000,
-  RESOURCE_NOT_AVAILABLE: -32002,
-  TRANSACTION_REJECTED: -32003,
-  METHOD_NOT_FOUND: -32601,
-  INTERNAL_ERROR: -32603,
+  DOWNLOAD_LINK: "https://phantom.app/download",
 } as const;
