@@ -15,6 +15,7 @@ export const usePhantomWallet = () => {
 
   const resetWalletState = useCallback(() => {
     setConnected(false);
+    setPhantomWallet(null);
     setPublicKey(null);
     setBalance(null);
     console.log("🔄 État du wallet réinitialisé");
@@ -28,26 +29,25 @@ export const usePhantomWallet = () => {
       return balanceInSol;
     } catch (error) {
       console.error("❌ Erreur lors de la vérification du solde:", error);
-      // Ne pas mettre le solde à null en cas d'erreur pour éviter un flash UI
-      // setBalance(null);
       toast({
         title: "Erreur de Solde",
         description: "Impossible de récupérer le solde du wallet. Réessayez plus tard.",
         variant: "destructive",
       });
-      return balance; // Retourner le dernier solde connu
+      return null;
     }
-  }, [balance]);
+  }, []);
 
   const updateConnectionState = useCallback(async (wallet: PhantomWallet) => {
     try {
-      if (wallet.publicKey) {
+      if (wallet?.publicKey) {
         const key = wallet.publicKey.toString();
         setPublicKey(key);
         setConnected(true);
         console.log("✅ Connecté avec la clé:", key);
         await checkWalletBalance(key);
       } else {
+        console.log("❌ Pas de clé publique disponible");
         resetWalletState();
       }
     } catch (error) {
@@ -58,7 +58,12 @@ export const usePhantomWallet = () => {
 
   useEffect(() => {
     const wallet = getPhantomInstance();
-    if (!wallet) return;
+    
+    if (!wallet) {
+      console.log("❌ Aucune instance Phantom trouvée lors de l'initialisation");
+      resetWalletState();
+      return;
+    }
 
     const handleAccountChanged = (publicKey: any) => {
       console.log("👤 Changement de compte détecté");
@@ -69,9 +74,30 @@ export const usePhantomWallet = () => {
       }
     };
 
+    const handleDisconnect = () => {
+      console.log("🔌 Déconnexion détectée");
+      resetWalletState();
+      toast({
+        title: "Wallet Déconnecté",
+        description: "Déconnexion du Phantom wallet",
+      });
+    };
+
     wallet.on('accountChanged', handleAccountChanged);
+    wallet.on('disconnect', handleDisconnect);
+
+    // Vérifier l'état initial de la connexion
+    if (wallet.publicKey) {
+      console.log("🔍 Wallet déjà connecté, mise à jour de l'état...");
+      updateConnectionState(wallet);
+    } else {
+      console.log("❌ Wallet non connecté initialement");
+      resetWalletState();
+    }
+    
     return () => {
       wallet.off('accountChanged', handleAccountChanged);
+      wallet.off('disconnect', handleDisconnect);
     };
   }, [getPhantomInstance, updateConnectionState, resetWalletState]);
 
@@ -79,21 +105,23 @@ export const usePhantomWallet = () => {
     try {
       console.log("🔄 Tentative de connexion au wallet...");
       
-      // Déconnecter d'abord pour assurer une connexion propre
-      try {
-        await wallet.disconnect();
-        console.log("🔌 Déconnexion réussie pour une connexion propre");
-      } catch (e) {
-        console.log("Info: Pas de déconnexion nécessaire");
+      if (!wallet) {
+        console.error("❌ Pas d'instance wallet disponible");
+        return false;
       }
-      
-      // Demander la connexion avec onlyIfTrusted à false pour forcer l'approbation
+
+      // Vérifier si déjà connecté
+      if (wallet.publicKey) {
+        console.log("✅ Wallet déjà connecté");
+        await updateConnectionState(wallet);
+        return true;
+      }
+
+      // Demander la connexion
       const response = await wallet.connect({ onlyIfTrusted: false });
       
-      if (response.publicKey) {
+      if (response?.publicKey) {
         console.log("🎯 Clé publique obtenue:", response.publicKey.toString());
-        
-        // Mettre à jour l'état de connexion
         await updateConnectionState(wallet);
         
         toast({
@@ -102,6 +130,9 @@ export const usePhantomWallet = () => {
         });
         return true;
       }
+
+      console.log("❌ Pas de clé publique après tentative de connexion");
+      resetWalletState();
       return false;
     } catch (error: any) {
       console.error("❌ Échec de la tentative de connexion:", error);
@@ -126,43 +157,6 @@ export const usePhantomWallet = () => {
     }
   }, [isMobile, resetWalletState, updateConnectionState]);
 
-  useEffect(() => {
-    const wallet = getPhantomInstance();
-    if (wallet) {
-      console.log("🔄 Initialisation du wallet...");
-      setPhantomWallet(wallet);
-      
-      if (wallet.publicKey) {
-        console.log("🔍 Wallet déjà connecté, mise à jour de l'état...");
-        updateConnectionState(wallet);
-      }
-      
-      const handleConnect = () => {
-        console.log("🔌 Événement connect détecté");
-        updateConnectionState(wallet);
-      };
-      
-      const handleDisconnect = () => {
-        console.log("🔌 Événement disconnect détecté");
-        resetWalletState();
-        toast({
-          title: "Wallet Déconnecté",
-          description: "Déconnexion du Phantom wallet",
-        });
-      };
-      
-      wallet.on('connect', handleConnect);
-      wallet.on('disconnect', handleDisconnect);
-      
-      return () => {
-        wallet.off('connect', handleConnect);
-        wallet.off('disconnect', handleDisconnect);
-      };
-    } else {
-      console.log("❌ Aucune instance Phantom trouvée");
-    }
-  }, [getPhantomInstance, resetWalletState, updateConnectionState]);
-
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
     
@@ -177,7 +171,8 @@ export const usePhantomWallet = () => {
       return;
     }
 
-    if (!phantomWallet) {
+    const wallet = getPhantomInstance();
+    if (!wallet) {
       console.log("⚠️ Phantom non détecté");
       toast({
         title: "Phantom Wallet Non Trouvé",
@@ -188,8 +183,9 @@ export const usePhantomWallet = () => {
       return;
     }
 
-    await attemptConnection(phantomWallet);
-  }, [isMobile, phantomWallet, attemptConnection]);
+    setPhantomWallet(wallet);
+    await attemptConnection(wallet);
+  }, [isMobile, phantomWallet, attemptConnection, getPhantomInstance]);
 
   return { connected, phantomWallet, handleConnectWallet, publicKey, balance };
 };
