@@ -6,51 +6,41 @@ import {
   TransactionMessage
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
+import { RPC_CONFIG, TRANSACTION_CONFIG } from './config';
+import { toast } from "@/hooks/use-toast";
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
-
-async function getLatestBlockhash(connection: any, retries = MAX_RETRIES) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      return await connection.getLatestBlockhash('confirmed');
-    } catch (error) {
-      console.error(`❌ Blockhash error attempt ${attempt}/${retries}:`, error);
-      if (attempt === retries) throw error;
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
-    }
+const getLatestBlockhash = async (connection: any) => {
+  try {
+    return await connection.getLatestBlockhash('confirmed');
+  } catch (error) {
+    console.error('❌ Error getting blockhash:', error);
+    throw error;
   }
-  throw new Error("Could not get blockhash");
-}
+};
 
-async function confirmTransaction(
+const confirmTransaction = async (
   connection: any,
   signature: string,
   blockhash: string,
-  lastValidBlockHeight: number,
-  retries = MAX_RETRIES
-) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const confirmation = await connection.confirmTransaction({
-        signature,
-        blockhash,
-        lastValidBlockHeight
-      });
-      
-      if (confirmation.value.err) {
-        throw new Error("Transaction failed during confirmation");
-      }
-      
-      return confirmation;
-    } catch (error) {
-      console.error(`❌ Confirmation error attempt ${attempt}/${retries}:`, error);
-      if (attempt === retries) throw error;
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+  lastValidBlockHeight: number
+) => {
+  try {
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight
+    });
+    
+    if (confirmation.value.err) {
+      throw new Error("Transaction failed during confirmation");
     }
+    
+    return confirmation;
+  } catch (error) {
+    console.error('❌ Error confirming transaction:', error);
+    throw error;
   }
-  throw new Error("Could not confirm transaction");
-}
+};
 
 export const createSolanaTransaction = async (
   provider: any,
@@ -75,7 +65,7 @@ export const createSolanaTransaction = async (
     let success = false;
     let lastError;
     
-    for (let attempt = 1; attempt <= MAX_RETRIES && !success; attempt++) {
+    for (let attempt = 1; attempt <= TRANSACTION_CONFIG.MAX_RETRIES && !success; attempt++) {
       try {
         // Check balance
         const balance = await connection.getBalance(fromPubkey);
@@ -106,7 +96,7 @@ export const createSolanaTransaction = async (
         console.log("✍️ Transaction signed, sending...");
         const signature = await connection.sendRawTransaction(signed.serialize(), {
           skipPreflight: false,
-          preflightCommitment: 'confirmed',
+          preflightCommitment: TRANSACTION_CONFIG.PREFLIGHT_COMMITMENT,
           maxRetries: 5
         });
         
@@ -118,18 +108,24 @@ export const createSolanaTransaction = async (
         return signature;
         
       } catch (error: any) {
-        console.error(`❌ Error on attempt ${attempt}/${MAX_RETRIES}:`, error);
+        console.error(`❌ Error on attempt ${attempt}/${TRANSACTION_CONFIG.MAX_RETRIES}:`, error);
         lastError = error;
         
-        if (attempt < MAX_RETRIES) {
+        if (attempt < TRANSACTION_CONFIG.MAX_RETRIES) {
           console.log("🔄 Switching to another endpoint...");
           connection = await solanaConnection.switchToNextEndpoint();
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+          await new Promise(resolve => setTimeout(resolve, RPC_CONFIG.INITIAL_BACKOFF * attempt));
         }
       }
     }
     
-    throw lastError || new Error("Transaction failed after multiple attempts");
+    const errorMessage = lastError?.message || "Transaction failed after multiple attempts";
+    toast({
+      title: "Erreur de transaction",
+      description: errorMessage,
+      variant: "destructive",
+    });
+    throw new Error(errorMessage);
     
   } catch (error: any) {
     console.error("❌ Fatal transaction error:", error);

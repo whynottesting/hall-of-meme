@@ -1,30 +1,34 @@
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+import { RPC_CONFIG } from './config';
+import { toast } from "@/hooks/use-toast";
 
 export const checkBalance = async (walletAddress: string): Promise<number> => {
   const solanaConnection = SolanaConnection.getInstance();
   const pubKey = new PublicKey(walletAddress);
   
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+  for (let attempt = 1; attempt <= RPC_CONFIG.MAX_RETRIES; attempt++) {
     try {
-      console.log(`🔍 Checking balance (attempt ${attempt}/${MAX_RETRIES})`);
+      console.log(`🔍 Checking balance (attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES})`);
       const connection = solanaConnection.getConnection();
-      const balance = await connection.getBalance(pubKey, 'confirmed');
+      const balance = await connection.getBalance(pubKey);
       const balanceInSol = balance / LAMPORTS_PER_SOL;
       console.log("💰 Balance found:", balanceInSol, "SOL");
       return balanceInSol;
-    } catch (error) {
-      console.error(`❌ Error on attempt ${attempt}/${MAX_RETRIES}:`, error);
+    } catch (error: any) {
+      console.error(`❌ Error on attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES}:`, error);
       
-      if (attempt === MAX_RETRIES) {
-        throw new Error(`Unable to check balance after ${MAX_RETRIES} attempts`);
+      if (attempt === RPC_CONFIG.MAX_RETRIES) {
+        toast({
+          title: "Erreur de connexion",
+          description: "Impossible de vérifier le solde. Réessayez plus tard.",
+          variant: "destructive",
+        });
+        throw new Error(`Unable to check balance after ${RPC_CONFIG.MAX_RETRIES} attempts`);
       }
       
       await solanaConnection.switchToNextEndpoint();
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+      await new Promise(resolve => setTimeout(resolve, RPC_CONFIG.INITIAL_BACKOFF * attempt));
     }
   }
   
