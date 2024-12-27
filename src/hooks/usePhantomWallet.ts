@@ -10,6 +10,7 @@ export const usePhantomWallet = () => {
   const [phantomWallet, setPhantomWallet] = useState<PhantomWallet | null>(null);
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const isMobile = useIsMobile();
   const getPhantomInstance = usePhantomInstance();
 
@@ -55,6 +56,8 @@ export const usePhantomWallet = () => {
   }, [resetWalletState]);
 
   useEffect(() => {
+    if (isInitialized) return;
+    
     const wallet = getPhantomInstance();
     
     const handleAccountChanged = async () => {
@@ -81,7 +84,12 @@ export const usePhantomWallet = () => {
         .catch(() => {
           console.log("❌ Wallet non autorisé ou verrouillé");
           resetWalletState();
+        })
+        .finally(() => {
+          setIsInitialized(true);
         });
+    } else {
+      setIsInitialized(true);
     }
     
     return () => {
@@ -90,7 +98,7 @@ export const usePhantomWallet = () => {
         wallet.off('disconnect', handleDisconnect);
       }
     };
-  }, [getPhantomInstance, checkWalletConnection, resetWalletState]);
+  }, [getPhantomInstance, checkWalletConnection, resetWalletState, isInitialized]);
 
   const handleConnectWallet = useCallback(async () => {
     console.log("🔄 Démarrage du processus de connexion...");
@@ -119,7 +127,6 @@ export const usePhantomWallet = () => {
 
     try {
       console.log("🔑 Demande de connexion au wallet...");
-      // Demande explicite de connexion qui déclenchera le déverrouillage si nécessaire
       await wallet.connect();
       
       const isConnected = await checkWalletConnection(wallet);
