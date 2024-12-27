@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
@@ -8,12 +8,12 @@ import { createSolanaTransaction } from '@/utils/solana';
 const OWNER_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
 
 export const useSpaces = () => {
-  const { selectedSpace, handleSpaceSelection, handleInputChange } = useSpaceSelection();
+  const spaceSelection = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const loadOwnedSpaces = async () => {
+  const loadOwnedSpaces = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('spaces')
@@ -39,13 +39,13 @@ export const useSpaces = () => {
         variant: "destructive",
       });
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadOwnedSpaces();
-  }, []);
+  }, [loadOwnedSpaces]);
 
-  const checkSpaceOverlap = (newSpace: any) => {
+  const checkSpaceOverlap = useCallback((newSpace: any) => {
     return ownedSpaces.some(existingSpace => {
       const xOverlap = (
         (newSpace.x >= existingSpace.x && newSpace.x < existingSpace.x + existingSpace.width) ||
@@ -59,29 +59,25 @@ export const useSpaces = () => {
 
       return xOverlap && yOverlap;
     });
-  };
+  }, [ownedSpaces]);
 
-  const processSpacePurchase = async (phantomWallet: any, walletAddress: string, imageUrl: string) => {
+  const processSpacePurchase = useCallback(async (phantomWallet: any, walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
     try {
-      if (!selectedSpace) throw new Error("Aucun espace sélectionné");
+      if (!spaceSelection.selectedSpace) throw new Error("Aucun espace sélectionné");
 
-      // Check for overlap before proceeding
-      if (checkSpaceOverlap(selectedSpace)) {
+      if (checkSpaceOverlap(spaceSelection.selectedSpace)) {
         throw new Error("Cet espace chevauche un espace déjà réservé");
       }
 
-      // Calculate price in SOL (each cell is 10x10 pixels, and each pixel costs 0.01 SOL)
-      const pixelCount = selectedSpace.width * selectedSpace.height * 100; // 100 = 10x10 pixels per cell
+      const pixelCount = spaceSelection.selectedSpace.width * spaceSelection.selectedSpace.height * 100;
       const priceInSol = pixelCount * 0.01;
       console.log("💰 Prix en SOL:", priceInSol);
       
-      // Convert SOL to lamports (1 SOL = 1,000,000,000 lamports)
       const lamports = Math.floor(priceInSol * 1000000000);
       console.log("💰 Prix en lamports:", lamports);
 
       try {
-        // Process the Solana transaction
         const signature = await createSolanaTransaction(phantomWallet, OWNER_WALLET, lamports);
         console.log("✅ Transaction réussie, signature:", signature);
 
@@ -92,11 +88,11 @@ export const useSpaces = () => {
           },
           body: JSON.stringify({
             walletAddress,
-            x: selectedSpace.x,
-            y: selectedSpace.y,
-            width: selectedSpace.width,
-            height: selectedSpace.height,
-            link: selectedSpace.link,
+            x: spaceSelection.selectedSpace.x,
+            y: spaceSelection.selectedSpace.y,
+            width: spaceSelection.selectedSpace.width,
+            height: spaceSelection.selectedSpace.height,
+            link: spaceSelection.selectedSpace.link,
             imageUrl,
             price: priceInSol
           }),
@@ -128,14 +124,14 @@ export const useSpaces = () => {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [spaceSelection.selectedSpace, checkSpaceOverlap, loadOwnedSpaces]);
 
   return {
-    selectedSpace,
+    selectedSpace: spaceSelection.selectedSpace,
     ownedSpaces,
     isProcessing,
-    handleSpaceSelection,
-    handleInputChange,
+    handleSpaceSelection: spaceSelection.handleSpaceSelection,
+    handleInputChange: spaceSelection.handleInputChange,
     handleImageUpload,
     processSpacePurchase,
     loadOwnedSpaces

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 interface Space {
   x: number;
@@ -17,20 +17,20 @@ export const useSpaceSelection = () => {
     link: '',
   });
 
-  const handleSpaceSelection = (x: number, y: number) => {
+  const handleSpaceSelection = useCallback((x: number, y: number) => {
     setSelectedSpace(prev => ({
       ...prev,
       x,
       y,
     }));
-  };
+  }, []);
 
-  const handleInputChange = (field: string, value: number | string) => {
+  const handleInputChange = useCallback((field: string, value: number | string) => {
     setSelectedSpace(prev => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
   return {
     selectedSpace,
