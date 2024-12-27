@@ -1,3 +1,3 @@
-export { createSolanaTransaction } from './transaction-utils';
-export { checkBalance } from './balance-utils';
-export { SolanaRPCConnection, RPC_ENDPOINTS } from './rpc-config';
+export { createSolanaTransaction } from './transaction';
+export { checkBalance } from './balance';
+export { SolanaConnection } from './connection';
