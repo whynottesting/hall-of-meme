@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
-import { createSolanaTransaction } from '@/utils/solana';
 
 const OWNER_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
 
@@ -70,49 +69,12 @@ export const useSpaces = () => {
         throw new Error("Cet espace chevauche un espace déjà réservé");
       }
 
-      const pixelCount = spaceSelection.selectedSpace.width * spaceSelection.selectedSpace.height * 100;
-      const priceInSol = pixelCount * 0.01;
-      console.log("💰 Prix en SOL:", priceInSol);
-      
-      const lamports = Math.floor(priceInSol * 1000000000);
-      console.log("💰 Prix en lamports:", lamports);
-
-      try {
-        const signature = await createSolanaTransaction(phantomWallet, OWNER_WALLET, lamports);
-        console.log("✅ Transaction réussie, signature:", signature);
-
-        const response = await fetch('/api/process-space-purchase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            walletAddress,
-            x: spaceSelection.selectedSpace.x,
-            y: spaceSelection.selectedSpace.y,
-            width: spaceSelection.selectedSpace.width,
-            height: spaceSelection.selectedSpace.height,
-            link: spaceSelection.selectedSpace.link,
-            imageUrl,
-            price: priceInSol
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || "Erreur lors de la réservation de l'espace");
-        }
-
-        await loadOwnedSpaces();
-        toast({
-          title: "Succès",
-          description: "Votre espace a été réservé avec succès!",
-        });
-
-      } catch (error: any) {
-        console.error('Erreur transaction:', error);
-        throw error;
-      }
+      // Temporarily disabled Solana transaction
+      toast({
+        title: "Information",
+        description: "La fonctionnalité de paiement est temporairement désactivée",
+        variant: "default",
+      });
 
     } catch (error: any) {
       console.error('Error processing space purchase:', error);
@@ -124,7 +86,7 @@ export const useSpaces = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [spaceSelection.selectedSpace, checkSpaceOverlap, loadOwnedSpaces]);
+  }, [spaceSelection.selectedSpace, checkSpaceOverlap]);
 
   return {
     selectedSpace: spaceSelection.selectedSpace,
