@@ -3,16 +3,10 @@ import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
-import { toast } from "@/hooks/use-toast";
-import { X } from "lucide-react";
 import { useSpaces } from '@/hooks/useSpaces';
-import { usePhantomWallet } from '@/hooks/usePhantomWallet';
-import { useSpacePurchase } from '@/hooks/useSpacePurchase';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
-  const { walletAddress, isConnected, provider } = usePhantomWallet();
-  const { purchaseSpace, isProcessing } = useSpacePurchase();
   const { 
     selectedSpace,
     ownedSpaces,
@@ -23,42 +17,7 @@ const Index = () => {
 
   const handlePurchase = async () => {
     console.log('🚀 Starting purchase process...');
-    console.log('👛 Wallet status:', { 
-      isConnected, 
-      walletAddress,
-      hasProvider: !!provider
-    });
-
-    if (!isConnected || !provider) {
-      console.log('❌ Purchase failed: Wallet not connected or provider missing');
-      toast({
-        title: "Wallet Not Connected",
-        description: "Please connect your wallet first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('✅ Wallet connected, proceeding with purchase...');
     console.log('📦 Selected space data:', selectedSpace);
-
-    const success = await purchaseSpace(provider, {
-      x: selectedSpace.x,
-      y: selectedSpace.y,
-      width: selectedSpace.width,
-      height: selectedSpace.height,
-      walletAddress: walletAddress!,
-      imageUrl: selectedSpace.image_url || '',
-      link: selectedSpace.link,
-      price: selectedSpace.width * selectedSpace.height * 100 * 0.01
-    });
-
-    if (success) {
-      console.log('✅ Purchase completed successfully');
-      setShowForm(false);
-    } else {
-      console.log('❌ Purchase failed');
-    }
   };
 
   return (
@@ -96,7 +55,7 @@ const Index = () => {
               onImageUpload={handleImageUpload}
               onSubmit={handlePurchase}
               price={selectedSpace.width * selectedSpace.height * 100 * 0.01}
-              isProcessing={isProcessing}
+              isProcessing={false}
             />
           </div>
         )}

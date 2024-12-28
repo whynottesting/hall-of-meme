@@ -8,7 +8,6 @@ export const useSpaces = () => {
   const spaceSelection = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
   const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const loadOwnedSpaces = useCallback(async () => {
     try {
@@ -61,7 +60,6 @@ export const useSpaces = () => {
   return {
     selectedSpace: spaceSelection.selectedSpace,
     ownedSpaces,
-    isProcessing,
     handleSpaceSelection: spaceSelection.handleSpaceSelection,
     handleInputChange: spaceSelection.handleInputChange,
     handleImageUpload,
