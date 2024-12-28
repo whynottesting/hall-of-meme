@@ -29,6 +29,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   price,
   isProcessing
 }) => {
+  // Calcul correct : width * height cellules * (10 * 10) pixels par cellule * 0.01 SOL par pixel
   const actualPrice = width * height * 100 * 0.01;
 
   return (

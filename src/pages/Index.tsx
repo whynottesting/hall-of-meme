@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PixelGrid from '@/components/PixelGrid';
 import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
@@ -15,7 +15,8 @@ const Index = () => {
     isProcessing,
     handleSpaceSelection,
     handleInputChange,
-    handleImageUpload
+    handleImageUpload,
+    processSpacePurchase
   } = useSpaces();
 
   return (
@@ -53,8 +54,8 @@ const Index = () => {
               onImageUpload={handleImageUpload}
               onSubmit={() => {
                 toast({
-                  title: "Coming Soon",
-                  description: "This feature is not yet available",
+                  title: "Wallet Non Connecté",
+                  description: "Veuillez d'abord connecter votre Phantom wallet",
                   variant: "destructive",
                 });
               }}
