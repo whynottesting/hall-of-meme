@@ -6,9 +6,11 @@ import Header from '@/components/Header';
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 import { useSpaces } from '@/hooks/useSpaces';
+import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
+  const { walletAddress, connectWallet } = usePhantomWallet();
   const { 
     selectedSpace,
     ownedSpaces,
@@ -52,12 +54,28 @@ const Index = () => {
               link={selectedSpace.link}
               onInputChange={handleInputChange}
               onImageUpload={handleImageUpload}
-              onSubmit={() => {
-                toast({
-                  title: "Wallet Non Connecté",
-                  description: "Veuillez d'abord connecter votre Phantom wallet",
-                  variant: "destructive",
-                });
+              onSubmit={async () => {
+                if (!walletAddress) {
+                  toast({
+                    title: "Wallet Non Connecté",
+                    description: "Veuillez d'abord connecter votre Phantom wallet",
+                    variant: "destructive",
+                  });
+                  await connectWallet();
+                  return;
+                }
+                
+                const provider = window.solana;
+                if (!provider) {
+                  toast({
+                    title: "Erreur",
+                    description: "Phantom wallet n'est pas installé",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                await processSpacePurchase(provider, walletAddress);
               }}
               price={selectedSpace.width * selectedSpace.height * 100 * 0.01}
               isProcessing={isProcessing}
