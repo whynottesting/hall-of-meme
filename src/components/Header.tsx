@@ -2,26 +2,9 @@ import React from 'react';
 import InfoDialog from "@/components/InfoDialog";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { usePhantomWallet } from "@/hooks/usePhantomWallet";
 
 const Header = () => {
   const isMobile = useIsMobile();
-  const { walletAddress, connectWallet, disconnectWallet } = usePhantomWallet();
-
-  const handleWalletAction = () => {
-    if (walletAddress) {
-      disconnectWallet();
-    } else {
-      connectWallet();
-    }
-  };
-
-  const getButtonText = () => {
-    if (!walletAddress) {
-      return isMobile ? "Connect" : "Connect Phantom Wallet";
-    }
-    return `Connected: ${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`;
-  };
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-background z-50 border-b border-primary">
@@ -34,10 +17,10 @@ const Header = () => {
           <div className="flex-1 flex justify-end">
             <Button 
               variant="outline"
-              onClick={handleWalletAction}
+              onClick={() => console.log('Connect wallet clicked')}
               className="font-retro"
             >
-              {getButtonText()}
+              {isMobile ? "Connect" : "Connect Phantom Wallet"}
             </Button>
           </div>
         </header>
