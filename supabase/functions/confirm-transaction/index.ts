@@ -18,20 +18,20 @@ serve(async (req) => {
 
     const connection = new Connection('https://api.mainnet-beta.solana.com')
     
-    // Attendre la confirmation de la transaction
+    // Wait for transaction confirmation
     const confirmation = await connection.confirmTransaction(signature)
     
     if (confirmation.value.err) {
       throw new Error('Transaction failed')
     }
 
-    // Créer le client Supabase
+    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Enregistrer l'espace dans la base de données
+    // Save space in database
     const { error: spaceError } = await supabase
       .from('spaces')
       .insert({
@@ -50,7 +50,7 @@ serve(async (req) => {
       throw spaceError
     }
 
-    // Enregistrer la transaction
+    // Save transaction
     const { error: transactionError } = await supabase
       .from('transaction_history')
       .insert({

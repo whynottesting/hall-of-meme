@@ -16,13 +16,13 @@ serve(async (req) => {
     const { x, y, width, height, walletAddress, imageUrl, link, price } = await req.json()
     console.log('Processing space purchase request:', { x, y, width, height, walletAddress, price })
 
-    // Créer le client Supabase
+    // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Vérifier si l'espace est déjà occupé
+    // Check if space is already occupied
     const { data: existingSpaces, error: checkError } = await supabase
       .from('spaces')
       .select('*')
@@ -41,7 +41,7 @@ serve(async (req) => {
       )
     }
 
-    // Créer la transaction Solana
+    // Create Solana transaction
     const connection = new Connection('https://api.mainnet-beta.solana.com')
     const buyerPubkey = new PublicKey(walletAddress)
     const receiverPubkey = new PublicKey('DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs')
@@ -50,16 +50,16 @@ serve(async (req) => {
       SystemProgram.transfer({
         fromPubkey: buyerPubkey,
         toPubkey: receiverPubkey,
-        lamports: price * 1000000000, // Convertir SOL en lamports
+        lamports: price * 1000000000, // Convert SOL to lamports
       })
     )
 
-    // Obtenir le dernier blockhash
+    // Get latest blockhash
     const { blockhash } = await connection.getLatestBlockhash()
     transaction.recentBlockhash = blockhash
     transaction.feePayer = buyerPubkey
 
-    // Sérialiser la transaction
+    // Serialize transaction
     const serializedTransaction = transaction.serialize({
       requireAllSignatures: false,
       verifySignatures: false

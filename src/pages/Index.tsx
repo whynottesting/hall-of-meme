@@ -6,17 +6,46 @@ import Header from '@/components/Header';
 import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 import { useSpaces } from '@/hooks/useSpaces';
+import { usePhantomWallet } from '@/hooks/usePhantomWallet';
+import { useSpacePurchase } from '@/hooks/useSpacePurchase';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
+  const { walletAddress, isConnected } = usePhantomWallet();
+  const { purchaseSpace, isProcessing } = useSpacePurchase();
   const { 
     selectedSpace,
     ownedSpaces,
-    isProcessing,
     handleSpaceSelection,
     handleInputChange,
     handleImageUpload
   } = useSpaces();
+
+  const handlePurchase = async () => {
+    if (!isConnected) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const success = await purchaseSpace({
+      x: selectedSpace.x,
+      y: selectedSpace.y,
+      width: selectedSpace.width,
+      height: selectedSpace.height,
+      walletAddress: walletAddress!,
+      imageUrl: selectedSpace.imageUrl || '',
+      link: selectedSpace.link,
+      price: selectedSpace.width * selectedSpace.height * 100 * 0.01
+    });
+
+    if (success) {
+      setShowForm(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,13 +80,7 @@ const Index = () => {
               link={selectedSpace.link}
               onInputChange={handleInputChange}
               onImageUpload={handleImageUpload}
-              onSubmit={() => {
-                toast({
-                  title: "Wallet Non Connecté",
-                  description: "Veuillez d'abord connecter votre wallet",
-                  variant: "destructive",
-                });
-              }}
+              onSubmit={handlePurchase}
               price={selectedSpace.width * selectedSpace.height * 100 * 0.01}
               isProcessing={isProcessing}
             />
