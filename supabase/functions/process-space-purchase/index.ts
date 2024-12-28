@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { Connection, PublicKey, SystemProgram, Transaction } from 'https://esm.sh/@solana/web3.js@1.87.6'
 
-const RECIPIENT_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -36,36 +34,34 @@ serve(async (req) => {
       )
     }
 
-    // Créer la transaction Solana
-    const connection = new Connection('https://api.mainnet-beta.solana.com');
-    const fromPubkey = new PublicKey(walletAddress);
-    const toPubkey = new PublicKey(RECIPIENT_WALLET);
-    
-    const transaction = new Transaction().add(
-      SystemProgram.transfer({
-        fromPubkey,
-        toPubkey,
-        lamports: Math.floor(price * 1000000000), // Convert SOL to lamports
+    // Insérer le nouvel espace
+    const { error: insertError } = await supabase
+      .from('spaces')
+      .insert({
+        wallet_address: walletAddress,
+        x,
+        y,
+        width,
+        height,
+        url: link,
+        image_url: imageUrl,
+        price
       })
-    );
 
-    const { blockhash } = await connection.getLatestBlockhash();
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = fromPubkey;
+    if (insertError) throw insertError;
 
-    // Sérialiser la transaction
-    const serializedTransaction = transaction.serialize({
-      requireAllSignatures: false,
-      verifySignatures: false
-    });
+    // Enregistrer la transaction
+    const { error: transactionError } = await supabase
+      .from('transaction_history')
+      .insert({
+        wallet_address: walletAddress,
+        status: 'completed'
+      })
 
-    const transactionBase64 = serializedTransaction.toString('base64');
+    if (transactionError) throw transactionError;
 
     return new Response(
-      JSON.stringify({ 
-        transaction: transactionBase64,
-        message: 'Transaction created successfully'
-      }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

@@ -5,6 +5,8 @@ import { checkBalance } from '@/utils/solana/balance';
 
 declare const window: PhantomWindow;
 
+const PHANTOM_DOWNLOAD_URL = 'https://phantom.app/download';
+
 export const usePhantomWallet = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -34,7 +36,7 @@ export const usePhantomWallet = () => {
       const provider = getProvider();
       
       if (!provider) {
-        window.open('https://phantom.app/download', '_blank');
+        window.open(PHANTOM_DOWNLOAD_URL, '_blank');
         return;
       }
 

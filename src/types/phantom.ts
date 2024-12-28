@@ -5,6 +5,5 @@ export interface PhantomWindow extends Window {
     on(event: string, callback: () => void): void;
     publicKey?: { toString(): string };
     isPhantom?: boolean;
-    signTransaction(transaction: any): Promise<any>;
   };
 }
