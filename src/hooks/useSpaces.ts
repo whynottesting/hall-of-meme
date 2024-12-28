@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
-import { createSolanaTransaction } from '@/utils/solana/transaction-utils';
 
 const OWNER_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
 
@@ -70,56 +69,12 @@ export const useSpaces = () => {
         throw new Error("Cet espace chevauche un espace déjà réservé");
       }
 
-      const price = spaceSelection.selectedSpace.width * 
-                   spaceSelection.selectedSpace.height * 
-                   100 * 0.01;
-      const lamports = Math.floor(price * 1000000000); // Convert SOL to lamports
-
-      console.log("💰 Prix calculé:", price, "SOL");
-      console.log("💸 Montant en lamports:", lamports);
-
-      // Créer et envoyer la transaction
-      const signature = await createSolanaTransaction(
-        phantomWallet,
-        OWNER_WALLET,
-        lamports
-      );
-
-      console.log("✅ Transaction réussie! Signature:", signature);
-
-      // Enregistrer l'espace dans la base de données
-      const { error: insertError } = await supabase
-        .from('spaces')
-        .insert({
-          wallet_address: walletAddress,
-          x: spaceSelection.selectedSpace.x,
-          y: spaceSelection.selectedSpace.y,
-          width: spaceSelection.selectedSpace.width,
-          height: spaceSelection.selectedSpace.height,
-          url: spaceSelection.selectedSpace.link,
-          image_url: imageUrl,
-          price: price
-        });
-
-      if (insertError) throw insertError;
-
-      // Enregistrer la transaction
-      const { error: transactionError } = await supabase
-        .from('transaction_history')
-        .insert({
-          wallet_address: walletAddress,
-          status: 'completed'
-        });
-
-      if (transactionError) throw transactionError;
-
+      // Temporarily disabled Solana transaction
       toast({
-        title: "Succès!",
-        description: "Votre espace a été réservé avec succès",
+        title: "Information",
+        description: "La fonctionnalité de paiement est temporairement désactivée",
+        variant: "default",
       });
-
-      // Recharger les espaces
-      await loadOwnedSpaces();
 
     } catch (error: any) {
       console.error('Error processing space purchase:', error);
@@ -131,7 +86,7 @@ export const useSpaces = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [spaceSelection.selectedSpace, checkSpaceOverlap, loadOwnedSpaces]);
+  }, [spaceSelection.selectedSpace, checkSpaceOverlap]);
 
   return {
     selectedSpace: spaceSelection.selectedSpace,

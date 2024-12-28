@@ -1,3 +1,2 @@
-export * from './transaction-utils';
-export * from './balance';
-export * from './connection';
+export { checkBalance } from './balance';
+export { SolanaConnection } from './connection';
