@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from "@/hooks/use-toast";
+import { checkBalance } from "@/utils/solana/balance";
 
 interface PhantomWindow extends Window {
   solana?: {
@@ -21,7 +22,19 @@ export const usePhantomWallet = () => {
   const checkIfWalletIsConnected = async () => {
     try {
       if (window.solana?.publicKey) {
-        setWalletAddress(window.solana.publicKey.toString());
+        const address = window.solana.publicKey.toString();
+        setWalletAddress(address);
+        
+        // Log wallet address
+        console.log("🦊 Wallet connecté:", address);
+        
+        // Get and log wallet balance
+        try {
+          const balance = await checkBalance(address);
+          console.log("💰 Solde du wallet:", balance, "SOL");
+        } catch (error) {
+          console.error("❌ Erreur lors de la récupération du solde:", error);
+        }
       }
     } catch (error) {
       console.error("Error checking if wallet is connected:", error);
@@ -63,6 +76,15 @@ export const usePhantomWallet = () => {
       const address = response.publicKey.toString();
       setWalletAddress(address);
       
+      // Log wallet address and balance after successful connection
+      console.log("🦊 Wallet connecté:", address);
+      try {
+        const balance = await checkBalance(address);
+        console.log("💰 Solde du wallet:", balance, "SOL");
+      } catch (error) {
+        console.error("❌ Erreur lors de la récupération du solde:", error);
+      }
+      
       toast({
         title: "Wallet Connected",
         description: "Successfully connected to Phantom Wallet",
@@ -84,6 +106,7 @@ export const usePhantomWallet = () => {
       if (window.solana) {
         await window.solana.disconnect();
         setWalletAddress(null);
+        console.log("🔌 Wallet déconnecté");
         toast({
           title: "Wallet Disconnected",
           description: "Successfully disconnected from Phantom Wallet",
