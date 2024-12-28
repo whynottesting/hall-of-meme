@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { Connection, PublicKey, Transaction, SystemProgram } from 'https://esm.sh/@solana/web3.js@1.73.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,7 @@ serve(async (req) => {
 
   try {
     const { x, y, width, height, walletAddress, imageUrl, link, price } = await req.json()
+    console.log('Processing space purchase request:', { x, y, width, height, walletAddress, price })
 
     // Créer le client Supabase
     const supabase = createClient(
@@ -26,46 +28,52 @@ serve(async (req) => {
       .select('*')
       .or(`and(x.gte.${x},x.lt.${x + width}),and(y.gte.${y},y.lt.${y + height})`)
 
-    if (checkError) throw checkError;
+    if (checkError) {
+      console.error('Error checking space availability:', checkError)
+      throw checkError
+    }
+
     if (existingSpaces && existingSpaces.length > 0) {
+      console.log('Space already occupied:', existingSpaces)
       return new Response(
-        JSON.stringify({ error: 'Cet espace est déjà occupé' }),
+        JSON.stringify({ error: 'This space is already occupied' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    // Insérer le nouvel espace
-    const { error: insertError } = await supabase
-      .from('spaces')
-      .insert({
-        wallet_address: walletAddress,
-        x,
-        y,
-        width,
-        height,
-        url: link,
-        image_url: imageUrl,
-        price
+    // Créer la transaction Solana
+    const connection = new Connection('https://api.mainnet-beta.solana.com')
+    const buyerPubkey = new PublicKey(walletAddress)
+    const receiverPubkey = new PublicKey('DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs')
+    
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: buyerPubkey,
+        toPubkey: receiverPubkey,
+        lamports: price * 1000000000, // Convertir SOL en lamports
       })
+    )
 
-    if (insertError) throw insertError;
+    // Obtenir le dernier blockhash
+    const { blockhash } = await connection.getLatestBlockhash()
+    transaction.recentBlockhash = blockhash
+    transaction.feePayer = buyerPubkey
 
-    // Enregistrer la transaction
-    const { error: transactionError } = await supabase
-      .from('transaction_history')
-      .insert({
-        wallet_address: walletAddress,
-        status: 'completed'
-      })
-
-    if (transactionError) throw transactionError;
+    // Sérialiser la transaction
+    const serializedTransaction = transaction.serialize({
+      requireAllSignatures: false,
+      verifySignatures: false
+    }).toString('base64')
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ 
+        transaction: serializedTransaction,
+        message: 'Transaction created successfully'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Erreur:', error)
+    console.error('Error processing space purchase:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

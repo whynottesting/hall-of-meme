@@ -4,8 +4,6 @@ import { toast } from "@/hooks/use-toast";
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
 
-const OWNER_WALLET = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
-
 export const useSpaces = () => {
   const spaceSelection = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
@@ -63,18 +61,71 @@ export const useSpaces = () => {
   const processSpacePurchase = useCallback(async (phantomWallet: any, walletAddress: string, imageUrl: string) => {
     setIsProcessing(true);
     try {
-      if (!spaceSelection.selectedSpace) throw new Error("Aucun espace sélectionné");
+      if (!spaceSelection.selectedSpace) {
+        throw new Error("Aucun espace sélectionné");
+      }
 
       if (checkSpaceOverlap(spaceSelection.selectedSpace)) {
         throw new Error("Cet espace chevauche un espace déjà réservé");
       }
 
-      // Temporarily disabled Solana transaction
+      // Créer la transaction
+      const { data: transactionData, error: transactionError } = await supabase.functions.invoke(
+        'process-space-purchase',
+        {
+          body: {
+            x: spaceSelection.selectedSpace.x,
+            y: spaceSelection.selectedSpace.y,
+            width: spaceSelection.selectedSpace.width,
+            height: spaceSelection.selectedSpace.height,
+            walletAddress,
+            imageUrl,
+            link: spaceSelection.selectedSpace.link,
+            price: spaceSelection.selectedSpace.width * spaceSelection.selectedSpace.height * 100 * 0.01
+          }
+        }
+      );
+
+      if (transactionError) throw transactionError;
+
+      // Signer la transaction avec Phantom
+      const transaction = transactionData.transaction;
+      const signedTransaction = await phantomWallet.signTransaction(
+        Buffer.from(transaction, 'base64')
+      );
+
+      // Envoyer la transaction signée
+      const signature = await phantomWallet.send(signedTransaction);
+
+      // Confirmer la transaction
+      const { data: confirmationData, error: confirmationError } = await supabase.functions.invoke(
+        'confirm-transaction',
+        {
+          body: {
+            signature,
+            spaceData: {
+              walletAddress,
+              x: spaceSelection.selectedSpace.x,
+              y: spaceSelection.selectedSpace.y,
+              width: spaceSelection.selectedSpace.width,
+              height: spaceSelection.selectedSpace.height,
+              imageUrl,
+              link: spaceSelection.selectedSpace.link,
+              price: spaceSelection.selectedSpace.width * spaceSelection.selectedSpace.height * 100 * 0.01
+            }
+          }
+        }
+      );
+
+      if (confirmationError) throw confirmationError;
+
       toast({
-        title: "Information",
-        description: "La fonctionnalité de paiement est temporairement désactivée",
-        variant: "default",
+        title: "Succès",
+        description: "Espace acheté avec succès!",
       });
+
+      // Recharger les espaces
+      await loadOwnedSpaces();
 
     } catch (error: any) {
       console.error('Error processing space purchase:', error);
@@ -86,7 +137,7 @@ export const useSpaces = () => {
     } finally {
       setIsProcessing(false);
     }
-  }, [spaceSelection.selectedSpace, checkSpaceOverlap]);
+  }, [spaceSelection.selectedSpace, checkSpaceOverlap, loadOwnedSpaces]);
 
   return {
     selectedSpace: spaceSelection.selectedSpace,
