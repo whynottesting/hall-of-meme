@@ -22,7 +22,15 @@ const Index = () => {
   } = useSpaces();
 
   const handlePurchase = async () => {
+    console.log('🚀 Starting purchase process...');
+    console.log('👛 Wallet status:', { 
+      isConnected, 
+      walletAddress,
+      hasProvider: !!provider
+    });
+
     if (!isConnected || !provider) {
+      console.log('❌ Purchase failed: Wallet not connected or provider missing');
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet first",
@@ -30,6 +38,9 @@ const Index = () => {
       });
       return;
     }
+
+    console.log('✅ Wallet connected, proceeding with purchase...');
+    console.log('📦 Selected space data:', selectedSpace);
 
     const success = await purchaseSpace(provider, {
       x: selectedSpace.x,
@@ -43,7 +54,10 @@ const Index = () => {
     });
 
     if (success) {
+      console.log('✅ Purchase completed successfully');
       setShowForm(false);
+    } else {
+      console.log('❌ Purchase failed');
     }
   };
 
