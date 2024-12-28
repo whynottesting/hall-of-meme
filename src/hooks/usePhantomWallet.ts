@@ -7,6 +7,7 @@ type PhantomWindow = Window & {
     disconnect: () => Promise<void>;
     on: (event: string, callback: () => void) => void;
     publicKey: { toString: () => string } | null;
+    isPhantom?: boolean;
   };
 };
 
