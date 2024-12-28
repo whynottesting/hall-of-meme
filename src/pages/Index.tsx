@@ -41,9 +41,9 @@ const Index = () => {
             <button 
               onClick={() => setShowForm(false)}
               className="absolute right-2 top-2 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
-              aria-label="Fermer le formulaire"
+              aria-label="Close form"
             >
-              <X className="h-4 w-4" />
+              ✕
             </button>
             <SpaceForm
               x={selectedSpace.x}
