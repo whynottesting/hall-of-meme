@@ -3,9 +3,26 @@ import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import InfoDialog from "@/components/InfoDialog";
 import { Wallet } from "lucide-react";
+import { usePhantomWallet } from "@/hooks/usePhantomWallet";
 
 const Header = () => {
   const isMobile = useIsMobile();
+  const { publicKey, connect, disconnect, isConnected } = usePhantomWallet();
+
+  const handleWalletAction = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
+
+  const getButtonText = () => {
+    if (!isConnected) {
+      return isMobile ? "Connect" : "Connect Phantom Wallet";
+    }
+    return `Connected: ${publicKey?.slice(0, 4)}...`;
+  };
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-background z-50 border-b border-primary">
@@ -18,10 +35,10 @@ const Header = () => {
           <div className="flex-1 flex justify-end items-center gap-4">
             <Button
               className="retro-button px-1 md:px-6 flex items-center gap-2"
-              onClick={() => console.log('Wallet button clicked')}
+              onClick={handleWalletAction}
             >
               <Wallet className="h-4 w-4" />
-              {isMobile ? "Connect" : "Connect Phantom Wallet"}
+              {getButtonText()}
             </Button>
           </div>
         </header>
