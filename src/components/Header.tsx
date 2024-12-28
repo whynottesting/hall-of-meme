@@ -1,10 +1,10 @@
 import React from 'react';
 import InfoDialog from "@/components/InfoDialog";
 import { Button } from "@/components/ui/button";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Header = () => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-background z-50 border-b border-primary">
