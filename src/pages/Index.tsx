@@ -7,6 +7,9 @@ import { toast } from "@/hooks/use-toast";
 import { X } from "lucide-react";
 import { useSpaces } from '@/hooks/useSpaces';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
+import { PhantomWindow } from '@/types/phantom';
+
+declare const window: PhantomWindow;
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
