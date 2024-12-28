@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { PhantomWindow } from '@/types/phantom';
+import { checkBalance } from '@/utils/solana/balance';
 
 declare const window: PhantomWindow;
 
@@ -20,6 +21,15 @@ export const usePhantomWallet = () => {
     return null;
   }, []);
 
+  const checkWalletBalance = useCallback(async (address: string) => {
+    try {
+      const balance = await checkBalance(address);
+      console.log(`💰 Solde du portefeuille: ${balance} SOL`);
+    } catch (error) {
+      console.error('Erreur lors de la vérification du solde:', error);
+    }
+  }, []);
+
   const connectWallet = useCallback(async () => {
     setIsConnecting(true);
     try {
@@ -33,6 +43,9 @@ export const usePhantomWallet = () => {
       const response = await provider.connect();
       const address = response.publicKey.toString();
       setWalletAddress(address);
+      
+      // Vérifier le solde après la connexion
+      await checkWalletBalance(address);
       
       toast({
         title: "Succès",
@@ -48,7 +61,7 @@ export const usePhantomWallet = () => {
     } finally {
       setIsConnecting(false);
     }
-  }, [getProvider]);
+  }, [getProvider, checkWalletBalance]);
 
   const disconnectWallet = useCallback(async () => {
     try {
@@ -80,10 +93,13 @@ export const usePhantomWallet = () => {
 
       // Check if already connected
       if (provider.publicKey) {
-        setWalletAddress(provider.publicKey.toString());
+        const address = provider.publicKey.toString();
+        setWalletAddress(address);
+        // Vérifier le solde initial si déjà connecté
+        checkWalletBalance(address);
       }
     }
-  }, [getProvider]);
+  }, [getProvider, checkWalletBalance]);
 
   return {
     walletAddress,
