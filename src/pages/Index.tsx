@@ -11,7 +11,7 @@ import { useSpacePurchase } from '@/hooks/useSpacePurchase';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
-  const { walletAddress, isConnected } = usePhantomWallet();
+  const { walletAddress, isConnected, provider } = usePhantomWallet();
   const { purchaseSpace, isProcessing } = useSpacePurchase();
   const { 
     selectedSpace,
@@ -22,7 +22,7 @@ const Index = () => {
   } = useSpaces();
 
   const handlePurchase = async () => {
-    if (!isConnected) {
+    if (!isConnected || !provider) {
       toast({
         title: "Wallet Not Connected",
         description: "Please connect your wallet first",
@@ -31,13 +31,13 @@ const Index = () => {
       return;
     }
 
-    const success = await purchaseSpace({
+    const success = await purchaseSpace(provider, {
       x: selectedSpace.x,
       y: selectedSpace.y,
       width: selectedSpace.width,
       height: selectedSpace.height,
       walletAddress: walletAddress!,
-      imageUrl: selectedSpace.imageUrl || '',
+      imageUrl: selectedSpace.image_url || '',
       link: selectedSpace.link,
       price: selectedSpace.width * selectedSpace.height * 100 * 0.01
     });

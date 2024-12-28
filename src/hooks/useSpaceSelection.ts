@@ -6,6 +6,7 @@ interface Space {
   width: number;
   height: number;
   link: string;
+  image_url?: string;
 }
 
 export const useSpaceSelection = () => {
