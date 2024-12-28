@@ -14,6 +14,7 @@ type PhantomWindow = Window & {
 
 export const usePhantomWallet = () => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [provider, setProvider] = useState<PhantomWindow['solana'] | null>(null);
 
   const getProvider = () => {
     if ('solana' in window) {
@@ -34,6 +35,7 @@ export const usePhantomWallet = () => {
         return;
       }
 
+      setProvider(provider);
       const response = await provider.connect();
       const address = response.publicKey.toString();
       setWalletAddress(address);
@@ -67,6 +69,7 @@ export const usePhantomWallet = () => {
       if (provider) {
         await provider.disconnect();
         setWalletAddress(null);
+        setProvider(null);
         console.log('🔌 Wallet disconnected');
         toast({
           title: "Wallet Disconnected",
@@ -86,8 +89,10 @@ export const usePhantomWallet = () => {
   useEffect(() => {
     const provider = getProvider();
     if (provider) {
+      setProvider(provider);
       provider.on('disconnect', () => {
         setWalletAddress(null);
+        setProvider(null);
         console.log('🔌 Wallet disconnected');
       });
 
@@ -107,6 +112,7 @@ export const usePhantomWallet = () => {
     walletAddress,
     connectWallet,
     disconnectWallet,
-    isConnected: !!walletAddress
+    isConnected: !!walletAddress,
+    provider
   };
 };
