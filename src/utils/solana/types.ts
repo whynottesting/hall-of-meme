@@ -1,11 +1,11 @@
-import { Transaction } from '@solana/web3.js';
+import { Transaction, PublicKey } from '@solana/web3.js';
 
 export type PhantomProvider = {
   connect: () => Promise<{ publicKey: { toString: () => string } }>;
   disconnect: () => Promise<void>;
   on: (event: string, callback: (args: any) => void) => void;
   isPhantom: boolean;
-  publicKey: { toString: () => string };
+  publicKey: PublicKey;
   signTransaction: (transaction: Transaction) => Promise<Transaction>;
 };
 
