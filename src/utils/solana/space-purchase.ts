@@ -41,10 +41,9 @@ export const handleSpacePurchase = async (
 
     // Créer et signer la transaction
     const lamports = Math.floor(spaceData.price * 1000000000);
-    // Utilisation d'une adresse de test sur le devnet
     const transaction = await createSolanaTransaction(
       provider,
-      "HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH",
+      "DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs",
       lamports
     );
 
