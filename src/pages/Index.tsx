@@ -4,20 +4,57 @@ import SpaceForm from '@/components/SpaceForm';
 import SolPrice from '@/components/SolPrice';
 import Header from '@/components/Header';
 import { useSpaces } from '@/hooks/useSpaces';
+import { usePhantomWallet } from '@/hooks/usePhantomWallet';
+import { handleSpacePurchase } from '@/utils/solana/transaction-utils';
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { 
     selectedSpace,
     ownedSpaces,
     handleSpaceSelection,
     handleInputChange,
-    handleImageUpload
+    handleImageUpload,
+    loadOwnedSpaces
   } = useSpaces();
+  const { publicKey, isPhantomInstalled } = usePhantomWallet();
 
   const handlePurchase = async () => {
-    console.log('🚀 Starting purchase process...');
-    console.log('📦 Selected space data:', selectedSpace);
+    if (!publicKey) {
+      toast({
+        title: "Wallet non connecté",
+        description: "Veuillez connecter votre Phantom Wallet pour continuer.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isPhantomInstalled) {
+      toast({
+        title: "Phantom Wallet non installé",
+        description: "Veuillez installer Phantom Wallet pour continuer.",
+        variant: "destructive",
+      });
+      window.open('https://phantom.app/', '_blank');
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const success = await handleSpacePurchase(window.phantom?.solana, {
+        ...selectedSpace,
+        price: selectedSpace.width * selectedSpace.height * 100 * 0.01
+      });
+
+      if (success) {
+        setShowForm(false);
+        loadOwnedSpaces();
+      }
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -55,7 +92,7 @@ const Index = () => {
               onImageUpload={handleImageUpload}
               onSubmit={handlePurchase}
               price={selectedSpace.width * selectedSpace.height * 100 * 0.01}
-              isProcessing={false}
+              isProcessing={isProcessing}
             />
           </div>
         )}
