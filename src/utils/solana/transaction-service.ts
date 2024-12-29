@@ -5,7 +5,7 @@ import {
   Transaction
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
-import { PhantomProvider } from '@/hooks/usePhantomWallet';
+import { PhantomProvider } from './types';
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 1000;
@@ -26,7 +26,7 @@ export const createSolanaTransaction = async (
     console.log("💰 Montant demandé en lamports:", lamports);
     console.log("📍 Adresse du wallet:", provider.publicKey.toString());
     
-    const fromPubkey = new PublicKey(provider.publicKey.toString());
+    const fromPubkey = provider.publicKey;
     const toPubkey = new PublicKey(recipientAddress);
     
     // Vérifier le solde

@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createSolanaTransaction } from "./transaction-service";
 import { toast } from "@/hooks/use-toast";
-import { PhantomProvider } from "@/hooks/usePhantomWallet";
+import { PhantomProvider } from "./types";
 
 export const handleSpacePurchase = async (
   provider: PhantomProvider | null,
@@ -65,7 +65,7 @@ export const handleSpacePurchase = async (
     const { error: transactionError } = await supabase
       .from('transaction_history')
       .insert({
-        wallet_address: provider.publicKey?.toString(),
+        wallet_address: provider.publicKey.toString(),
         status: 'completed'
       });
 
@@ -78,7 +78,7 @@ export const handleSpacePurchase = async (
     const { error: spaceError } = await supabase
       .from('spaces')
       .insert({
-        wallet_address: provider.publicKey?.toString(),
+        wallet_address: provider.publicKey.toString(),
         x: spaceData.x,
         y: spaceData.y,
         width: spaceData.width,
