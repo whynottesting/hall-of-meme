@@ -17,8 +17,8 @@ const DEFAULT_CONFIG: ConnectionConfig = {
 
 export class SolanaRPCConnection {
   private static instance: SolanaRPCConnection;
-  private currentEndpointIndex: number = 0;
   private connection: Connection;
+  private currentEndpointIndex: number = 0;
 
   private constructor() {
     this.connection = new Connection(RPC_ENDPOINTS[0], DEFAULT_CONFIG);
@@ -38,12 +38,7 @@ export class SolanaRPCConnection {
   public async switchToNextEndpoint(): Promise<Connection> {
     this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_ENDPOINTS.length;
     const newEndpoint = RPC_ENDPOINTS[this.currentEndpointIndex];
-    console.log(`🔄 Basculement vers le RPC endpoint devnet: ${newEndpoint}`);
     this.connection = new Connection(newEndpoint, DEFAULT_CONFIG);
     return this.connection;
-  }
-
-  public getCurrentEndpoint(): string {
-    return RPC_ENDPOINTS[this.currentEndpointIndex];
   }
 }

@@ -9,16 +9,11 @@ export const checkBalance = async (walletAddress: string): Promise<number> => {
   
   for (let attempt = 1; attempt <= RPC_CONFIG.MAX_RETRIES; attempt++) {
     try {
-      console.log(`🔍 Checking balance (attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES})`);
       const connection = solanaConnection.getConnection();
-      
       const balance = await connection.getBalance(pubKey, 'confirmed');
       const balanceInSol = balance / LAMPORTS_PER_SOL;
-      console.log("💰 Balance found:", balanceInSol, "SOL");
       return balanceInSol;
     } catch (error: any) {
-      console.error(`❌ Error on attempt ${attempt}/${RPC_CONFIG.MAX_RETRIES}:`, error);
-      
       if (attempt === RPC_CONFIG.MAX_RETRIES) {
         toast({
           title: "Erreur de connexion",
