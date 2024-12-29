@@ -19,6 +19,8 @@ const OwnedCell: React.FC<OwnedCellProps> = ({
   link,
   onClick
 }) => {
+  console.log("🎯 Rendu OwnedCell:", { x, y, width, height, imageUrl, link });
+  
   return (
     <div
       className="absolute cursor-pointer"

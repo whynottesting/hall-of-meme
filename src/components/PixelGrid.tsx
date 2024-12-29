@@ -18,20 +18,25 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
 
   useEffect(() => {
+    console.log("🔄 Mise à jour des cellules possédées:", ownedCells);
+    
     const processImages = async () => {
       try {
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
+            console.log("📸 Traitement de la cellule:", cell);
             let imageUrl = cell.image_url || '';
             
             if (imageUrl) {
               if (imageUrl.startsWith('public/lovable-uploads/')) {
+                console.log("🔄 Conversion de l'URL de l'image:", imageUrl);
                 const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
                 const { data: { publicUrl } } = supabase.storage
                   .from('space-images')
                   .getPublicUrl(cleanPath);
                 
                 imageUrl = publicUrl;
+                console.log("✅ URL publique générée:", imageUrl);
               }
             }
 
@@ -41,6 +46,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             };
           })
         );
+        console.log("✅ Cellules traitées:", processed);
         setProcessedCells(processed);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
@@ -73,6 +79,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const occupiedPositions = new Set();
 
     processedCells.forEach(cell => {
+      console.log("📍 Position occupée:", cell);
       for (let dy = 0; dy < cell.height; dy++) {
         for (let dx = 0; dx < cell.width; dx++) {
           occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
@@ -98,6 +105,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
 
     processedCells.forEach((cell) => {
+      console.log("🎨 Rendu de la cellule possédée:", cell);
       grid.push(
         <OwnedCell
           key={`owned-${cell.x}-${cell.y}`}

@@ -66,6 +66,8 @@ export const handleSpacePurchase = async (
     const connection = SolanaConnection.getInstance().getConnection();
     const signature = await sendTransaction(connection, signedTransaction, provider);
 
+    console.log("💾 Transaction réussie, enregistrement des données...");
+
     // Enregistrer la transaction dans l'historique
     const { error: transactionError } = await supabase
       .from('transaction_history')
@@ -80,8 +82,20 @@ export const handleSpacePurchase = async (
       throw transactionError;
     }
 
+    console.log("📝 Enregistrement de l'espace...");
+    console.log("Données de l'espace à enregistrer:", {
+      wallet_address: provider.publicKey.toString(),
+      x: spaceData.x,
+      y: spaceData.y,
+      width: spaceData.width,
+      height: spaceData.height,
+      url: spaceData.link,
+      image_url: spaceData.imageUrl,
+      price: spaceData.price
+    });
+
     // Enregistrer l'espace acheté
-    const { error: spaceError } = await supabase
+    const { data: newSpace, error: spaceError } = await supabase
       .from('spaces')
       .insert({
         wallet_address: provider.publicKey.toString(),
@@ -92,12 +106,16 @@ export const handleSpacePurchase = async (
         url: spaceData.link,
         image_url: spaceData.imageUrl,
         price: spaceData.price
-      });
+      })
+      .select()
+      .single();
 
     if (spaceError) {
       console.error("Erreur lors de l'enregistrement de l'espace:", spaceError);
       throw spaceError;
     }
+
+    console.log("✅ Espace enregistré avec succès:", newSpace);
 
     toast({
       title: "Achat réussi!",
