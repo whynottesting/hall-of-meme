@@ -43,16 +43,19 @@ export const useSpaces = () => {
 
   const checkSpaceOverlap = useCallback((newSpace: any) => {
     return ownedSpaces.some(existingSpace => {
+      // Vérifier si les rectangles se chevauchent en x
       const xOverlap = (
-        (newSpace.x >= existingSpace.x && newSpace.x < existingSpace.x + existingSpace.width) ||
-        (existingSpace.x >= newSpace.x && existingSpace.x < newSpace.x + newSpace.width)
+        newSpace.x < existingSpace.x + existingSpace.width &&
+        newSpace.x + newSpace.width > existingSpace.x
       );
       
+      // Vérifier si les rectangles se chevauchent en y
       const yOverlap = (
-        (newSpace.y >= existingSpace.y && newSpace.y < existingSpace.y + existingSpace.height) ||
-        (existingSpace.y >= newSpace.y && existingSpace.y < newSpace.y + newSpace.height)
+        newSpace.y < existingSpace.y + existingSpace.height &&
+        newSpace.y + newSpace.height > existingSpace.y
       );
 
+      // Il y a chevauchement uniquement si les deux conditions sont vraies
       return xOverlap && yOverlap;
     });
   }, [ownedSpaces]);
