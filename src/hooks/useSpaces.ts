@@ -1,47 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+import { useCallback, useState } from 'react';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
+import { Space } from '@/utils/solana/types';
 
 export const useSpaces = () => {
+  const [ownedSpaces, setOwnedSpaces] = useState<Space[]>([]);
   const spaceSelection = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
-  const [ownedSpaces, setOwnedSpaces] = useState<any[]>([]);
+  const { data: spaces } = useSupabaseQuery('spaces');
 
-  const loadOwnedSpaces = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from('spaces')
-        .select('*');
-
-      if (error) throw error;
-
-      const formattedSpaces = data.map(space => ({
-        x: space.x,
-        y: space.y,
-        width: space.width,
-        height: space.height,
-        image: space.image_url,
-        link: space.url
-      }));
-
-      setOwnedSpaces(formattedSpaces);
-    } catch (error) {
-      console.error('Error loading spaces:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les espaces",
-        variant: "destructive",
-      });
+  const loadOwnedSpaces = useCallback(() => {
+    if (spaces) {
+      setOwnedSpaces(spaces);
     }
-  }, []);
+  }, [spaces]);
 
-  useEffect(() => {
-    loadOwnedSpaces();
-  }, [loadOwnedSpaces]);
-
-  const checkSpaceOverlap = useCallback((newSpace: any) => {
+  const checkSpaceOverlap = useCallback((newSpace: Space) => {
     return ownedSpaces.some(existingSpace => {
       // Vérifie si le nouvel espace chevauche un espace existant
       const newSpaceRight = newSpace.x + newSpace.width;
@@ -50,12 +25,11 @@ export const useSpaces = () => {
       const existingSpaceBottom = existingSpace.y + existingSpace.height;
 
       // Un chevauchement existe si les rectangles se superposent sur les deux axes
-      return !(
-        newSpace.x >= existingSpaceRight || // Nouveau à droite de l'existant
-        newSpaceRight <= existingSpace.x || // Nouveau à gauche de l'existant
-        newSpace.y >= existingSpaceBottom || // Nouveau en dessous de l'existant
-        newSpaceBottom <= existingSpace.y    // Nouveau au-dessus de l'existant
-      );
+      const xOverlap = newSpace.x < existingSpaceRight && newSpaceRight > existingSpace.x;
+      const yOverlap = newSpace.y < existingSpaceBottom && newSpaceBottom > existingSpace.y;
+
+      // Il y a chevauchement uniquement si les deux conditions sont vraies
+      return xOverlap && yOverlap;
     });
   }, [ownedSpaces]);
 
