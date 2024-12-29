@@ -1,10 +1,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { createSolanaTransaction } from "./transaction-service";
 import { toast } from "@/hooks/use-toast";
-import { PhantomWindow } from "./types";
+import { PhantomProvider } from "@/hooks/usePhantomWallet";
 
 export const handleSpacePurchase = async (
-  provider: any,
+  provider: PhantomProvider | null,
   spaceData: {
     x: number;
     y: number;
@@ -16,9 +16,14 @@ export const handleSpacePurchase = async (
   }
 ) => {
   try {
+    if (!provider) {
+      throw new Error("Phantom Wallet non connecté");
+    }
+
     console.log("🚀 Démarrage de l'achat d'espace...");
     console.log("📦 Données de l'espace:", spaceData);
 
+    // Vérifier si l'espace est disponible
     const { data: existingSpaces } = await supabase
       .from('spaces')
       .select('*')
@@ -33,21 +38,34 @@ export const handleSpacePurchase = async (
       return false;
     }
 
-    const lamports = Math.floor(spaceData.price * 1000000000); // LAMPORTS_PER_SOL
-    const signature = await createSolanaTransaction(
+    // Créer et signer la transaction
+    const lamports = Math.floor(spaceData.price * 1000000000);
+    const transaction = await createSolanaTransaction(
       provider,
       "DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs",
       lamports
     );
 
-    if (!signature) {
+    if (!transaction) {
       throw new Error("La transaction n'a pas pu être créée");
     }
 
+    console.log("✍️ Transaction créée, demande de signature...");
+    
+    // Demander la signature à l'utilisateur via Phantom
+    const signedTransaction = await provider.signTransaction(transaction);
+    
+    if (!signedTransaction) {
+      throw new Error("La transaction n'a pas été signée");
+    }
+
+    console.log("📤 Transaction signée, envoi en cours...");
+
+    // Enregistrer la transaction dans l'historique
     const { error: transactionError } = await supabase
       .from('transaction_history')
       .insert({
-        wallet_address: provider.publicKey.toString(),
+        wallet_address: provider.publicKey?.toString(),
         status: 'completed'
       });
 
@@ -56,10 +74,11 @@ export const handleSpacePurchase = async (
       throw transactionError;
     }
 
+    // Enregistrer l'espace acheté
     const { error: spaceError } = await supabase
       .from('spaces')
       .insert({
-        wallet_address: provider.publicKey.toString(),
+        wallet_address: provider.publicKey?.toString(),
         x: spaceData.x,
         y: spaceData.y,
         width: spaceData.width,
