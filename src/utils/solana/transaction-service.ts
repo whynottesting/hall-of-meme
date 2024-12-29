@@ -2,7 +2,8 @@ import {
   PublicKey, 
   SystemProgram,
   LAMPORTS_PER_SOL,
-  Transaction
+  Transaction,
+  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { PhantomProvider } from './types';
@@ -57,6 +58,32 @@ export const createSolanaTransaction = async (
 
   } catch (error: any) {
     console.error("❌ Erreur lors de la création de la transaction:", error);
+    throw error;
+  }
+};
+
+export const sendTransaction = async (
+  connection: any,
+  transaction: Transaction,
+  provider: PhantomProvider
+): Promise<string> => {
+  try {
+    console.log("🚀 Envoi de la transaction signée...");
+    const signature = await connection.sendRawTransaction(
+      transaction.serialize()
+    );
+    
+    console.log("⏳ Attente de la confirmation de la transaction...");
+    const confirmation = await connection.confirmTransaction(signature);
+    
+    if (confirmation.value.err) {
+      throw new Error("La transaction a échoué lors de la confirmation");
+    }
+    
+    console.log("✅ Transaction confirmée avec succès!");
+    return signature;
+  } catch (error) {
+    console.error("❌ Erreur lors de l'envoi de la transaction:", error);
     throw error;
   }
 };
