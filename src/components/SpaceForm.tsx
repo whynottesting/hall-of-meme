@@ -33,7 +33,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
   const actualPrice = width * height * 100 * 0.01;
 
   return (
-    <div className="bg-secondary p-4 rounded-lg">
+    <div className="bg-secondary p-4 pt-2 rounded-lg">
       <div className="flex flex-wrap gap-4 items-end">
         <SpaceFormDimensions
           x={x}
