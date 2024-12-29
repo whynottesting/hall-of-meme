@@ -7,6 +7,7 @@ import { useSpaces } from '@/hooks/useSpaces';
 import { usePhantomWallet } from '@/hooks/usePhantomWallet';
 import { handleSpacePurchase } from '@/utils/solana/transaction-utils';
 import { toast } from "@/hooks/use-toast";
+import { PhantomWindow } from '@/utils/solana/types';
 
 const Index = () => {
   const [showForm, setShowForm] = useState(false);
@@ -43,7 +44,8 @@ const Index = () => {
 
     setIsProcessing(true);
     try {
-      const success = await handleSpacePurchase(window.phantom?.solana, {
+      const phantomWindow = window as PhantomWindow;
+      const success = await handleSpacePurchase(phantomWindow.phantom?.solana, {
         ...selectedSpace,
         price: selectedSpace.width * selectedSpace.height * 100 * 0.01
       });
