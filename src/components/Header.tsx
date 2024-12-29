@@ -2,9 +2,31 @@ import React from 'react';
 import InfoDialog from "@/components/InfoDialog";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePhantomWallet } from "@/hooks/usePhantomWallet";
+import { Loader2 } from "lucide-react";
 
 const Header = () => {
   const isMobile = useIsMobile();
+  const { 
+    publicKey, 
+    isConnecting, 
+    connectWallet, 
+    disconnectWallet 
+  } = usePhantomWallet();
+
+  const handleWalletAction = () => {
+    if (publicKey) {
+      disconnectWallet();
+    } else {
+      connectWallet();
+    }
+  };
+
+  const getButtonText = () => {
+    if (isConnecting) return isMobile ? "Connecting..." : "Connecting to Phantom Wallet...";
+    if (publicKey) return isMobile ? `${publicKey.slice(0, 3)}...` : `Connected (${publicKey.slice(0, 3)}...)`;
+    return isMobile ? "Connect" : "Connect Phantom Wallet";
+  };
 
   return (
     <div className="fixed top-0 left-0 right-0 bg-background z-50 border-b border-primary">
@@ -18,8 +40,11 @@ const Header = () => {
             <Button 
               variant="outline"
               className="font-retro"
+              onClick={handleWalletAction}
+              disabled={isConnecting}
             >
-              {isMobile ? "Connect" : "Connect Phantom Wallet"}
+              {isConnecting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {getButtonText()}
             </Button>
           </div>
         </header>
