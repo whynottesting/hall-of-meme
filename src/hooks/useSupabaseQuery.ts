@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export const useSupabaseQuery = (table: string) => {
+type TableName = 'spaces' | 'transaction_history';
+
+export const useSupabaseQuery = (table: TableName) => {
   const [data, setData] = useState<any[]>([]);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);

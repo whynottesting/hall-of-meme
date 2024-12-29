@@ -2,19 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import EmptyCell from './grid/EmptyCell';
 import OwnedCell from './grid/OwnedCell';
+import { Space } from '@/utils/solana/types';
 
 interface PixelGridProps {
   selectedCells: { x: number; y: number; width: number; height: number } | null;
-  ownedCells: Array<{ x: number; y: number; width: number; height: number; image: string; link: string }>;
+  ownedCells: Space[];
   onCellClick: (x: number, y: number) => void;
 }
 
-interface ProcessedCell {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  link: string;
+interface ProcessedCell extends Space {
   processedImageUrl: string;
 }
 
@@ -26,7 +22,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       try {
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
-            let imageUrl = cell.image;
+            let imageUrl = cell.image_url || '';
             
             if (imageUrl) {
               if (imageUrl.startsWith('public/lovable-uploads/')) {
@@ -65,8 +61,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
   };
 
   const handleCellClick = (x: number, y: number, cell?: ProcessedCell) => {
-    if (cell?.link) {
-      window.open(cell.link, '_blank', 'noopener,noreferrer');
+    if (cell?.url) {
+      window.open(cell.url, '_blank', 'noopener,noreferrer');
     } else {
       onCellClick(x, y);
     }
@@ -76,7 +72,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const grid = [];
     const occupiedPositions = new Set();
 
-    // Marquer d'abord toutes les positions occupées
     processedCells.forEach(cell => {
       for (let dy = 0; dy < cell.height; dy++) {
         for (let dx = 0; dx < cell.width; dx++) {
@@ -85,7 +80,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       }
     });
 
-    // Rendu des cellules vides
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const key = `${x}-${y}`;
@@ -103,7 +97,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       }
     }
 
-    // Rendu des cellules possédées
     processedCells.forEach((cell) => {
       grid.push(
         <OwnedCell
@@ -113,7 +106,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           width={cell.width}
           height={cell.height}
           imageUrl={cell.processedImageUrl}
-          link={cell.link}
+          link={cell.url || ''}
           onClick={() => handleCellClick(cell.x, cell.y, cell)}
         />
       );
