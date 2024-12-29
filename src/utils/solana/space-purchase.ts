@@ -41,9 +41,10 @@ export const handleSpacePurchase = async (
 
     // Créer et signer la transaction
     const lamports = Math.floor(spaceData.price * 1000000000);
+    // Utilisation d'une adresse de test sur le devnet
     const transaction = await createSolanaTransaction(
       provider,
-      "DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs",
+      "HN7cABqLq46Es1jh92dQQisAq662SmxELLLsHHe4YWrH",
       lamports
     );
 
@@ -72,7 +73,7 @@ export const handleSpacePurchase = async (
       .insert({
         wallet_address: provider.publicKey.toString(),
         status: 'completed',
-        space_id: null // sera mis à jour après la création de l'espace
+        space_id: null
       });
 
     if (transactionError) {
