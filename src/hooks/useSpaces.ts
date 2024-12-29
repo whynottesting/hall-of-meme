@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
@@ -8,10 +8,19 @@ export const useSpaces = () => {
   const [ownedSpaces, setOwnedSpaces] = useState<Space[]>([]);
   const spaceSelection = useSpaceSelection();
   const { handleImageUpload } = useImageUpload();
-  const { data: spaces } = useSupabaseQuery('spaces');
+  const { data: spaces, isLoading } = useSupabaseQuery('spaces');
+
+  // Charger les espaces au démarrage et quand spaces change
+  useEffect(() => {
+    console.log("🔄 Chargement initial des espaces:", spaces);
+    if (spaces) {
+      setOwnedSpaces(spaces);
+    }
+  }, [spaces]);
 
   const loadOwnedSpaces = useCallback(() => {
     if (spaces) {
+      console.log("♻️ Rechargement manuel des espaces:", spaces);
       setOwnedSpaces(spaces);
     }
   }, [spaces]);
@@ -38,6 +47,7 @@ export const useSpaces = () => {
     handleInputChange: spaceSelection.handleInputChange,
     handleImageUpload,
     loadOwnedSpaces,
-    checkSpaceOverlap
+    checkSpaceOverlap,
+    isLoading
   };
 };

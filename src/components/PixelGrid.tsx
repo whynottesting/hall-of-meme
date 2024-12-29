@@ -22,6 +22,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     
     const processImages = async () => {
       try {
+        if (!ownedCells || ownedCells.length === 0) {
+          console.log("❌ Aucune cellule à traiter");
+          setProcessedCells([]);
+          return;
+        }
+
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
             console.log("📸 Traitement de la cellule:", cell);
@@ -50,6 +56,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         setProcessedCells(processed);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
+        setProcessedCells([]);
       }
     };
 
@@ -78,15 +85,19 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const grid = [];
     const occupiedPositions = new Set();
 
-    processedCells.forEach(cell => {
-      console.log("📍 Position occupée:", cell);
-      for (let dy = 0; dy < cell.height; dy++) {
-        for (let dx = 0; dx < cell.width; dx++) {
-          occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
+    // Traiter d'abord les cellules occupées
+    if (processedCells && processedCells.length > 0) {
+      processedCells.forEach(cell => {
+        console.log("📍 Position occupée:", cell);
+        for (let dy = 0; dy < cell.height; dy++) {
+          for (let dx = 0; dx < cell.width; dx++) {
+            occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
+          }
         }
-      }
-    });
+      });
+    }
 
+    // Rendre les cellules vides
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const key = `${x}-${y}`;
@@ -104,21 +115,24 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       }
     }
 
-    processedCells.forEach((cell) => {
-      console.log("🎨 Rendu de la cellule possédée:", cell);
-      grid.push(
-        <OwnedCell
-          key={`owned-${cell.x}-${cell.y}`}
-          x={cell.x}
-          y={cell.y}
-          width={cell.width}
-          height={cell.height}
-          imageUrl={cell.processedImageUrl}
-          link={cell.url || ''}
-          onClick={() => handleCellClick(cell.x, cell.y, cell)}
-        />
-      );
-    });
+    // Rendre les cellules possédées
+    if (processedCells && processedCells.length > 0) {
+      processedCells.forEach((cell) => {
+        console.log("🎨 Rendu de la cellule possédée:", cell);
+        grid.push(
+          <OwnedCell
+            key={`owned-${cell.x}-${cell.y}`}
+            x={cell.x}
+            y={cell.y}
+            width={cell.width}
+            height={cell.height}
+            imageUrl={cell.processedImageUrl}
+            link={cell.url || ''}
+            onClick={() => handleCellClick(cell.x, cell.y, cell)}
+          />
+        );
+      });
+    }
 
     return grid;
   };
