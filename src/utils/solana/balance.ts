@@ -1,4 +1,4 @@
-import { PublicKey, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { RPC_CONFIG } from './config';
 import { toast } from "@/hooks/use-toast";
