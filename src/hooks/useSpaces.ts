@@ -18,17 +18,14 @@ export const useSpaces = () => {
 
   const checkSpaceOverlap = useCallback((newSpace: Space) => {
     return ownedSpaces.some(existingSpace => {
-      // Vérifie si le nouvel espace chevauche un espace existant
       const newSpaceRight = newSpace.x + newSpace.width;
       const newSpaceBottom = newSpace.y + newSpace.height;
       const existingSpaceRight = existingSpace.x + existingSpace.width;
       const existingSpaceBottom = existingSpace.y + existingSpace.height;
 
-      // Un chevauchement existe si les rectangles se superposent sur les deux axes
       const xOverlap = newSpace.x < existingSpaceRight && newSpaceRight > existingSpace.x;
       const yOverlap = newSpace.y < existingSpaceBottom && newSpaceBottom > existingSpace.y;
 
-      // Il y a chevauchement uniquement si les deux conditions sont vraies
       return xOverlap && yOverlap;
     });
   }, [ownedSpaces]);
@@ -36,6 +33,7 @@ export const useSpaces = () => {
   return {
     selectedSpace: spaceSelection.selectedSpace,
     ownedSpaces,
+    setOwnedSpaces,
     handleSpaceSelection: spaceSelection.handleSpaceSelection,
     handleInputChange: spaceSelection.handleInputChange,
     handleImageUpload,

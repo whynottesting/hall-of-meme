@@ -18,7 +18,8 @@ const Index = () => {
     handleSpaceSelection,
     handleInputChange,
     handleImageUpload,
-    loadOwnedSpaces
+    loadOwnedSpaces,
+    setOwnedSpaces
   } = useSpaces();
   const { publicKey, isPhantomInstalled } = usePhantomWallet();
 
@@ -45,14 +46,14 @@ const Index = () => {
     setIsProcessing(true);
     try {
       const phantomWindow = window as PhantomWindow;
-      const success = await handleSpacePurchase(phantomWindow.phantom?.solana, {
+      const result = await handleSpacePurchase(phantomWindow.phantom?.solana, {
         ...selectedSpace,
         price: selectedSpace.width * selectedSpace.height * 100 * 0.01
       });
 
-      if (success) {
+      if (result && typeof result === 'object' && 'spaces' in result) {
+        setOwnedSpaces(result.spaces);
         setShowForm(false);
-        loadOwnedSpaces();
       }
     } finally {
       setIsProcessing(false);

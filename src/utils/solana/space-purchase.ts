@@ -117,6 +117,16 @@ export const handleSpacePurchase = async (
 
     console.log("✅ Espace enregistré avec succès:", newSpace);
 
+    // Recharger immédiatement les données après l'enregistrement
+    const { data: updatedSpaces } = await supabase
+      .from('spaces')
+      .select('*');
+
+    if (updatedSpaces) {
+      // Mettre à jour le state avec les nouvelles données
+      return { success: true, spaces: updatedSpaces };
+    }
+
     toast({
       title: "Achat réussi!",
       description: "Votre espace a été acheté avec succès.",
