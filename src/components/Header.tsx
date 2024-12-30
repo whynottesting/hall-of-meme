@@ -38,7 +38,7 @@ const Header = () => {
           <h1 className="retro-title rainbow-title mb-0 flex-1 animate-bounce whitespace-nowrap text-2xl md:text-6xl text-left md:text-center">HALL OF MEME</h1>
           <div className="flex-1 flex justify-end">
             <Button 
-              className="font-retro bg-[#9b87f5] hover:bg-[#7E69AB] text-white transition-colors duration-200"
+              className="font-retro bg-black text-white hover:bg-gray-800 hover:text-accent hover:border-2 hover:border-black transition-all duration-200"
               onClick={handleWalletAction}
               disabled={isConnecting}
             >
