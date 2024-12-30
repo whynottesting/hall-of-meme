@@ -34,8 +34,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             let imageUrl = cell.image_url || '';
             
             if (imageUrl) {
+              // Si l'URL est une URL complète de Supabase Storage, on la garde telle quelle
+              if (imageUrl.includes('storage.googleapis.com')) {
+                console.log("✅ URL Supabase déjà formatée:", imageUrl);
+              }
               // Si l'URL commence par public/lovable-uploads/, on la convertit en URL publique Supabase
-              if (imageUrl.startsWith('public/lovable-uploads/')) {
+              else if (imageUrl.startsWith('public/lovable-uploads/')) {
                 console.log("🔄 Conversion de l'URL de l'image:", imageUrl);
                 const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
                 const { data: { publicUrl } } = supabase.storage
@@ -53,7 +57,8 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             };
           })
         );
-        console.log("✅ Cellules traitées:", processed);
+        
+        console.log("✅ Cellules traitées avec leurs URLs d'images:", processed);
         setProcessedCells(processed);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
@@ -119,7 +124,12 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     // Rendre les cellules possédées
     if (processedCells && processedCells.length > 0) {
       processedCells.forEach((cell) => {
-        console.log("🎨 Rendu de la cellule possédée:", cell);
+        console.log("🎨 Rendu de la cellule possédée avec image:", {
+          position: `${cell.x},${cell.y}`,
+          dimensions: `${cell.width}x${cell.height}`,
+          imageUrl: cell.processedImageUrl
+        });
+        
         grid.push(
           <OwnedCell
             key={`owned-${cell.x}-${cell.y}`}

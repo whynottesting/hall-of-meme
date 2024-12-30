@@ -19,7 +19,7 @@ const OwnedCell: React.FC<OwnedCellProps> = ({
   link,
   onClick
 }) => {
-  console.log("🎯 Rendu OwnedCell:", { x, y, width, height, imageUrl, link });
+  console.log("🎯 Rendu OwnedCell:", { x, y, width, height, imageUrl });
   
   return (
     <div
@@ -43,11 +43,11 @@ const OwnedCell: React.FC<OwnedCellProps> = ({
           className="w-full h-full object-cover"
           style={{ display: 'block' }}
           onError={(e) => {
-            console.error('Erreur de chargement de l\'image:', imageUrl);
-            e.currentTarget.src = '/placeholder.svg';
+            console.error('❌ Erreur de chargement de l\'image:', imageUrl);
+            e.currentTarget.style.display = 'none';
           }}
           onLoad={() => {
-            console.log('Image chargée avec succès:', imageUrl);
+            console.log('✅ Image chargée avec succès:', imageUrl);
           }}
         />
       )}
