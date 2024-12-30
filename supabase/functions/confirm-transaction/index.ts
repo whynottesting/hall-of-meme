@@ -16,7 +16,7 @@ serve(async (req) => {
     const { signature, spaceData } = await req.json()
     console.log('Confirming transaction:', { signature, spaceData })
 
-    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo')
+    const connection = new Connection('https://api.mainnet-beta.solana.com')
     
     // Wait for transaction confirmation
     const confirmation = await connection.confirmTransaction(signature)
