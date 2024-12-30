@@ -34,6 +34,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             let imageUrl = cell.image_url || '';
             
             if (imageUrl) {
+              // Si l'URL commence par public/lovable-uploads/, on la convertit en URL publique Supabase
               if (imageUrl.startsWith('public/lovable-uploads/')) {
                 console.log("🔄 Conversion de l'URL de l'image:", imageUrl);
                 const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
