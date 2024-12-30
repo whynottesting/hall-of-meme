@@ -40,11 +40,10 @@ export const createSolanaTransaction = async (
 
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     
-    const transaction = new Transaction({
-      feePayer: fromPubkey,
-      blockhash,
-      lastValidBlockHeight,
-    });
+    const transaction = new Transaction();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = fromPubkey;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
 
     transaction.add(
       SystemProgram.transfer({
@@ -83,7 +82,7 @@ export const sendTransaction = async (
     
     const confirmation = await connection.confirmTransaction({
       signature,
-      blockhash: transaction.blockhash,
+      blockhash: transaction.recentBlockhash,
       lastValidBlockHeight: transaction.lastValidBlockHeight,
     }, 'processed');
     
