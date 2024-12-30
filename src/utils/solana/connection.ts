@@ -9,17 +9,17 @@ export class SolanaConnection {
   private constructor() {
     const endpoint = RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
     
-    console.log('🔌 Initializing Solana connection...');
-    console.log('📡 HTTP Endpoint:', endpoint);
+    console.log('🔌 Initialisation de la connexion Solana...');
+    console.log('📡 Endpoint HTTP:', endpoint);
     
     this.connection = new Connection(endpoint, {
       commitment: 'confirmed' as Commitment,
-      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
+      confirmTransactionInitialTimeout: 60000, // 60 secondes
       wsEndpoint: endpoint.replace('https', 'wss'),
       disableRetryOnRateLimit: false,
     });
 
-    console.log('✅ Solana connection initialized successfully');
+    console.log('✅ Connexion Solana initialisée avec succès');
   }
 
   public static getInstance(): SolanaConnection {
@@ -41,15 +41,15 @@ export class SolanaConnection {
     this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
     const newEndpoint = RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
 
-    console.log('🔄 Switching to new endpoint:', newEndpoint);
+    console.log('🔄 Changement vers le nouvel endpoint:', newEndpoint);
     
     this.connection = new Connection(newEndpoint, {
       commitment: 'confirmed' as Commitment,
-      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
+      confirmTransactionInitialTimeout: 60000,
       wsEndpoint: newEndpoint.replace('https', 'wss'),
       disableRetryOnRateLimit: false,
     });
 
-    console.log('✅ Successfully switched to new endpoint');
+    console.log('✅ Changement d\'endpoint réussi');
   }
 }

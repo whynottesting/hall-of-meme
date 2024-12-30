@@ -4,13 +4,14 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   sendAndConfirmTransaction,
-  Connection
+  Connection,
+  Commitment
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { PhantomProvider } from './types';
 import { toast } from "@/hooks/use-toast";
 
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
 export const createSolanaTransaction = async (
@@ -38,7 +39,7 @@ export const createSolanaTransaction = async (
       throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
-    // Utilisation de 'confirmed' au lieu de 'finalized' pour une confirmation plus rapide
+    // Utiliser 'confirmed' comme niveau d'engagement pour un meilleur équilibre
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     
     const transaction = new Transaction();
@@ -70,47 +71,77 @@ export const sendTransaction = async (
 ): Promise<string> => {
   try {
     console.log("📤 Envoi de la transaction...");
-    const rawTransaction = transaction.serialize();
     
+    // Signer la transaction
+    const signedTransaction = await provider.signTransaction(transaction);
+    const rawTransaction = signedTransaction.serialize();
+    
+    // Envoyer la transaction avec des options optimisées
     const signature = await connection.sendRawTransaction(rawTransaction, {
       skipPreflight: false,
       preflightCommitment: 'confirmed',
-      maxRetries: 5
+      maxRetries: MAX_RETRIES
     });
 
     console.log("⏳ Attente de la confirmation de la transaction:", signature);
 
-    // Utilisation d'une approche plus robuste pour la confirmation
-    const status = await connection.confirmTransaction({
-      signature,
-      blockhash: transaction.recentBlockhash,
-      lastValidBlockHeight: transaction.lastValidBlockHeight
-    }, 'confirmed');
+    // Nouvelle stratégie de confirmation avec retry
+    let confirmed = false;
+    let retries = 0;
 
-    if (status.value.err) {
-      console.error("❌ Erreur lors de la confirmation:", status.value.err);
-      throw new Error("La transaction a échoué lors de la confirmation");
+    while (!confirmed && retries < MAX_RETRIES) {
+      try {
+        const confirmation = await connection.confirmTransaction(
+          {
+            signature,
+            blockhash: transaction.recentBlockhash,
+            lastValidBlockHeight: transaction.lastValidBlockHeight
+          },
+          'confirmed'
+        );
+
+        if (confirmation.value.err) {
+          throw new Error(confirmation.value.err.toString());
+        }
+
+        confirmed = true;
+        console.log("✅ Transaction confirmée!");
+        
+        // Vérification supplémentaire
+        const confirmedTx = await connection.getTransaction(signature, {
+          maxSupportedTransactionVersion: 0,
+          commitment: 'confirmed'
+        });
+
+        if (!confirmedTx) {
+          throw new Error("La transaction n'a pas pu être vérifiée");
+        }
+
+        toast({
+          title: "Transaction réussie",
+          description: "Votre espace a été sécurisé avec succès!",
+        });
+        
+        return signature;
+      } catch (error) {
+        console.warn(`Tentative ${retries + 1}/${MAX_RETRIES} échouée:`, error);
+        retries++;
+        if (retries < MAX_RETRIES) {
+          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        } else {
+          throw error;
+        }
+      }
     }
 
-    // Vérification supplémentaire de la transaction
-    const confirmedTransaction = await connection.getTransaction(signature, {
-      maxSupportedTransactionVersion: 0,
-      commitment: 'confirmed'
-    });
-
-    if (!confirmedTransaction) {
-      throw new Error("La transaction n'a pas pu être vérifiée");
-    }
-
-    console.log("✅ Transaction confirmée!", confirmedTransaction);
+    throw new Error("Nombre maximum de tentatives de confirmation atteint");
+  } catch (error: any) {
+    console.error("❌ Erreur lors de l'envoi ou de la confirmation de la transaction:", error);
     toast({
-      title: "Transaction réussie",
-      description: "Votre espace a été sécurisé avec succès!",
+      title: "Erreur de transaction",
+      description: error.message,
+      variant: "destructive",
     });
-    
-    return signature;
-  } catch (error) {
-    console.error("❌ Erreur lors de l'envoi de la transaction:", error);
     throw error;
   }
 };
