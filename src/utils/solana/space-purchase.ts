@@ -29,9 +29,10 @@ export const handleSpacePurchase = async (
       .from('spaces')
       .select('*')
       .or(
-        `and(x,lt.${spaceData.x + spaceData.width},x.plus.width,gt.${spaceData.x}),` +
-        `and(y,lt.${spaceData.y + spaceData.height},y.plus.height,gt.${spaceData.y})`
-      );
+        `x,lt,${spaceData.x + spaceData.width},and(x_plus_width,gt,${spaceData.x})`,
+        `y,lt,${spaceData.y + spaceData.height},and(y_plus_height,gt,${spaceData.y})`
+      )
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Exclure l'ID par défaut si nécessaire
 
     if (checkError) {
       console.error('Error checking space availability:', checkError);
