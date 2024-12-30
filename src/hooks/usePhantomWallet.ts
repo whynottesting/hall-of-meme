@@ -17,8 +17,24 @@ type WindowWithPhantom = Window & {
 
 const getProvider = (): PhantomProvider | null => {
   if (typeof window === 'undefined') return null;
+  
   const windowWithPhantom = window as WindowWithPhantom;
   const provider = windowWithPhantom.phantom?.solana;
+  
+  // Vérification spécifique pour mobile
+  const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  );
+
+  if (isMobileDevice) {
+    // Sur mobile, si Phantom n'est pas détecté, on redirige vers l'app
+    if (!provider) {
+      const url = window.location.href;
+      window.location.href = `https://phantom.app/ul/browse/${url}`;
+      return null;
+    }
+  }
+
   return provider && provider.isPhantom ? provider : null;
 };
 
@@ -40,7 +56,13 @@ export const usePhantomWallet = () => {
       const provider = getProvider();
       
       if (!provider) {
-        window.open('https://phantom.app/', '_blank');
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+          navigator.userAgent
+        );
+        
+        if (!isMobileDevice) {
+          window.open('https://phantom.app/', '_blank');
+        }
         return;
       }
 
