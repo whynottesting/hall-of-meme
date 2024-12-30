@@ -9,11 +9,9 @@ export class SolanaConnection {
 
   private constructor() {
     const endpoint = RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
-    const wsEndpoint = RPC_CONFIG.WS_ENDPOINTS[this.currentEndpointIndex];
     
     console.log('🔌 Initializing Solana connections...');
     console.log('📡 HTTP Endpoint:', endpoint);
-    console.log('🔄 WebSocket Endpoint:', wsEndpoint);
     
     // Connection principale pour les requêtes HTTP
     this.connection = new Connection(endpoint, {
@@ -21,12 +19,8 @@ export class SolanaConnection {
       disableRetryOnRateLimit: false,
     });
 
-    // Connection WebSocket dédiée
-    this.wsConnection = new Connection(wsEndpoint, {
-      commitment: 'confirmed' as Commitment,
-      wsEndpoint: wsEndpoint,
-      disableRetryOnRateLimit: false,
-    });
+    // Pour WebSocket, on utilise la même connexion
+    this.wsConnection = this.connection;
 
     console.log('✅ Solana connections initialized successfully');
   }
@@ -53,7 +47,6 @@ export class SolanaConnection {
   public async switchToNextEndpoint(): Promise<void> {
     this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
     const newEndpoint = RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
-    const newWsEndpoint = RPC_CONFIG.WS_ENDPOINTS[this.currentEndpointIndex];
 
     console.log('🔄 Switching to new endpoint:', newEndpoint);
     
@@ -62,11 +55,8 @@ export class SolanaConnection {
       disableRetryOnRateLimit: false,
     });
 
-    this.wsConnection = new Connection(newWsEndpoint, {
-      commitment: 'confirmed' as Commitment,
-      wsEndpoint: newWsEndpoint,
-      disableRetryOnRateLimit: false,
-    });
+    // Utiliser la même connexion pour WebSocket
+    this.wsConnection = this.connection;
 
     console.log('✅ Successfully switched to new endpoint');
   }
