@@ -42,6 +42,13 @@ export const useImageUpload = () => {
       
       console.log("🔗 Chemin de stockage:", storagePath);
 
+      // Obtenir l'URL publique immédiatement pour vérification
+      const { data: { publicUrl } } = supabase.storage
+        .from('space-images')
+        .getPublicUrl(storagePath);
+
+      console.log("🌐 URL publique générée:", publicUrl);
+
       toast({
         title: "Image Téléchargée",
         description: "Votre image a été téléchargée avec succès",

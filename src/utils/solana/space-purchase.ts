@@ -25,29 +25,27 @@ export const handleSpacePurchase = async (
     console.log("📦 Données de l'espace:", spaceData);
 
     // Vérifier si l'espace est disponible
-    const { data: existingSpaces, error: checkError } = await supabase
+    const { data: existingSpaces } = await supabase
       .from('spaces')
       .select('*')
-      .or(`x.lt.${spaceData.x + spaceData.width},and(x.gt.${spaceData.x})`);
+      .or(`x.gte.${spaceData.x},x.lte.${spaceData.x + spaceData.width - 1}`);
 
-    if (checkError) {
-      console.error('Error checking space availability:', checkError);
-      throw checkError;
+    if (!existingSpaces) {
+      throw new Error("Erreur lors de la vérification de l'espace");
     }
 
     // Vérification manuelle du chevauchement
-    const hasOverlap = existingSpaces?.some(existingSpace => {
+    const hasOverlap = existingSpaces.some(existingSpace => {
       const newSpaceRight = spaceData.x + spaceData.width;
       const newSpaceBottom = spaceData.y + spaceData.height;
       const existingSpaceRight = existingSpace.x + existingSpace.width;
       const existingSpaceBottom = existingSpace.y + existingSpace.height;
 
-      // Vérifie si les rectangles se chevauchent
       const overlaps = !(
-        spaceData.x >= existingSpaceRight ||  // Nouveau à droite de l'existant
-        newSpaceRight <= existingSpace.x ||    // Nouveau à gauche de l'existant
-        spaceData.y >= existingSpaceBottom ||  // Nouveau en dessous de l'existant
-        newSpaceBottom <= existingSpace.y      // Nouveau au-dessus de l'existant
+        spaceData.x >= existingSpaceRight ||
+        newSpaceRight <= existingSpace.x ||
+        spaceData.y >= existingSpaceBottom ||
+        newSpaceBottom <= existingSpace.y
       );
 
       if (overlaps) {
@@ -81,7 +79,6 @@ export const handleSpacePurchase = async (
 
     console.log("✍️ Transaction créée, demande de signature...");
     
-    // Demander la signature à l'utilisateur via Phantom
     const signedTransaction = await provider.signTransaction(transaction);
     
     if (!signedTransaction) {
@@ -90,13 +87,11 @@ export const handleSpacePurchase = async (
 
     console.log("📤 Transaction signée, envoi en cours...");
 
-    // Envoyer la transaction signée
     const connection = SolanaConnection.getInstance().getConnection();
     const signature = await sendTransaction(connection, signedTransaction, provider);
 
     console.log("💾 Transaction réussie, enregistrement des données...");
 
-    // Enregistrer la transaction dans l'historique
     const { error: transactionError } = await supabase
       .from('transaction_history')
       .insert({
@@ -122,7 +117,6 @@ export const handleSpacePurchase = async (
       price: spaceData.price
     });
 
-    // Enregistrer l'espace acheté
     const { data: newSpace, error: spaceError } = await supabase
       .from('spaces')
       .insert({
@@ -132,7 +126,7 @@ export const handleSpacePurchase = async (
         width: spaceData.width,
         height: spaceData.height,
         url: spaceData.link,
-        image_url: spaceData.imageUrl,
+        image_url: spaceData.imageUrl, // Assurez-vous que l'URL de l'image est bien incluse
         price: spaceData.price
       })
       .select()
@@ -145,13 +139,11 @@ export const handleSpacePurchase = async (
 
     console.log("✅ Espace enregistré avec succès:", newSpace);
 
-    // Recharger immédiatement les données après l'enregistrement
     const { data: updatedSpaces } = await supabase
       .from('spaces')
       .select('*');
 
     if (updatedSpaces) {
-      // Mettre à jour le state avec les nouvelles données
       return { success: true, spaces: updatedSpaces };
     }
 
