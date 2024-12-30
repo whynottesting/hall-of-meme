@@ -1,19 +1,22 @@
-import { Connection, ConnectionConfig, Commitment } from '@solana/web3.js';
+import { Connection, ConnectionConfig } from '@solana/web3.js';
 import { RPC_CONFIG } from './config';
 
 export class SolanaConnection {
   private static instance: SolanaConnection;
-  private currentEndpointIndex: number = 0;
   private connection: Connection;
+  private currentEndpointIndex: number = 0;
 
   private constructor() {
     const config: ConnectionConfig = {
-      commitment: 'confirmed' as Commitment,
+      commitment: 'confirmed',
       confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
+      wsEndpoint: RPC_CONFIG.WS_ENDPOINTS[0],
     };
     
-    console.log("🔗 Initialisation de la connexion avec:", RPC_CONFIG.ENDPOINTS[0]);
+    console.log("🔗 Initialisation de la connexion HTTP avec:", RPC_CONFIG.ENDPOINTS[0]);
+    console.log("🔌 Initialisation de la connexion WebSocket avec:", RPC_CONFIG.WS_ENDPOINTS[0]);
+    
     this.connection = new Connection(RPC_CONFIG.ENDPOINTS[0], config);
   }
 
@@ -28,22 +31,22 @@ export class SolanaConnection {
     return this.connection;
   }
 
-  public async switchToNextEndpoint(): Promise<Connection> {
-    this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
-    const newEndpoint = RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
-    console.log(`🔄 Switching to RPC endpoint: ${newEndpoint}`);
-    
-    const config: ConnectionConfig = {
-      commitment: 'confirmed' as Commitment,
-      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
-      disableRetryOnRateLimit: false,
-    };
-    
-    this.connection = new Connection(newEndpoint, config);
-    return this.connection;
-  }
-
   public getCurrentEndpoint(): string {
     return RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex];
+  }
+
+  public switchToNextEndpoint(): void {
+    this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
+    const config: ConnectionConfig = {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
+      disableRetryOnRateLimit: false,
+      wsEndpoint: RPC_CONFIG.WS_ENDPOINTS[this.currentEndpointIndex],
+    };
+    
+    console.log("🔄 Changement d'endpoint vers:", RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex]);
+    console.log("🔌 Nouvelle connexion WebSocket:", RPC_CONFIG.WS_ENDPOINTS[this.currentEndpointIndex]);
+    
+    this.connection = new Connection(RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex], config);
   }
 }

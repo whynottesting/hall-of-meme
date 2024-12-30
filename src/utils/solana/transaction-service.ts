@@ -3,10 +3,12 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
   Transaction,
-  sendAndConfirmTransaction
+  sendAndConfirmTransaction,
+  Connection
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { PhantomProvider } from './types';
+import { toast } from "@/hooks/use-toast";
 
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 1000;
@@ -53,23 +55,37 @@ export const createSolanaTransaction = async (
 };
 
 export const sendTransaction = async (
-  connection: any,
+  connection: Connection,
   transaction: Transaction,
   provider: PhantomProvider
 ): Promise<string> => {
   try {
+    console.log("📤 Envoi de la transaction...");
     const signature = await connection.sendRawTransaction(
-      transaction.serialize()
+      transaction.serialize(),
+      { skipPreflight: false, maxRetries: 3 }
     );
     
-    const confirmation = await connection.confirmTransaction(signature);
+    console.log("⏳ Attente de la confirmation de la transaction:", signature);
+    const confirmation = await connection.confirmTransaction(
+      signature,
+      'confirmed'
+    );
     
     if (confirmation.value.err) {
+      console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
       throw new Error("La transaction a échoué lors de la confirmation");
     }
     
+    console.log("✅ Transaction confirmée!");
+    toast({
+      title: "Transaction réussie",
+      description: "Votre espace a été sécurisé avec succès!",
+    });
+    
     return signature;
   } catch (error) {
+    console.error("❌ Erreur lors de l'envoi de la transaction:", error);
     throw error;
   }
 };
