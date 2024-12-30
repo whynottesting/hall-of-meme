@@ -4,16 +4,21 @@ import { RPC_CONFIG } from './config';
 import { toast } from "@/hooks/use-toast";
 
 export const checkBalance = async (walletAddress: string): Promise<number> => {
+  console.log("🔄 Vérification du solde avec l'endpoint:", SolanaConnection.getInstance().getCurrentEndpoint());
   const solanaConnection = SolanaConnection.getInstance();
   const pubKey = new PublicKey(walletAddress);
   
   for (let attempt = 1; attempt <= RPC_CONFIG.MAX_RETRIES; attempt++) {
     try {
       const connection = solanaConnection.getConnection();
+      console.log("📡 Utilisation de l'endpoint:", connection.rpcEndpoint);
       const balance = await connection.getBalance(pubKey, 'confirmed');
       const balanceInSol = balance / LAMPORTS_PER_SOL;
+      console.log("💰 Solde trouvé:", balanceInSol, "SOL");
       return balanceInSol;
     } catch (error: any) {
+      console.error(`❌ Tentative ${attempt} échouée:`, error);
+      
       if (attempt === RPC_CONFIG.MAX_RETRIES) {
         toast({
           title: "Erreur de connexion",

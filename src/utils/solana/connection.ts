@@ -12,6 +12,8 @@ export class SolanaConnection {
       confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
     };
+    
+    console.log("🔗 Initialisation de la connexion avec:", RPC_CONFIG.ENDPOINTS[0]);
     this.connection = new Connection(RPC_CONFIG.ENDPOINTS[0], config);
   }
 
