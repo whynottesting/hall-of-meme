@@ -46,9 +46,10 @@ export const usePhantomWallet = () => {
       
       if (!provider) {
         if (isMobileDevice) {
-          // Sur mobile, si Phantom n'est pas détecté, on redirige vers la page de téléchargement
-          const currentUrl = window.location.href;
-          window.location.href = `https://phantom.app/ul/browse/${currentUrl}`;
+          // Sur mobile, on utilise le deeplink Phantom
+          const currentUrl = encodeURIComponent(window.location.href);
+          const ref = encodeURIComponent(window.location.origin);
+          window.location.href = `https://phantom.app/ul/browse/${currentUrl}?ref=${ref}`;
           return;
         } else {
           // Sur desktop, on ouvre la page de téléchargement dans un nouvel onglet
