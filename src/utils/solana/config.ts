@@ -1,8 +1,9 @@
 export const RPC_CONFIG = {
   ENDPOINTS: [
-    "https://api.devnet.solana.com",
-    "https://devnet.helius-rpc.com/?api-key=1d24dc75-e291-4d08-a152-24548e66cc0e",
-    "https://mango.devnet.rpcpool.com"
+    "https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo",
+    // Gardons un fallback avec un endpoint public en cas de problème avec Alchemy
+    "https://api.mainnet-beta.solana.com",
+    "https://solana-api.projectserum.com"
   ],
   MAX_RETRIES: 3,
   INITIAL_BACKOFF: 1000,

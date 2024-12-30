@@ -42,7 +42,7 @@ serve(async (req) => {
     }
 
     // Create Solana transaction
-    const connection = new Connection('https://api.mainnet-beta.solana.com')
+    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo')
     const buyerPubkey = new PublicKey(walletAddress)
     const receiverPubkey = new PublicKey('DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs')
     
