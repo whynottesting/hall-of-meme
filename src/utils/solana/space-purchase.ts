@@ -24,13 +24,19 @@ export const handleSpacePurchase = async (
     console.log("🚀 Démarrage de l'achat d'espace...");
     console.log("📦 Données de l'espace:", spaceData);
 
-    // Vérifier si l'espace est disponible
+    // Vérifier si l'espace est disponible avec une logique de chevauchement correcte
     const { data: existingSpaces } = await supabase
       .from('spaces')
       .select('*')
-      .or(`and(x.gte.${spaceData.x},x.lt.${spaceData.x + spaceData.width}),and(y.gte.${spaceData.y},y.lt.${spaceData.y + spaceData.height})`);
+      .or(
+        `and(x,lt.${spaceData.x + spaceData.width},x.plus.width,gt.${spaceData.x}),` +
+        `and(y,lt.${spaceData.y + spaceData.height},y.plus.height,gt.${spaceData.y})`
+      );
+
+    console.log("🔍 Espaces existants trouvés:", existingSpaces);
 
     if (existingSpaces && existingSpaces.length > 0) {
+      console.log("❌ Espace déjà occupé:", existingSpaces);
       toast({
         title: "Espace déjà occupé",
         description: "Cet espace a déjà été acheté. Veuillez en choisir un autre.",
