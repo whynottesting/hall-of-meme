@@ -10,7 +10,6 @@ export const useSpaces = () => {
   const { handleImageUpload } = useImageUpload();
   const { data: spaces, isLoading } = useSupabaseQuery('spaces');
 
-  // Charger les espaces au démarrage et quand spaces change
   useEffect(() => {
     console.log("🔄 Chargement initial des espaces:", spaces);
     if (spaces) {
@@ -39,13 +38,22 @@ export const useSpaces = () => {
     });
   }, [ownedSpaces]);
 
+  const handleSpaceImageUpload = async (file: File) => {
+    const imageUrl = await handleImageUpload(file);
+    if (imageUrl) {
+      console.log("🖼️ URL de l'image après upload:", imageUrl);
+      spaceSelection.handleInputChange('imageUrl', imageUrl);
+    }
+    return imageUrl;
+  };
+
   return {
     selectedSpace: spaceSelection.selectedSpace,
     ownedSpaces,
     setOwnedSpaces,
     handleSpaceSelection: spaceSelection.handleSpaceSelection,
     handleInputChange: spaceSelection.handleInputChange,
-    handleImageUpload,
+    handleImageUpload: handleSpaceImageUpload,
     loadOwnedSpaces,
     checkSpaceOverlap,
     isLoading
