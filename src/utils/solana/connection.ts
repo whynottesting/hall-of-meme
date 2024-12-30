@@ -15,7 +15,8 @@ export class SolanaConnection {
     
     // Connection principale pour les requêtes HTTP
     this.connection = new Connection(endpoint, {
-      commitment: 'confirmed' as Commitment,
+      commitment: 'processed' as Commitment,
+      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
     });
 
@@ -51,7 +52,8 @@ export class SolanaConnection {
     console.log('🔄 Switching to new endpoint:', newEndpoint);
     
     this.connection = new Connection(newEndpoint, {
-      commitment: 'confirmed' as Commitment,
+      commitment: 'processed' as Commitment,
+      confirmTransactionInitialTimeout: RPC_CONFIG.DEFAULT_TIMEOUT,
       disableRetryOnRateLimit: false,
     });
 

@@ -38,11 +38,13 @@ export const createSolanaTransaction = async (
       throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
-    const transaction = new Transaction();
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = fromPubkey;
+    const transaction = new Transaction({
+      feePayer: fromPubkey,
+      blockhash,
+      lastValidBlockHeight,
+    });
 
     transaction.add(
       SystemProgram.transfer({
@@ -70,14 +72,20 @@ export const sendTransaction = async (
     console.log("📤 Envoi de la transaction...");
     const signature = await connection.sendRawTransaction(
       transaction.serialize(),
-      { skipPreflight: false, maxRetries: 3 }
+      { 
+        skipPreflight: false,
+        maxRetries: 3,
+        preflightCommitment: 'processed'
+      }
     );
     
     console.log("⏳ Attente de la confirmation de la transaction:", signature);
-    const confirmation = await connection.confirmTransaction(
+    
+    const confirmation = await connection.confirmTransaction({
       signature,
-      'confirmed'
-    );
+      blockhash: transaction.blockhash,
+      lastValidBlockHeight: transaction.lastValidBlockHeight,
+    }, 'processed');
     
     if (confirmation.value.err) {
       console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
