@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import EmptyCell from './grid/EmptyCell';
 import OwnedCell from './grid/OwnedCell';
@@ -17,51 +17,50 @@ interface ProcessedCell extends Space {
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
 
-  useEffect(() => {
-    console.log("🔄 Mise à jour des cellules possédées:", ownedCells);
-    
-    const processImages = async () => {
-      try {
-        if (!ownedCells || ownedCells.length === 0) {
-          console.log("❌ Aucune cellule à traiter");
-          setProcessedCells([]);
-          return;
-        }
-
-        const processed = await Promise.all(
-          ownedCells.map(async (cell) => {
-            console.log("📸 Traitement de la cellule:", cell);
-            let imageUrl = '';
-            
-            if (cell.image_url) {
-              console.log("🖼️ URL de l'image trouvée:", cell.image_url);
-              const { data: { publicUrl } } = supabase.storage
-                .from('space-images')
-                .getPublicUrl(cell.image_url);
-              
-              imageUrl = publicUrl;
-              console.log("✅ URL publique générée:", imageUrl);
-            }
-
-            return {
-              ...cell,
-              processedImageUrl: imageUrl
-            };
-          })
-        );
-        
-        console.log("✅ Cellules traitées avec leurs URLs d'images:", processed);
-        setProcessedCells(processed);
-      } catch (error) {
-        console.error('Erreur lors du traitement des images:', error);
+  const processImages = useCallback(async () => {
+    try {
+      if (!ownedCells || ownedCells.length === 0) {
+        console.log("❌ Aucune cellule à traiter");
         setProcessedCells([]);
+        return;
       }
-    };
 
-    processImages();
+      const processed = await Promise.all(
+        ownedCells.map(async (cell) => {
+          console.log("📸 Traitement de la cellule:", cell);
+          let imageUrl = '';
+          
+          if (cell.image_url) {
+            console.log("🖼️ URL de l'image trouvée:", cell.image_url);
+            const { data: { publicUrl } } = supabase.storage
+              .from('space-images')
+              .getPublicUrl(cell.image_url);
+            
+            imageUrl = publicUrl;
+            console.log("✅ URL publique générée:", imageUrl);
+          }
+
+          return {
+            ...cell,
+            processedImageUrl: imageUrl
+          };
+        })
+      );
+      
+      console.log("✅ Cellules traitées avec leurs URLs d'images:", processed);
+      setProcessedCells(processed);
+    } catch (error) {
+      console.error('Erreur lors du traitement des images:', error);
+      setProcessedCells([]);
+    }
   }, [ownedCells]);
 
-  const isSelected = (x: number, y: number) => {
+  useEffect(() => {
+    console.log("🔄 Mise à jour des cellules possédées:", ownedCells);
+    processImages();
+  }, [processImages]);
+
+  const isSelected = useCallback((x: number, y: number) => {
     if (!selectedCells) return false;
     return (
       x >= selectedCells.x &&
@@ -69,17 +68,17 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       y >= selectedCells.y &&
       y < selectedCells.y + selectedCells.height
     );
-  };
+  }, [selectedCells]);
 
-  const handleCellClick = (x: number, y: number, cell?: ProcessedCell) => {
+  const handleCellClick = useCallback((x: number, y: number, cell?: ProcessedCell) => {
     if (cell?.url) {
       window.open(cell.url, '_blank', 'noopener,noreferrer');
     } else {
       onCellClick(x, y);
     }
-  };
+  }, [onCellClick]);
 
-  const renderGrid = () => {
+  const renderGrid = useCallback(() => {
     const grid = [];
     const occupiedPositions = new Set();
 
@@ -138,7 +137,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
 
     return grid;
-  };
+  }, [processedCells, isSelected, handleCellClick]);
 
   return (
     <div 
