@@ -8,6 +8,7 @@ export class SolanaConnection {
   private wsRetryCount: number = 0;
   private readonly MAX_WS_RETRIES = 3;
   private wsSubscription: number | null = null;
+  private wsReconnectTimeout: NodeJS.Timeout | null = null;
 
   private constructor() {
     this.initializeConnection();
@@ -19,31 +20,27 @@ export class SolanaConnection {
     
     this.connection = new Connection(endpoint, {
       commitment: 'confirmed' as Commitment,
-      wsEndpoint: endpoint.replace('https', 'wss'),
-      confirmTransactionInitialTimeout: 60000,
       disableRetryOnRateLimit: false,
+      confirmTransactionInitialTimeout: 60000,
     });
 
-    // Setup WebSocket monitoring
-    this.setupWebSocketMonitoring();
+    // Setup WebSocket monitoring with delay
+    setTimeout(() => {
+      this.setupWebSocketMonitoring();
+    }, 1000);
     
     console.log('✅ Connexion Solana initialisée');
   }
 
   private setupWebSocketMonitoring() {
     try {
-      // Unsubscribe from previous subscription if it exists
-      if (this.wsSubscription !== null) {
-        this.connection.removeOnLogsListener(this.wsSubscription);
-        this.wsSubscription = null;
-      }
+      // Cleanup previous subscription and timeout
+      this.cleanupWebSocket();
 
-      // Create new subscription
-      this.wsSubscription = this.connection.onLogs(
-        'all',
-        (logs) => {
-          console.log('📡 WebSocket logs received:', logs);
-        },
+      // Create new subscription with error handling
+      this.wsSubscription = this.connection.onAccountChange(
+        this.connection.getProgramAccounts('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA').then(accounts => accounts[0]?.pubkey),
+        () => {},
         'confirmed'
       );
 
@@ -54,11 +51,33 @@ export class SolanaConnection {
     }
   }
 
+  private cleanupWebSocket() {
+    if (this.wsSubscription !== null) {
+      try {
+        this.connection.removeAccountChangeListener(this.wsSubscription);
+      } catch (error) {
+        console.warn('Warning: Error cleaning up WebSocket:', error);
+      }
+      this.wsSubscription = null;
+    }
+
+    if (this.wsReconnectTimeout) {
+      clearTimeout(this.wsReconnectTimeout);
+      this.wsReconnectTimeout = null;
+    }
+  }
+
   private async handleWebSocketError() {
     if (this.wsRetryCount < this.MAX_WS_RETRIES) {
       this.wsRetryCount++;
       console.log(`🔄 Tentative de reconnexion WebSocket ${this.wsRetryCount}/${this.MAX_WS_RETRIES}`);
-      await this.switchToNextEndpoint();
+      
+      // Exponential backoff for retries
+      const delay = Math.min(1000 * Math.pow(2, this.wsRetryCount - 1), 10000);
+      
+      this.wsReconnectTimeout = setTimeout(() => {
+        this.switchToNextEndpoint();
+      }, delay);
     } else {
       console.error('❌ Nombre maximum de tentatives de reconnexion WebSocket atteint');
       this.wsRetryCount = 0;
@@ -81,12 +100,7 @@ export class SolanaConnection {
   }
 
   public async switchToNextEndpoint(): Promise<void> {
-    // Clean up existing WebSocket subscription
-    if (this.wsSubscription !== null) {
-      this.connection.removeOnLogsListener(this.wsSubscription);
-      this.wsSubscription = null;
-    }
-
+    this.cleanupWebSocket();
     this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
     console.log('🔄 Changement vers le nouvel endpoint:', RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex]);
     this.initializeConnection();
