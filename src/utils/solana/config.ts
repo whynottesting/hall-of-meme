@@ -1,6 +1,8 @@
 export const RPC_CONFIG = {
   ENDPOINTS: [
-    'https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo'
+    'https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo',
+    'https://api.mainnet-beta.solana.com',
+    'https://solana-api.projectserum.com'
   ],
   MAX_RETRIES: 3,
   DEFAULT_TIMEOUT: 90000,

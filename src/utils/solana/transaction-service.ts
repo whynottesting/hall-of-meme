@@ -3,7 +3,6 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
   Transaction,
-  sendAndConfirmTransaction,
   Connection,
   Commitment
 } from '@solana/web3.js';
@@ -12,7 +11,8 @@ import { PhantomProvider } from './types';
 import { toast } from "@/hooks/use-toast";
 
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+const RETRY_DELAY = 2000; // 2 secondes
+const EXTRA_BLOCKS = 150; // Augmentation de la marge de blocs valides
 
 export const createSolanaTransaction = async (
   provider: PhantomProvider,
@@ -36,16 +36,16 @@ export const createSolanaTransaction = async (
     console.log("💳 Balance du wallet:", balance / LAMPORTS_PER_SOL, "SOL");
     
     if (balance < lamports) {
-      throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
+      throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL`);
     }
 
-    // Utiliser 'confirmed' comme niveau d'engagement pour un meilleur équilibre
     const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     
     const transaction = new Transaction();
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
-    transaction.lastValidBlockHeight = lastValidBlockHeight;
+    // Augmentation de la durée de validité de la transaction
+    transaction.lastValidBlockHeight = lastValidBlockHeight + EXTRA_BLOCKS;
 
     transaction.add(
       SystemProgram.transfer({
@@ -67,76 +67,67 @@ export const createSolanaTransaction = async (
 export const sendTransaction = async (
   connection: Connection,
   transaction: Transaction,
-  provider: PhantomProvider
+  provider: PhantomProvider,
+  retryCount: number = 0
 ): Promise<string> => {
   try {
-    console.log("📤 Envoi de la transaction...");
+    console.log(`📤 Envoi de la transaction (tentative ${retryCount + 1}/${MAX_RETRIES})...`);
     
-    // Signer la transaction
     const signedTransaction = await provider.signTransaction(transaction);
     const rawTransaction = signedTransaction.serialize();
     
-    // Envoyer la transaction avec des options optimisées
     const signature = await connection.sendRawTransaction(rawTransaction, {
       skipPreflight: false,
       preflightCommitment: 'confirmed',
-      maxRetries: MAX_RETRIES
+      maxRetries: 3
     });
 
-    console.log("⏳ Attente de la confirmation de la transaction:", signature);
+    console.log("🔍 Attente de la confirmation...");
 
-    // Nouvelle stratégie de confirmation avec retry
-    let confirmed = false;
-    let retries = 0;
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash: transaction.recentBlockhash,
+      lastValidBlockHeight: transaction.lastValidBlockHeight
+    }, 'confirmed');
 
-    while (!confirmed && retries < MAX_RETRIES) {
-      try {
-        const confirmation = await connection.confirmTransaction(
-          {
-            signature,
-            blockhash: transaction.recentBlockhash,
-            lastValidBlockHeight: transaction.lastValidBlockHeight
-          },
-          'confirmed'
-        );
-
-        if (confirmation.value.err) {
-          throw new Error(confirmation.value.err.toString());
-        }
-
-        confirmed = true;
-        console.log("✅ Transaction confirmée!");
-        
-        // Vérification supplémentaire
-        const confirmedTx = await connection.getTransaction(signature, {
-          maxSupportedTransactionVersion: 0,
-          commitment: 'confirmed'
-        });
-
-        if (!confirmedTx) {
-          throw new Error("La transaction n'a pas pu être vérifiée");
-        }
-
-        toast({
-          title: "Transaction réussie",
-          description: "Votre espace a été sécurisé avec succès!",
-        });
-        
-        return signature;
-      } catch (error) {
-        console.warn(`Tentative ${retries + 1}/${MAX_RETRIES} échouée:`, error);
-        retries++;
-        if (retries < MAX_RETRIES) {
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-        } else {
-          throw error;
-        }
-      }
+    if (confirmation.value.err) {
+      throw new Error(confirmation.value.err.toString());
     }
 
-    throw new Error("Nombre maximum de tentatives de confirmation atteint");
+    // Vérification supplémentaire
+    const confirmedTx = await connection.getTransaction(signature, {
+      maxSupportedTransactionVersion: 0,
+      commitment: 'confirmed'
+    });
+
+    if (!confirmedTx) {
+      throw new Error("La transaction n'a pas pu être vérifiée");
+    }
+
+    console.log("✅ Transaction confirmée!");
+    toast({
+      title: "Transaction réussie",
+      description: "Votre espace a été sécurisé avec succès!",
+    });
+    
+    return signature;
+
   } catch (error: any) {
-    console.error("❌ Erreur lors de l'envoi ou de la confirmation de la transaction:", error);
+    console.error("❌ Erreur de transaction:", error);
+
+    if (retryCount < MAX_RETRIES - 1 && 
+        (error.message.includes('blockhash') || error.message.includes('expired'))) {
+      console.log(`🔄 Nouvelle tentative dans ${RETRY_DELAY/1000} secondes...`);
+      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      
+      // Mise à jour du blockhash pour la nouvelle tentative
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+      transaction.recentBlockhash = blockhash;
+      transaction.lastValidBlockHeight = lastValidBlockHeight + EXTRA_BLOCKS;
+      
+      return sendTransaction(connection, transaction, provider, retryCount + 1);
+    }
+
     toast({
       title: "Erreur de transaction",
       description: error.message,
