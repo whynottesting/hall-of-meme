@@ -24,15 +24,11 @@ export const handleSpacePurchase = async (
     console.log("🚀 Démarrage de l'achat d'espace...");
     console.log("📦 Données de l'espace:", spaceData);
 
-    // Vérifier si l'espace est disponible avec une logique de chevauchement correcte
+    // Vérifier si l'espace est disponible
     const { data: existingSpaces, error: checkError } = await supabase
       .from('spaces')
       .select('*')
-      .or(
-        `x,lt,${spaceData.x + spaceData.width},and(x_plus_width,gt,${spaceData.x})`,
-        `y,lt,${spaceData.y + spaceData.height},and(y_plus_height,gt,${spaceData.y})`
-      )
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // Exclure l'ID par défaut si nécessaire
+      .or(`x.lt.${spaceData.x + spaceData.width},and(x.gt.${spaceData.x})`);
 
     if (checkError) {
       console.error('Error checking space availability:', checkError);
