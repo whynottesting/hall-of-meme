@@ -25,7 +25,7 @@ export const handleSpacePurchase = async (
     console.log("📦 Données de l'espace:", spaceData);
 
     // Vérifier si l'espace est disponible avec une logique de chevauchement correcte
-    const { data: existingSpaces } = await supabase
+    const { data: existingSpaces, error: checkError } = await supabase
       .from('spaces')
       .select('*')
       .or(
@@ -33,13 +33,38 @@ export const handleSpacePurchase = async (
         `and(y,lt.${spaceData.y + spaceData.height},y.plus.height,gt.${spaceData.y})`
       );
 
-    console.log("🔍 Espaces existants trouvés:", existingSpaces);
+    if (checkError) {
+      console.error('Error checking space availability:', checkError);
+      throw checkError;
+    }
 
-    if (existingSpaces && existingSpaces.length > 0) {
-      console.log("❌ Espace déjà occupé:", existingSpaces);
+    // Vérification manuelle du chevauchement
+    const hasOverlap = existingSpaces?.some(existingSpace => {
+      const newSpaceRight = spaceData.x + spaceData.width;
+      const newSpaceBottom = spaceData.y + spaceData.height;
+      const existingSpaceRight = existingSpace.x + existingSpace.width;
+      const existingSpaceBottom = existingSpace.y + existingSpace.height;
+
+      // Vérifie si les rectangles se chevauchent
+      const overlaps = !(
+        spaceData.x >= existingSpaceRight ||  // Nouveau à droite de l'existant
+        newSpaceRight <= existingSpace.x ||    // Nouveau à gauche de l'existant
+        spaceData.y >= existingSpaceBottom ||  // Nouveau en dessous de l'existant
+        newSpaceBottom <= existingSpace.y      // Nouveau au-dessus de l'existant
+      );
+
+      if (overlaps) {
+        console.log("🚫 Chevauchement détecté avec l'espace:", existingSpace);
+      }
+
+      return overlaps;
+    });
+
+    if (hasOverlap) {
+      console.log("❌ Espace déjà occupé");
       toast({
         title: "Espace déjà occupé",
-        description: "Cet espace a déjà été acheté. Veuillez en choisir un autre.",
+        description: "Cet espace chevauche un espace déjà acheté. Veuillez en choisir un autre.",
         variant: "destructive",
       });
       return false;
