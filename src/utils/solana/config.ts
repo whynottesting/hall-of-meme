@@ -9,6 +9,7 @@ export const RPC_CONFIG = {
   ],
   MAX_RETRIES: 3,
   DEFAULT_TIMEOUT: 90000,
+  INITIAL_BACKOFF: 1000, // Délai initial de 1 seconde entre les tentatives
 };
 
 export const RECIPIENT_ADDRESS = 'DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs';
