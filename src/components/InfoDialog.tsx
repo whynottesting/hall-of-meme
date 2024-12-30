@@ -51,6 +51,11 @@ const InfoDialog = () => {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <h3 className="font-bold">4. Three hidden surprises await!</h3>
+            <p>Will you uncover the secret squares?</p>
+          </div>
+
           <div className="text-center mt-6">
             <a 
               href="https://x.com/HallOfMe_me" 
