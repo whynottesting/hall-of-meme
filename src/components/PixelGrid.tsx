@@ -34,21 +34,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             let imageUrl = cell.image_url || '';
             
             if (imageUrl) {
-              // Si l'URL est une URL complète de Supabase Storage, on la garde telle quelle
-              if (imageUrl.includes('storage.googleapis.com')) {
-                console.log("✅ URL Supabase déjà formatée:", imageUrl);
-              }
-              // Si l'URL commence par public/lovable-uploads/, on la convertit en URL publique Supabase
-              else if (imageUrl.startsWith('public/lovable-uploads/')) {
-                console.log("🔄 Conversion de l'URL de l'image:", imageUrl);
-                const cleanPath = imageUrl.replace('public/lovable-uploads/', '');
-                const { data: { publicUrl } } = supabase.storage
-                  .from('space-images')
-                  .getPublicUrl(cleanPath);
-                
-                imageUrl = publicUrl;
-                console.log("✅ URL publique générée:", imageUrl);
-              }
+              console.log("🖼️ URL de l'image trouvée:", imageUrl);
+              const { data: { publicUrl } } = supabase.storage
+                .from('space-images')
+                .getPublicUrl(imageUrl.replace('public/lovable-uploads/', ''));
+              
+              imageUrl = publicUrl;
+              console.log("✅ URL publique générée:", imageUrl);
             }
 
             return {

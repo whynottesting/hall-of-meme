@@ -21,30 +21,35 @@ export const useImageUpload = () => {
         throw new Error('Le fichier doit être une image');
       }
 
+      console.log("📤 Début de l'upload de l'image...");
+
       const { data, error: uploadError } = await supabase.storage
         .from('space-images')
-        .upload(fileName, file, {
+        .upload(`public/lovable-uploads/${fileName}`, file, {
           cacheControl: '3600',
           upsert: false
         });
 
       if (uploadError) {
+        console.error("❌ Erreur d'upload:", uploadError);
         throw uploadError;
       }
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('space-images')
-        .getPublicUrl(fileName);
 
-      const finalUrl = `${publicUrl}?t=${Date.now()}`;
+      console.log("✅ Image uploadée avec succès:", data);
+      
+      // Construire le chemin pour la base de données
+      const storagePath = `public/lovable-uploads/${fileName}`;
+      
+      console.log("🔗 Chemin de stockage:", storagePath);
 
       toast({
         title: "Image Téléchargée",
         description: "Votre image a été téléchargée avec succès",
       });
 
-      return finalUrl;
+      return storagePath;
     } catch (error) {
+      console.error("❌ Erreur lors de l'upload:", error);
       toast({
         title: "Erreur",
         description: "Impossible de télécharger l'image",
