@@ -25,7 +25,7 @@ export const useImageUpload = () => {
 
       const { data, error: uploadError } = await supabase.storage
         .from('space-images')
-        .upload(`public/lovable-uploads/${fileName}`, file, {
+        .upload(`lovable-uploads/${fileName}`, file, {
           cacheControl: '3600',
           upsert: false
         });
@@ -37,20 +37,16 @@ export const useImageUpload = () => {
 
       console.log("✅ Image uploadée avec succès:", data);
       
-      // Obtenir l'URL publique
-      const { data: { publicUrl } } = supabase.storage
-        .from('space-images')
-        .getPublicUrl(`public/lovable-uploads/${fileName}`);
-
-      console.log("🌐 URL publique générée:", publicUrl);
+      // Stocker uniquement le chemin relatif dans la base de données
+      const storagePath = `lovable-uploads/${fileName}`;
+      console.log("📂 Chemin de stockage:", storagePath);
 
       toast({
         title: "Image Téléchargée",
         description: "Votre image a été téléchargée avec succès",
       });
 
-      // Retourner directement l'URL publique au lieu du chemin de stockage
-      return publicUrl;
+      return storagePath;
     } catch (error) {
       console.error("❌ Erreur lors de l'upload:", error);
       toast({

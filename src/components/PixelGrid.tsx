@@ -31,13 +31,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
             console.log("📸 Traitement de la cellule:", cell);
-            let imageUrl = cell.image_url || '';
+            let imageUrl = '';
             
-            if (imageUrl) {
-              console.log("🖼️ URL de l'image trouvée:", imageUrl);
+            if (cell.image_url) {
+              console.log("🖼️ URL de l'image trouvée:", cell.image_url);
               const { data: { publicUrl } } = supabase.storage
                 .from('space-images')
-                .getPublicUrl(imageUrl.replace('public/lovable-uploads/', ''));
+                .getPublicUrl(cell.image_url);
               
               imageUrl = publicUrl;
               console.log("✅ URL publique générée:", imageUrl);
