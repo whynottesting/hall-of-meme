@@ -7,6 +7,7 @@ export class SolanaConnection {
   private currentEndpointIndex: number = 0;
   private wsRetryCount: number = 0;
   private readonly MAX_WS_RETRIES = 3;
+  private wsSubscription: number | null = null;
 
   private constructor() {
     this.initializeConnection();
@@ -23,15 +24,34 @@ export class SolanaConnection {
       disableRetryOnRateLimit: false,
     });
 
-    // Gestion des erreurs WebSocket
-    this.connection.onLogs('all', () => {}, 'confirmed').subscribe({
-      error: (error) => {
-        console.error('❌ Erreur WebSocket:', error);
-        this.handleWebSocketError();
-      }
-    });
-
+    // Setup WebSocket monitoring
+    this.setupWebSocketMonitoring();
+    
     console.log('✅ Connexion Solana initialisée');
+  }
+
+  private setupWebSocketMonitoring() {
+    try {
+      // Unsubscribe from previous subscription if it exists
+      if (this.wsSubscription !== null) {
+        this.connection.removeOnLogsListener(this.wsSubscription);
+        this.wsSubscription = null;
+      }
+
+      // Create new subscription
+      this.wsSubscription = this.connection.onLogs(
+        'all',
+        (logs) => {
+          console.log('📡 WebSocket logs received:', logs);
+        },
+        'confirmed'
+      );
+
+      console.log('✅ WebSocket monitoring setup complete');
+    } catch (error) {
+      console.error('❌ Error setting up WebSocket monitoring:', error);
+      this.handleWebSocketError();
+    }
   }
 
   private async handleWebSocketError() {
@@ -61,6 +81,12 @@ export class SolanaConnection {
   }
 
   public async switchToNextEndpoint(): Promise<void> {
+    // Clean up existing WebSocket subscription
+    if (this.wsSubscription !== null) {
+      this.connection.removeOnLogsListener(this.wsSubscription);
+      this.wsSubscription = null;
+    }
+
     this.currentEndpointIndex = (this.currentEndpointIndex + 1) % RPC_CONFIG.ENDPOINTS.length;
     console.log('🔄 Changement vers le nouvel endpoint:', RPC_CONFIG.ENDPOINTS[this.currentEndpointIndex]);
     this.initializeConnection();
