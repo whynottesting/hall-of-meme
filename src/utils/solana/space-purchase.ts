@@ -126,7 +126,7 @@ export const handleSpacePurchase = async (
         width: spaceData.width,
         height: spaceData.height,
         url: spaceData.link,
-        image_url: spaceData.imageUrl, // Assurez-vous que l'URL de l'image est bien incluse
+        image_url: spaceData.imageUrl,
         price: spaceData.price
       })
       .select()

@@ -37,15 +37,10 @@ export const useImageUpload = () => {
 
       console.log("✅ Image uploadée avec succès:", data);
       
-      // Construire le chemin pour la base de données
-      const storagePath = `public/lovable-uploads/${fileName}`;
-      
-      console.log("🔗 Chemin de stockage:", storagePath);
-
-      // Obtenir l'URL publique immédiatement pour vérification
+      // Obtenir l'URL publique
       const { data: { publicUrl } } = supabase.storage
         .from('space-images')
-        .getPublicUrl(storagePath);
+        .getPublicUrl(`public/lovable-uploads/${fileName}`);
 
       console.log("🌐 URL publique générée:", publicUrl);
 
@@ -54,7 +49,8 @@ export const useImageUpload = () => {
         description: "Votre image a été téléchargée avec succès",
       });
 
-      return storagePath;
+      // Retourner directement l'URL publique au lieu du chemin de stockage
+      return publicUrl;
     } catch (error) {
       console.error("❌ Erreur lors de l'upload:", error);
       toast({
