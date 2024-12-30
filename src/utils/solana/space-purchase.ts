@@ -23,6 +23,7 @@ export const handleSpacePurchase = async (
 
     console.log("🚀 Démarrage de l'achat d'espace...");
     console.log("📦 Données de l'espace:", spaceData);
+    console.log("💰 Prix total:", spaceData.price, "SOL");
 
     // Vérifier si l'espace est disponible
     const { data: existingSpaces } = await supabase
@@ -65,12 +66,15 @@ export const handleSpacePurchase = async (
       return false;
     }
 
-    // Créer et signer la transaction
-    const lamports = Math.floor(spaceData.price * 1000000000);
+    // Créer et signer la transaction avec le montant total correct
+    // Le prix est déjà en SOL, nous devons le convertir en lamports (1 SOL = 1_000_000_000 lamports)
+    const totalPriceInLamports = Math.floor(spaceData.price * 1_000_000_000);
+    console.log("💰 Prix en lamports:", totalPriceInLamports);
+
     const transaction = await createSolanaTransaction(
       provider,
       "DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs",
-      lamports
+      totalPriceInLamports
     );
 
     if (!transaction) {
