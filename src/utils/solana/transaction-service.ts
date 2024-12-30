@@ -25,10 +25,15 @@ export const createSolanaTransaction = async (
       throw new Error("Wallet non connecté");
     }
     
+    console.log("📝 Création de la transaction...");
+    console.log("💰 Montant:", lamports / LAMPORTS_PER_SOL, "SOL");
+    
     const fromPubkey = provider.publicKey;
     const toPubkey = new PublicKey(recipientAddress);
     
     const balance = await connection.getBalance(fromPubkey);
+    console.log("💳 Balance du wallet:", balance / LAMPORTS_PER_SOL, "SOL");
+    
     if (balance < lamports) {
       throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
     }
@@ -47,9 +52,11 @@ export const createSolanaTransaction = async (
       })
     );
 
+    console.log("✅ Transaction créée avec succès");
     return transaction;
 
   } catch (error: any) {
+    console.error("❌ Erreur lors de la création de la transaction:", error);
     throw error;
   }
 };
