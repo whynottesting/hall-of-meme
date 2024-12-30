@@ -1,4 +1,4 @@
-import { Connection, Commitment } from '@solana/web3.js';
+import { Connection, Commitment, PublicKey } from '@solana/web3.js';
 import { RPC_CONFIG } from './config';
 
 export class SolanaConnection {
@@ -32,15 +32,22 @@ export class SolanaConnection {
     console.log('✅ Connexion Solana initialisée');
   }
 
-  private setupWebSocketMonitoring() {
+  private async setupWebSocketMonitoring() {
     try {
       // Cleanup previous subscription and timeout
       this.cleanupWebSocket();
 
       // Create new subscription with error handling
-      this.wsSubscription = this.connection.onAccountChange(
-        this.connection.getProgramAccounts('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA').then(accounts => accounts[0]?.pubkey),
-        () => {},
+      // Utilisation d'un token SPL connu pour le monitoring
+      const tokenProgramId = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+      
+      // On s'abonne aux changements du programme token
+      this.wsSubscription = this.connection.onProgramAccountChange(
+        tokenProgramId,
+        () => {
+          // On peut laisser le callback vide car on utilise juste
+          // cette souscription pour maintenir la connexion active
+        },
         'confirmed'
       );
 
@@ -54,7 +61,7 @@ export class SolanaConnection {
   private cleanupWebSocket() {
     if (this.wsSubscription !== null) {
       try {
-        this.connection.removeAccountChangeListener(this.wsSubscription);
+        this.connection.removeProgramAccountChangeListener(this.wsSubscription);
       } catch (error) {
         console.warn('Warning: Error cleaning up WebSocket:', error);
       }
