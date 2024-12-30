@@ -38,7 +38,8 @@ export const createSolanaTransaction = async (
       throw new Error(`Solde insuffisant. Nécessaire: ${lamports / LAMPORTS_PER_SOL} SOL, Disponible: ${balance / LAMPORTS_PER_SOL} SOL`);
     }
 
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+    // Utilisation de 'confirmed' au lieu de 'finalized' pour une confirmation plus rapide
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
     
     const transaction = new Transaction();
     transaction.recentBlockhash = blockhash;
@@ -69,29 +70,39 @@ export const sendTransaction = async (
 ): Promise<string> => {
   try {
     console.log("📤 Envoi de la transaction...");
-    const signature = await connection.sendRawTransaction(
-      transaction.serialize(),
-      { 
-        skipPreflight: false,
-        maxRetries: 3,
-        preflightCommitment: 'processed'
-      }
-    );
+    const rawTransaction = transaction.serialize();
     
+    const signature = await connection.sendRawTransaction(rawTransaction, {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+      maxRetries: 5
+    });
+
     console.log("⏳ Attente de la confirmation de la transaction:", signature);
-    
-    const confirmation = await connection.confirmTransaction({
+
+    // Utilisation d'une approche plus robuste pour la confirmation
+    const status = await connection.confirmTransaction({
       signature,
       blockhash: transaction.recentBlockhash,
-      lastValidBlockHeight: transaction.lastValidBlockHeight,
-    }, 'processed');
-    
-    if (confirmation.value.err) {
-      console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
+      lastValidBlockHeight: transaction.lastValidBlockHeight
+    }, 'confirmed');
+
+    if (status.value.err) {
+      console.error("❌ Erreur lors de la confirmation:", status.value.err);
       throw new Error("La transaction a échoué lors de la confirmation");
     }
-    
-    console.log("✅ Transaction confirmée!");
+
+    // Vérification supplémentaire de la transaction
+    const confirmedTransaction = await connection.getTransaction(signature, {
+      maxSupportedTransactionVersion: 0,
+      commitment: 'confirmed'
+    });
+
+    if (!confirmedTransaction) {
+      throw new Error("La transaction n'a pas pu être vérifiée");
+    }
+
+    console.log("✅ Transaction confirmée!", confirmedTransaction);
     toast({
       title: "Transaction réussie",
       description: "Votre espace a été sécurisé avec succès!",
