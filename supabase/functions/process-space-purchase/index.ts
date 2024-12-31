@@ -42,7 +42,7 @@ serve(async (req) => {
     }
 
     // Create Solana transaction
-    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/VOTRE_CLE_ALCHEMY')
+    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/qD078w2WZzwQeJaAENhphOrXYXCi9afo')
     const buyerPubkey = new PublicKey(walletAddress)
     // Mettez à jour cette adresse avec votre adresse de réception mainnet
     const receiverPubkey = new PublicKey('VOTRE_ADRESSE_MAINNET_ICI')
