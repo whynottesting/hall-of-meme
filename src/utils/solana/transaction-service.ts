@@ -29,7 +29,7 @@ export const createSolanaTransaction = async (
 
     const transaction = new Transaction();
     
-    const { blockhash } = await connection.getLatestBlockhash('finalized');
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -54,30 +54,38 @@ export const sendTransaction = async (
   provider: PhantomProvider
 ): Promise<string> => {
   try {
+    console.log("🚀 Envoi de la transaction...");
     const signature = await connection.sendRawTransaction(
       transaction.serialize(),
-      { maxRetries: 5 }
-    );
-    
-    // Attendre la confirmation avec un timeout de 30 secondes
-    const status = await connection.confirmTransaction(
-      signature,
       {
-        maxRetries: 5,
-        skipPreflight: true
+        skipPreflight: false,
+        preflightCommitment: 'processed',
+        maxRetries: 5
       }
     );
     
-    if (status.value.err) {
+    console.log("⏳ Attente de la confirmation de la transaction...");
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+    
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight
+    }, 'finalized');
+    
+    if (confirmation.value.err) {
+      console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
       throw new Error("La transaction a échoué lors de la confirmation");
     }
+
+    console.log("✅ Transaction confirmée!");
     
     // Attendre un peu pour s'assurer que la transaction est bien finalisée
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     
     return signature;
   } catch (error) {
-    console.error("Erreur lors de l'envoi de la transaction:", error);
+    console.error("❌ Erreur lors de l'envoi de la transaction:", error);
     throw error;
   }
 };
