@@ -17,15 +17,16 @@ interface ProcessedCell extends Space {
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
 
-  const processImages = useCallback(async () => {
-    if (!ownedCells || ownedCells.length === 0) {
+  // Memoize the image processing function
+  const processImages = useCallback((cells: Space[]) => {
+    if (!cells || cells.length === 0) {
       console.log("❌ Aucune cellule à traiter");
       setProcessedCells([]);
       return;
     }
 
-    const processed = await Promise.all(
-      ownedCells.map(async (cell) => {
+    Promise.all(
+      cells.map(async (cell) => {
         let imageUrl = '';
         if (cell.image_url) {
           const { data: { publicUrl } } = supabase.storage
@@ -35,15 +36,17 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         }
         return { ...cell, processedImageUrl: imageUrl };
       })
-    );
-    
-    setProcessedCells(processed);
-  }, [ownedCells]);
+    ).then(processed => {
+      setProcessedCells(processed);
+    });
+  }, []);
 
+  // Only process images when ownedCells changes
   useEffect(() => {
-    processImages();
-  }, [processImages]);
+    processImages(ownedCells);
+  }, [ownedCells, processImages]);
 
+  // Memoize the selection check function
   const isSelected = useCallback((x: number, y: number) => {
     if (!selectedCells) return false;
     return (
@@ -54,6 +57,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     );
   }, [selectedCells]);
 
+  // Memoize the cell click handler
   const handleCellClick = useCallback((x: number, y: number, cell?: ProcessedCell) => {
     if (cell?.url) {
       window.open(cell.url, '_blank', 'noopener,noreferrer');
@@ -62,20 +66,20 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   }, [onCellClick]);
 
+  // Memoize the occupied positions calculation
   const occupiedPositions = useMemo(() => {
     const positions = new Set<string>();
-    if (processedCells && processedCells.length > 0) {
-      processedCells.forEach(cell => {
-        for (let dy = 0; dy < cell.height; dy++) {
-          for (let dx = 0; dx < cell.width; dx++) {
-            positions.add(`${cell.x + dx}-${cell.y + dy}`);
-          }
+    processedCells.forEach(cell => {
+      for (let dy = 0; dy < cell.height; dy++) {
+        for (let dx = 0; dx < cell.width; dx++) {
+          positions.add(`${cell.x + dx}-${cell.y + dy}`);
         }
-      });
-    }
+      }
+    });
     return positions;
   }, [processedCells]);
 
+  // Memoize the grid rendering
   const renderGrid = useMemo(() => {
     const grid = [];
 
