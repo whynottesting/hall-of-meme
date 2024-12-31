@@ -29,7 +29,9 @@ export const createSolanaTransaction = async (
 
     const transaction = new Transaction();
     
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash({
+      commitment: 'finalized'
+    });
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -55,23 +57,31 @@ export const sendTransaction = async (
 ): Promise<string> => {
   try {
     console.log("🚀 Envoi de la transaction...");
+    
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash({
+      commitment: 'finalized'
+    });
+    transaction.recentBlockhash = blockhash;
+
     const signature = await connection.sendRawTransaction(
       transaction.serialize(),
       {
         skipPreflight: false,
-        preflightCommitment: 'processed',
+        preflightCommitment: 'finalized',
         maxRetries: 5
       }
     );
     
     console.log("⏳ Attente de la confirmation de la transaction...");
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
     
     const confirmation = await connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight
-    }, 'finalized');
+    }, {
+      commitment: 'finalized',
+      maxRetries: 3
+    });
     
     if (confirmation.value.err) {
       console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
