@@ -66,8 +66,6 @@ export const handleSpacePurchase = async (
       return false;
     }
 
-    // Créer et signer la transaction avec le montant total correct
-    // Le prix est déjà en SOL, nous devons le convertir en lamports (1 SOL = 1_000_000_000 lamports)
     const totalPriceInLamports = Math.floor(spaceData.price * 1_000_000_000);
     console.log("💰 Prix en lamports:", totalPriceInLamports);
 
@@ -95,6 +93,9 @@ export const handleSpacePurchase = async (
     const signature = await sendTransaction(connection, signedTransaction, provider);
 
     console.log("💾 Transaction réussie, enregistrement des données...");
+
+    // Attendre un peu pour s'assurer que la transaction est bien finalisée
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const { error: transactionError } = await supabase
       .from('transaction_history')
@@ -148,13 +149,12 @@ export const handleSpacePurchase = async (
       .select('*');
 
     if (updatedSpaces) {
+      toast({
+        title: "Achat réussi!",
+        description: "Votre espace a été acheté avec succès.",
+      });
       return { success: true, spaces: updatedSpaces };
     }
-
-    toast({
-      title: "Achat réussi!",
-      description: "Votre espace a été acheté avec succès.",
-    });
 
     return true;
   } catch (error: any) {

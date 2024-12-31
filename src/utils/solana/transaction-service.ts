@@ -3,13 +3,9 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
   Transaction,
-  sendAndConfirmTransaction
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { PhantomProvider } from './types';
-
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 1000;
 
 export const createSolanaTransaction = async (
   provider: PhantomProvider,
@@ -33,7 +29,7 @@ export const createSolanaTransaction = async (
 
     const transaction = new Transaction();
     
-    const { blockhash } = await connection.getLatestBlockhash('confirmed');
+    const { blockhash } = await connection.getLatestBlockhash('finalized');
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
 
@@ -59,17 +55,29 @@ export const sendTransaction = async (
 ): Promise<string> => {
   try {
     const signature = await connection.sendRawTransaction(
-      transaction.serialize()
+      transaction.serialize(),
+      { maxRetries: 5 }
     );
     
-    const confirmation = await connection.confirmTransaction(signature);
+    // Attendre la confirmation avec un timeout de 30 secondes
+    const status = await connection.confirmTransaction(
+      signature,
+      {
+        maxRetries: 5,
+        skipPreflight: true
+      }
+    );
     
-    if (confirmation.value.err) {
+    if (status.value.err) {
       throw new Error("La transaction a échoué lors de la confirmation");
     }
     
+    // Attendre un peu pour s'assurer que la transaction est bien finalisée
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
     return signature;
   } catch (error) {
+    console.error("Erreur lors de l'envoi de la transaction:", error);
     throw error;
   }
 };
