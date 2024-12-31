@@ -29,7 +29,7 @@ export const createSolanaTransaction = async (
 
     const transaction = new Transaction();
     
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash({
+    const { blockhash } = await connection.getLatestBlockhash({
       commitment: 'finalized'
     });
     transaction.recentBlockhash = blockhash;
@@ -50,6 +50,43 @@ export const createSolanaTransaction = async (
   }
 };
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const pollForSignatureStatus = async (
+  connection: any,
+  signature: string,
+  maxAttempts = 30,
+  interval = 1000
+): Promise<boolean> => {
+  console.log("🔄 Début du polling pour la signature:", signature);
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      const signatureStatus = await connection.getSignatureStatus(signature, {
+        searchTransactionHistory: true
+      });
+      
+      console.log(`📊 Tentative ${attempt + 1}/${maxAttempts}, Status:`, signatureStatus);
+      
+      if (signatureStatus?.value?.confirmationStatus === 'finalized') {
+        if (signatureStatus.value.err) {
+          console.error("❌ Transaction finalisée avec erreur:", signatureStatus.value.err);
+          return false;
+        }
+        console.log("✅ Transaction finalisée avec succès!");
+        return true;
+      }
+      
+      await sleep(interval);
+    } catch (error) {
+      console.error(`❌ Erreur lors du polling (tentative ${attempt + 1}):`, error);
+      await sleep(interval);
+    }
+  }
+  
+  throw new Error("Le délai d'attente pour la confirmation de la transaction a expiré");
+};
+
 export const sendTransaction = async (
   connection: any,
   transaction: Transaction,
@@ -58,40 +95,26 @@ export const sendTransaction = async (
   try {
     console.log("🚀 Envoi de la transaction...");
     
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash({
-      commitment: 'finalized'
-    });
-    transaction.recentBlockhash = blockhash;
-
     const signature = await connection.sendRawTransaction(
       transaction.serialize(),
       {
         skipPreflight: false,
         preflightCommitment: 'finalized',
-        maxRetries: 5
+        maxRetries: 3
       }
     );
     
-    console.log("⏳ Attente de la confirmation de la transaction...");
+    console.log("📝 Signature de la transaction:", signature);
+    console.log("⏳ Attente de la confirmation...");
     
-    const confirmation = await connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight
-    }, {
-      commitment: 'finalized',
-      maxRetries: 3
-    });
+    const isConfirmed = await pollForSignatureStatus(connection, signature);
     
-    if (confirmation.value.err) {
-      console.error("❌ Erreur lors de la confirmation:", confirmation.value.err);
+    if (!isConfirmed) {
       throw new Error("La transaction a échoué lors de la confirmation");
     }
-
-    console.log("✅ Transaction confirmée!");
     
     // Attendre un peu pour s'assurer que la transaction est bien finalisée
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await sleep(2000);
     
     return signature;
   } catch (error) {
