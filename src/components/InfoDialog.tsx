@@ -43,7 +43,7 @@ const InfoDialog = () => {
               By purchasing an area on the grid. The larger your space, the bigger your airdrop reward. Additionally, if you{" "}
               <button 
                 onClick={handleShareOnX}
-                className="text-accent hover:underline cursor-pointer font-bold"
+                className="text-accent hover:underline cursor-pointer underline"
               >
                 share the page on X
               </button>
@@ -61,7 +61,7 @@ const InfoDialog = () => {
               href="https://x.com/HallOfMe_me" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-accent hover:underline font-bold"
+              className="text-accent hover:underline underline"
             >
               @HallOfMe_me
             </a>
