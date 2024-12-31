@@ -14,16 +14,23 @@ serve(async (req) => {
 
   try {
     const { signature, spaceData } = await req.json()
-    console.log('Confirming transaction:', { signature, spaceData })
+    console.log('🔍 Confirming transaction:', { signature, spaceData })
 
     const connection = new Connection('https://api.devnet.solana.com')
     
-    // Wait for transaction confirmation
-    const confirmation = await connection.confirmTransaction(signature)
+    // Attendre la confirmation avec un timeout plus long et plus de confirmations
+    const confirmation = await connection.confirmTransaction({
+      signature,
+      blockhash: spaceData.blockhash,
+      lastValidBlockHeight: spaceData.lastValidBlockHeight
+    }, 'confirmed')
     
     if (confirmation.value.err) {
-      throw new Error('Transaction failed')
+      console.error("❌ Transaction failed:", confirmation.value.err)
+      throw new Error(`Transaction failed: ${confirmation.value.err}`)
     }
+
+    console.log("✅ Transaction confirmed successfully")
 
     // Create Supabase client
     const supabase = createClient(
@@ -32,7 +39,7 @@ serve(async (req) => {
     )
 
     // Save space in database
-    const { error: spaceError } = await supabase
+    const { data: space, error: spaceError } = await supabase
       .from('spaces')
       .insert({
         wallet_address: spaceData.walletAddress,
@@ -44,34 +51,42 @@ serve(async (req) => {
         image_url: spaceData.imageUrl,
         price: spaceData.price
       })
+      .select()
+      .single()
 
     if (spaceError) {
-      console.error('Error saving space:', spaceError)
+      console.error('❌ Error saving space:', spaceError)
       throw spaceError
     }
+
+    console.log('✅ Space saved successfully:', space)
 
     // Save transaction
     const { error: transactionError } = await supabase
       .from('transaction_history')
       .insert({
         wallet_address: spaceData.walletAddress,
+        space_id: space.id,
         status: 'completed'
       })
 
     if (transactionError) {
-      console.error('Error saving transaction:', transactionError)
+      console.error('❌ Error saving transaction:', transactionError)
       throw transactionError
     }
+
+    console.log('✅ Transaction history saved successfully')
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Transaction confirmed and space registered'
+        message: 'Transaction confirmed and space registered',
+        space
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('Error confirming transaction:', error)
+    console.error('❌ Error in confirm-transaction:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

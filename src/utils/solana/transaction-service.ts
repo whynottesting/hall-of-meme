@@ -4,7 +4,6 @@ import {
   LAMPORTS_PER_SOL,
   Transaction,
   Connection,
-  Commitment
 } from '@solana/web3.js';
 import { SolanaConnection } from './connection';
 import { PhantomProvider } from './types';
@@ -12,7 +11,6 @@ import { toast } from "@/hooks/use-toast";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 2000; // 2 secondes
-const EXTRA_BLOCKS = 150; // Augmentation de la marge de blocs valides
 
 export const createSolanaTransaction = async (
   provider: PhantomProvider,
@@ -44,8 +42,7 @@ export const createSolanaTransaction = async (
     const transaction = new Transaction();
     transaction.recentBlockhash = blockhash;
     transaction.feePayer = fromPubkey;
-    // Augmentation de la durée de validité de la transaction
-    transaction.lastValidBlockHeight = lastValidBlockHeight + EXTRA_BLOCKS;
+    transaction.lastValidBlockHeight = lastValidBlockHeight;
 
     transaction.add(
       SystemProgram.transfer({
@@ -86,22 +83,12 @@ export const sendTransaction = async (
 
     const confirmation = await connection.confirmTransaction({
       signature,
-      blockhash: transaction.recentBlockhash,
-      lastValidBlockHeight: transaction.lastValidBlockHeight
+      blockhash: transaction.recentBlockhash!,
+      lastValidBlockHeight: transaction.lastValidBlockHeight!
     }, 'confirmed');
 
     if (confirmation.value.err) {
       throw new Error(confirmation.value.err.toString());
-    }
-
-    // Vérification supplémentaire
-    const confirmedTx = await connection.getTransaction(signature, {
-      maxSupportedTransactionVersion: 0,
-      commitment: 'confirmed'
-    });
-
-    if (!confirmedTx) {
-      throw new Error("La transaction n'a pas pu être vérifiée");
     }
 
     console.log("✅ Transaction confirmée!");
@@ -115,15 +102,14 @@ export const sendTransaction = async (
   } catch (error: any) {
     console.error("❌ Erreur de transaction:", error);
 
-    if (retryCount < MAX_RETRIES - 1 && 
-        (error.message.includes('blockhash') || error.message.includes('expired'))) {
+    if (retryCount < MAX_RETRIES - 1) {
       console.log(`🔄 Nouvelle tentative dans ${RETRY_DELAY/1000} secondes...`);
       await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
       
       // Mise à jour du blockhash pour la nouvelle tentative
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
       transaction.recentBlockhash = blockhash;
-      transaction.lastValidBlockHeight = lastValidBlockHeight + EXTRA_BLOCKS;
+      transaction.lastValidBlockHeight = lastValidBlockHeight;
       
       return sendTransaction(connection, transaction, provider, retryCount + 1);
     }
