@@ -17,16 +17,15 @@ interface ProcessedCell extends Space {
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
 
-  // Memoize the image processing function to prevent infinite loops
-  const processImages = useCallback(async (cells: Space[]) => {
-    if (!cells || cells.length === 0) {
+  const processImages = useCallback(async () => {
+    if (!ownedCells || ownedCells.length === 0) {
       console.log("❌ Aucune cellule à traiter");
       setProcessedCells([]);
       return;
     }
 
     const processed = await Promise.all(
-      cells.map(async (cell) => {
+      ownedCells.map(async (cell) => {
         let imageUrl = '';
         if (cell.image_url) {
           const { data: { publicUrl } } = supabase.storage
@@ -39,12 +38,11 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     );
     
     setProcessedCells(processed);
-  }, []); // Empty dependency array as this function doesn't depend on any props or state
+  }, [ownedCells]);
 
-  // Update effect to properly handle ownedCells changes
   useEffect(() => {
-    processImages(ownedCells);
-  }, [ownedCells, processImages]); // Only re-run when ownedCells changes
+    processImages();
+  }, [processImages]);
 
   const isSelected = useCallback((x: number, y: number) => {
     if (!selectedCells) return false;
@@ -82,11 +80,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     const grid = [];
     const gridSize = 100;
 
+    // Create a single loop for all positions
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
         const key = `${x}-${y}`;
         const occupiedCell = occupiedPositions.get(key);
 
+        // Only render a cell if it's the top-left corner of an owned cell or if it's empty
         if (occupiedCell && occupiedCell.x === x && occupiedCell.y === y) {
           grid.push(
             <OwnedCell
