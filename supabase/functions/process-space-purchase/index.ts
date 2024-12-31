@@ -42,9 +42,10 @@ serve(async (req) => {
     }
 
     // Create Solana transaction
-    const connection = new Connection('https://api.devnet.solana.com')
+    const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/VOTRE_CLE_ALCHEMY')
     const buyerPubkey = new PublicKey(walletAddress)
-    const receiverPubkey = new PublicKey('DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs')
+    // Mettez à jour cette adresse avec votre adresse de réception mainnet
+    const receiverPubkey = new PublicKey('VOTRE_ADRESSE_MAINNET_ICI')
     
     const transaction = new Transaction().add(
       SystemProgram.transfer({

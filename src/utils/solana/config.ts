@@ -1,8 +1,8 @@
 export const RPC_CONFIG = {
   ENDPOINTS: [
-    "https://api.devnet.solana.com",
-    "https://devnet.helius-rpc.com/?api-key=1d24dc75-e291-4d08-a152-24548e66cc0e",
-    "https://mango.devnet.rpcpool.com"
+    "https://solana-mainnet.g.alchemy.com/v2/VOTRE_CLE_ALCHEMY", // Remplacez par votre clé Alchemy
+    "https://api.mainnet-beta.solana.com",  // Fallback sur le RPC public
+    "https://solana-api.projectserum.com"   // Autre fallback
   ],
   MAX_RETRIES: 3,
   INITIAL_BACKOFF: 1000,
