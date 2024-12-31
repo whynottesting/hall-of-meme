@@ -3,6 +3,8 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
 import { Space } from '@/utils/solana/types';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export const useSpaces = () => {
   const [ownedSpaces, setOwnedSpaces] = useState<Space[]>([]);
@@ -38,13 +40,47 @@ export const useSpaces = () => {
     });
   }, [ownedSpaces]);
 
-  const handleSpaceImageUpload = async (file: File) => {
-    const imageUrl = await handleImageUpload(file);
-    if (imageUrl) {
-      console.log("🖼️ URL de l'image après upload:", imageUrl);
-      spaceSelection.handleInputChange('imageUrl', imageUrl);
+  const handleSpaceImageUpload = async (file: File, spaceId?: string) => {
+    try {
+      const imageUrl = await handleImageUpload(file);
+      if (imageUrl && spaceId) {
+        console.log("🖼️ URL de l'image après upload:", imageUrl);
+        
+        // Mettre à jour l'espace avec la nouvelle image
+        const { data, error } = await supabase
+          .from('spaces')
+          .update({ image_url: imageUrl })
+          .eq('id', spaceId)
+          .select();
+
+        if (error) {
+          console.error("❌ Erreur lors de la mise à jour de l'espace:", error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de mettre à jour l'image de l'espace",
+            variant: "destructive",
+          });
+          return null;
+        }
+
+        console.log("✅ Espace mis à jour avec succès:", data);
+        loadOwnedSpaces(); // Recharger les espaces pour afficher la nouvelle image
+        
+        toast({
+          title: "Succès",
+          description: "L'image de l'espace a été mise à jour",
+        });
+      }
+      return imageUrl;
+    } catch (error) {
+      console.error("❌ Erreur lors de l'upload de l'image:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'uploader l'image",
+        variant: "destructive",
+      });
+      return null;
     }
-    return imageUrl;
   };
 
   return {
