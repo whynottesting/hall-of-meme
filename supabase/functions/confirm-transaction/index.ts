@@ -16,7 +16,7 @@ serve(async (req) => {
     const { signature, spaceData } = await req.json()
     console.log('Confirming transaction:', { signature, spaceData })
 
-    const connection = new Connection('https://api.mainnet-beta.solana.com')
+    const connection = new Connection('https://api.devnet.solana.com')
     
     // Wait for transaction confirmation
     const confirmation = await connection.confirmTransaction(signature)
