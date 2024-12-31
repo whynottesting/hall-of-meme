@@ -109,7 +109,6 @@ const Index = () => {
             selectedCells={selectedSpace}
             ownedCells={ownedSpaces}
             onCellClick={handleSpaceSelection}
-            handleSpaceImageUpload={handleImageUpload}
           />
         </div>
 

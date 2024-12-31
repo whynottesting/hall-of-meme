@@ -3,8 +3,8 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSpaceSelection } from './useSpaceSelection';
 import { useImageUpload } from './useImageUpload';
 import { Space } from '@/utils/solana/types';
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSpaces = () => {
   const [ownedSpaces, setOwnedSpaces] = useState<Space[]>([]);
@@ -19,12 +19,32 @@ export const useSpaces = () => {
     }
   }, [spaces]);
 
-  const loadOwnedSpaces = useCallback(() => {
-    if (spaces) {
-      console.log("♻️ Rechargement manuel des espaces:", spaces);
-      setOwnedSpaces(spaces);
+  const loadOwnedSpaces = useCallback(async () => {
+    try {
+      console.log("♻️ Rechargement manuel des espaces...");
+      const { data: updatedSpaces, error } = await supabase
+        .from('spaces')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("❌ Erreur lors du rechargement des espaces:", error);
+        throw error;
+      }
+
+      if (updatedSpaces) {
+        console.log("✅ Espaces rechargés avec succès:", updatedSpaces);
+        setOwnedSpaces(updatedSpaces);
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors du rechargement des espaces:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de recharger les espaces",
+        variant: "destructive",
+      });
     }
-  }, [spaces]);
+  }, []);
 
   const checkSpaceOverlap = useCallback((newSpace: Space) => {
     return ownedSpaces.some(existingSpace => {
@@ -40,36 +60,13 @@ export const useSpaces = () => {
     });
   }, [ownedSpaces]);
 
-  const handleSpaceImageUpload = async (file: File, spaceId?: string) => {
+  const handleSpaceImageUpload = async (file: File) => {
     try {
+      console.log("📤 Upload de l'image en cours...");
       const imageUrl = await handleImageUpload(file);
-      if (imageUrl && spaceId) {
+      if (imageUrl) {
         console.log("🖼️ URL de l'image après upload:", imageUrl);
-        
-        // Mettre à jour l'espace avec la nouvelle image
-        const { data, error } = await supabase
-          .from('spaces')
-          .update({ image_url: imageUrl })
-          .eq('id', spaceId)
-          .select();
-
-        if (error) {
-          console.error("❌ Erreur lors de la mise à jour de l'espace:", error);
-          toast({
-            title: "Erreur",
-            description: "Impossible de mettre à jour l'image de l'espace",
-            variant: "destructive",
-          });
-          return null;
-        }
-
-        console.log("✅ Espace mis à jour avec succès:", data);
-        loadOwnedSpaces(); // Recharger les espaces pour afficher la nouvelle image
-        
-        toast({
-          title: "Succès",
-          description: "L'image de l'espace a été mise à jour",
-        });
+        spaceSelection.handleInputChange('imageUrl', imageUrl);
       }
       return imageUrl;
     } catch (error) {
