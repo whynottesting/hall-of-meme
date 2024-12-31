@@ -62,28 +62,45 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   }, [onCellClick]);
 
+  // Create a map of occupied positions for faster lookup
   const occupiedPositions = useMemo(() => {
-    const positions = new Set<string>();
-    if (processedCells && processedCells.length > 0) {
-      processedCells.forEach(cell => {
-        for (let dy = 0; dy < cell.height; dy++) {
-          for (let dx = 0; dx < cell.width; dx++) {
-            positions.add(`${cell.x + dx}-${cell.y + dy}`);
-          }
+    const positions = new Map<string, ProcessedCell>();
+    processedCells.forEach(cell => {
+      for (let dy = 0; dy < cell.height; dy++) {
+        for (let dx = 0; dx < cell.width; dx++) {
+          positions.set(`${cell.x + dx}-${cell.y + dy}`, cell);
         }
-      });
-    }
+      }
+    });
     return positions;
   }, [processedCells]);
 
+  // Render the grid more efficiently
   const renderGrid = useMemo(() => {
     const grid = [];
+    const gridSize = 100;
 
-    // Render empty cells
-    for (let y = 0; y < 100; y++) {
-      for (let x = 0; x < 100; x++) {
+    // Create a single loop for all positions
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
         const key = `${x}-${y}`;
-        if (!occupiedPositions.has(key)) {
+        const occupiedCell = occupiedPositions.get(key);
+
+        // Only render a cell if it's the top-left corner of an owned cell or if it's empty
+        if (occupiedCell && occupiedCell.x === x && occupiedCell.y === y) {
+          grid.push(
+            <OwnedCell
+              key={`owned-${key}`}
+              x={occupiedCell.x}
+              y={occupiedCell.y}
+              width={occupiedCell.width}
+              height={occupiedCell.height}
+              imageUrl={occupiedCell.processedImageUrl}
+              link={occupiedCell.url || ''}
+              onClick={() => handleCellClick(x, y, occupiedCell)}
+            />
+          );
+        } else if (!occupiedPositions.has(key)) {
           grid.push(
             <EmptyCell
               key={key}
@@ -96,22 +113,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
         }
       }
     }
-
-    // Render owned cells
-    processedCells.forEach((cell) => {
-      grid.push(
-        <OwnedCell
-          key={`owned-${cell.x}-${cell.y}`}
-          x={cell.x}
-          y={cell.y}
-          width={cell.width}
-          height={cell.height}
-          imageUrl={cell.processedImageUrl}
-          link={cell.url || ''}
-          onClick={() => handleCellClick(cell.x, cell.y, cell)}
-        />
-      );
-    });
 
     return grid;
   }, [processedCells, occupiedPositions, isSelected, handleCellClick]);
