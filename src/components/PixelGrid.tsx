@@ -30,27 +30,21 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
         const processed = await Promise.all(
           ownedCells.map(async (cell) => {
-            console.log("📸 Traitement de la cellule:", cell);
-            let imageUrl = '';
-            
-            if (cell.image_url) {
-              console.log("🖼️ URL de l'image trouvée:", cell.image_url);
-              const { data: { publicUrl } } = supabase.storage
-                .from('space-images')
-                .getPublicUrl(cell.image_url);
-              
-              imageUrl = publicUrl;
-              console.log("✅ URL publique générée:", imageUrl);
+            if (!cell.image_url) {
+              return { ...cell, processedImageUrl: '' };
             }
 
+            const { data: { publicUrl } } = supabase.storage
+              .from('space-images')
+              .getPublicUrl(cell.image_url);
+            
             return {
               ...cell,
-              processedImageUrl: imageUrl
+              processedImageUrl: publicUrl
             };
           })
         );
         
-        console.log("✅ Cellules traitées avec leurs URLs d'images:", processed);
         setProcessedCells(processed);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
@@ -81,28 +75,43 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
 
   const renderGrid = () => {
     const grid = [];
-    const occupiedPositions = new Set();
+    const occupiedPositions = new Map<string, ProcessedCell>();
 
-    // Traiter d'abord les cellules occupées
-    if (processedCells && processedCells.length > 0) {
-      processedCells.forEach(cell => {
-        console.log("📍 Position occupée:", cell);
-        for (let dy = 0; dy < cell.height; dy++) {
-          for (let dx = 0; dx < cell.width; dx++) {
-            occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
-          }
+    // Create a map of occupied positions
+    processedCells.forEach(cell => {
+      for (let dy = 0; dy < cell.height; dy++) {
+        for (let dx = 0; dx < cell.width; dx++) {
+          occupiedPositions.set(`${cell.x + dx}-${cell.y + dy}`, cell);
         }
-      });
-    }
+      }
+    });
 
-    // Rendre les cellules vides
+    // Render empty and owned cells
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const key = `${x}-${y}`;
-        if (!occupiedPositions.has(key)) {
+        const occupiedCell = occupiedPositions.get(key);
+
+        if (occupiedCell) {
+          // Only render the OwnedCell at its origin position
+          if (x === occupiedCell.x && y === occupiedCell.y) {
+            grid.push(
+              <OwnedCell
+                key={`owned-${key}`}
+                x={occupiedCell.x}
+                y={occupiedCell.y}
+                width={occupiedCell.width}
+                height={occupiedCell.height}
+                imageUrl={occupiedCell.processedImageUrl}
+                link={occupiedCell.url || ''}
+                onClick={() => handleCellClick(x, y, occupiedCell)}
+              />
+            );
+          }
+        } else {
           grid.push(
             <EmptyCell
-              key={key}
+              key={`empty-${key}`}
               x={x}
               y={y}
               isSelected={isSelected(x, y)}
@@ -111,30 +120,6 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           );
         }
       }
-    }
-
-    // Rendre les cellules possédées
-    if (processedCells && processedCells.length > 0) {
-      processedCells.forEach((cell) => {
-        console.log("🎨 Rendu de la cellule possédée avec image:", {
-          position: `${cell.x},${cell.y}`,
-          dimensions: `${cell.width}x${cell.height}`,
-          imageUrl: cell.processedImageUrl
-        });
-        
-        grid.push(
-          <OwnedCell
-            key={`owned-${cell.x}-${cell.y}`}
-            x={cell.x}
-            y={cell.y}
-            width={cell.width}
-            height={cell.height}
-            imageUrl={cell.processedImageUrl}
-            link={cell.url || ''}
-            onClick={() => handleCellClick(cell.x, cell.y, cell)}
-          />
-        );
-      });
     }
 
     return grid;
