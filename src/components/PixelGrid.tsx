@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import EmptyCell from './grid/EmptyCell';
 import OwnedCell from './grid/OwnedCell';
 import { Space } from '@/utils/solana/types';
+import { useSpaces } from '@/hooks/useSpaces';
 
 interface PixelGridProps {
   selectedCells: { x: number; y: number; width: number; height: number } | null;
@@ -16,6 +17,7 @@ interface ProcessedCell extends Space {
 
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
+  const { handleSpaceImageUpload } = useSpaces();
 
   useEffect(() => {
     console.log("🔄 Mise à jour des cellules possédées:", ownedCells);
@@ -79,6 +81,13 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, spaceId: string) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      await handleSpaceImageUpload(file, spaceId);
+    }
+  };
+
   const renderGrid = () => {
     const grid = [];
     const occupiedPositions = new Set();
@@ -132,6 +141,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
             imageUrl={cell.processedImageUrl}
             link={cell.url || ''}
             onClick={() => handleCellClick(cell.x, cell.y, cell)}
+            onImageUpload={(e) => handleImageUpload(e, cell.id)}
           />
         );
       });
