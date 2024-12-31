@@ -1,5 +1,4 @@
 import React from 'react';
-import { Upload } from 'lucide-react';
 
 interface OwnedCellProps {
   x: number;
@@ -9,7 +8,6 @@ interface OwnedCellProps {
   imageUrl: string;
   link: string;
   onClick: () => void;
-  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 const OwnedCell: React.FC<OwnedCellProps> = ({
@@ -19,14 +17,13 @@ const OwnedCell: React.FC<OwnedCellProps> = ({
   height,
   imageUrl,
   link,
-  onClick,
-  onImageUpload
+  onClick
 }) => {
   console.log("🎯 Rendu OwnedCell:", { x, y, width, height, imageUrl });
   
   return (
     <div
-      className="absolute cursor-pointer group"
+      className="absolute cursor-pointer"
       style={{
         left: `${x}%`,
         top: `${y}%`,
@@ -54,16 +51,6 @@ const OwnedCell: React.FC<OwnedCellProps> = ({
           }}
         />
       )}
-      <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={onImageUpload}
-          className="hidden"
-          onClick={(e) => e.stopPropagation()}
-        />
-        <Upload className="w-6 h-6 text-white" />
-      </label>
     </div>
   );
 };
