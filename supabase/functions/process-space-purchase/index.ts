@@ -14,7 +14,7 @@ serve(async (req) => {
 
   try {
     const { x, y, width, height, walletAddress, imageUrl, link, price } = await req.json()
-    console.log('📝 Processing space purchase request:', { x, y, width, height, walletAddress, price })
+    console.log('Processing space purchase request:', { x, y, width, height, walletAddress, price })
 
     // Create Supabase client
     const supabase = createClient(
@@ -29,12 +29,12 @@ serve(async (req) => {
       .or(`and(x.gte.${x},x.lt.${x + width}),and(y.gte.${y},y.lt.${y + height})`)
 
     if (checkError) {
-      console.error('❌ Error checking space availability:', checkError)
+      console.error('Error checking space availability:', checkError)
       throw checkError
     }
 
     if (existingSpaces && existingSpaces.length > 0) {
-      console.log('❌ Space already occupied:', existingSpaces)
+      console.log('Space already occupied:', existingSpaces)
       return new Response(
         JSON.stringify({ error: 'This space is already occupied' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -42,22 +42,20 @@ serve(async (req) => {
     }
 
     // Create Solana transaction
-    const connection = new Connection('https://api.devnet.solana.com')
+    const connection = new Connection('https://api.mainnet-beta.solana.com')
     const buyerPubkey = new PublicKey(walletAddress)
     const receiverPubkey = new PublicKey('DEjdjPNQ62HvEbjeKqwesoueaAMY8MP1veofwRoNnfQs')
     
-    // Obtenir le dernier blockhash avec une durée de validité plus longue
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed')
-    
-    const transaction = new Transaction()
-    transaction.add(
+    const transaction = new Transaction().add(
       SystemProgram.transfer({
         fromPubkey: buyerPubkey,
         toPubkey: receiverPubkey,
-        lamports: Math.floor(price * 1000000000), // Convert SOL to lamports
+        lamports: price * 1000000000, // Convert SOL to lamports
       })
     )
 
+    // Get latest blockhash
+    const { blockhash } = await connection.getLatestBlockhash()
     transaction.recentBlockhash = blockhash
     transaction.feePayer = buyerPubkey
 
@@ -67,19 +65,15 @@ serve(async (req) => {
       verifySignatures: false
     }).toString('base64')
 
-    console.log('✅ Transaction created successfully')
-
     return new Response(
       JSON.stringify({ 
         transaction: serializedTransaction,
-        blockhash,
-        lastValidBlockHeight,
         message: 'Transaction created successfully'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
-    console.error('❌ Error processing space purchase:', error)
+    console.error('Error processing space purchase:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }

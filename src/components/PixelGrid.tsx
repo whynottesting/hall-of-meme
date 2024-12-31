@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import EmptyCell from './grid/EmptyCell';
 import OwnedCell from './grid/OwnedCell';
@@ -17,37 +17,51 @@ interface ProcessedCell extends Space {
 const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCellClick }) => {
   const [processedCells, setProcessedCells] = useState<ProcessedCell[]>([]);
 
-  // Memoize the image processing function
-  const processImages = useCallback((cells: Space[]) => {
-    if (!cells || cells.length === 0) {
-      console.log("❌ Aucune cellule à traiter");
-      setProcessedCells([]);
-      return;
-    }
-
-    Promise.all(
-      cells.map(async (cell) => {
-        let imageUrl = '';
-        if (cell.image_url) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('space-images')
-            .getPublicUrl(cell.image_url);
-          imageUrl = publicUrl;
-        }
-        return { ...cell, processedImageUrl: imageUrl };
-      })
-    ).then(processed => {
-      setProcessedCells(processed);
-    });
-  }, []);
-
-  // Only process images when ownedCells changes
   useEffect(() => {
-    processImages(ownedCells);
-  }, [ownedCells, processImages]);
+    console.log("🔄 Mise à jour des cellules possédées:", ownedCells);
+    
+    const processImages = async () => {
+      try {
+        if (!ownedCells || ownedCells.length === 0) {
+          console.log("❌ Aucune cellule à traiter");
+          setProcessedCells([]);
+          return;
+        }
 
-  // Memoize the selection check function
-  const isSelected = useCallback((x: number, y: number) => {
+        const processed = await Promise.all(
+          ownedCells.map(async (cell) => {
+            console.log("📸 Traitement de la cellule:", cell);
+            let imageUrl = '';
+            
+            if (cell.image_url) {
+              console.log("🖼️ URL de l'image trouvée:", cell.image_url);
+              const { data: { publicUrl } } = supabase.storage
+                .from('space-images')
+                .getPublicUrl(cell.image_url);
+              
+              imageUrl = publicUrl;
+              console.log("✅ URL publique générée:", imageUrl);
+            }
+
+            return {
+              ...cell,
+              processedImageUrl: imageUrl
+            };
+          })
+        );
+        
+        console.log("✅ Cellules traitées avec leurs URLs d'images:", processed);
+        setProcessedCells(processed);
+      } catch (error) {
+        console.error('Erreur lors du traitement des images:', error);
+        setProcessedCells([]);
+      }
+    };
+
+    processImages();
+  }, [ownedCells]);
+
+  const isSelected = (x: number, y: number) => {
     if (!selectedCells) return false;
     return (
       x >= selectedCells.x &&
@@ -55,35 +69,33 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       y >= selectedCells.y &&
       y < selectedCells.y + selectedCells.height
     );
-  }, [selectedCells]);
+  };
 
-  // Memoize the cell click handler
-  const handleCellClick = useCallback((x: number, y: number, cell?: ProcessedCell) => {
+  const handleCellClick = (x: number, y: number, cell?: ProcessedCell) => {
     if (cell?.url) {
       window.open(cell.url, '_blank', 'noopener,noreferrer');
     } else {
       onCellClick(x, y);
     }
-  }, [onCellClick]);
+  };
 
-  // Memoize the occupied positions calculation
-  const occupiedPositions = useMemo(() => {
-    const positions = new Set<string>();
-    processedCells.forEach(cell => {
-      for (let dy = 0; dy < cell.height; dy++) {
-        for (let dx = 0; dx < cell.width; dx++) {
-          positions.add(`${cell.x + dx}-${cell.y + dy}`);
-        }
-      }
-    });
-    return positions;
-  }, [processedCells]);
-
-  // Memoize the grid rendering
-  const renderGrid = useMemo(() => {
+  const renderGrid = () => {
     const grid = [];
+    const occupiedPositions = new Set();
 
-    // Render empty cells
+    // Traiter d'abord les cellules occupées
+    if (processedCells && processedCells.length > 0) {
+      processedCells.forEach(cell => {
+        console.log("📍 Position occupée:", cell);
+        for (let dy = 0; dy < cell.height; dy++) {
+          for (let dx = 0; dx < cell.width; dx++) {
+            occupiedPositions.add(`${cell.x + dx}-${cell.y + dy}`);
+          }
+        }
+      });
+    }
+
+    // Rendre les cellules vides
     for (let y = 0; y < 100; y++) {
       for (let x = 0; x < 100; x++) {
         const key = `${x}-${y}`;
@@ -101,24 +113,32 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       }
     }
 
-    // Render owned cells
-    processedCells.forEach((cell) => {
-      grid.push(
-        <OwnedCell
-          key={`owned-${cell.x}-${cell.y}`}
-          x={cell.x}
-          y={cell.y}
-          width={cell.width}
-          height={cell.height}
-          imageUrl={cell.processedImageUrl}
-          link={cell.url || ''}
-          onClick={() => handleCellClick(cell.x, cell.y, cell)}
-        />
-      );
-    });
+    // Rendre les cellules possédées
+    if (processedCells && processedCells.length > 0) {
+      processedCells.forEach((cell) => {
+        console.log("🎨 Rendu de la cellule possédée avec image:", {
+          position: `${cell.x},${cell.y}`,
+          dimensions: `${cell.width}x${cell.height}`,
+          imageUrl: cell.processedImageUrl
+        });
+        
+        grid.push(
+          <OwnedCell
+            key={`owned-${cell.x}-${cell.y}`}
+            x={cell.x}
+            y={cell.y}
+            width={cell.width}
+            height={cell.height}
+            imageUrl={cell.processedImageUrl}
+            link={cell.url || ''}
+            onClick={() => handleCellClick(cell.x, cell.y, cell)}
+          />
+        );
+      });
+    }
 
     return grid;
-  }, [processedCells, occupiedPositions, isSelected, handleCellClick]);
+  };
 
   return (
     <div 
@@ -131,7 +151,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
       }}
     >
       <div className="absolute inset-0">
-        {renderGrid}
+        {renderGrid()}
       </div>
     </div>
   );
