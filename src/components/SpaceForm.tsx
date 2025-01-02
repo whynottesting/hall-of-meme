@@ -51,7 +51,10 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             onImageUpload={onImageUpload}
             isProcessing={isProcessing}
           />
-          <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-4">
+            <div className="font-pixel text-xs whitespace-nowrap">
+              Price: {actualPrice.toFixed(2)} SOL
+            </div>
             <Button
               onClick={onSubmit}
               className="retro-button h-8 px-4 py-0 whitespace-nowrap"
@@ -66,9 +69,6 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
                 'Secure Your Spot'
               )}
             </Button>
-            <div className="text-right font-pixel text-xs whitespace-nowrap">
-              Price: {actualPrice.toFixed(2)} SOL
-            </div>
           </div>
         </div>
       </div>
