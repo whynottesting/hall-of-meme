@@ -50,7 +50,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             isProcessing={isProcessing}
           />
         </div>
-        <div className="flex flex-col items-end gap-2 ml-auto self-center">
+        <div className="flex flex-col items-end gap-2 ml-auto self-end">
           <Button
             onClick={onSubmit}
             className="retro-button h-8 px-4 py-0 whitespace-nowrap"
