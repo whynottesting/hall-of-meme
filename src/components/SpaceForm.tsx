@@ -50,13 +50,7 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             isProcessing={isProcessing}
           />
         </div>
-        <div className="flex items-center gap-4 ml-auto">
-          <div className="text-right font-pixel text-xs whitespace-nowrap">
-            Price: {actualPrice.toFixed(2)} SOL
-            <div className="text-[10px] text-muted-foreground">
-              ({width * height} squares = {width * height * 100} pixels)
-            </div>
-          </div>
+        <div className="flex flex-col items-end gap-2 ml-auto">
           <Button
             onClick={onSubmit}
             className="retro-button h-8 px-4 py-0 whitespace-nowrap"
@@ -71,6 +65,12 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
               'Secure Your Space'
             )}
           </Button>
+          <div className="text-right font-pixel text-xs whitespace-nowrap">
+            Price: {actualPrice.toFixed(2)} SOL
+            <div className="text-[10px] text-muted-foreground">
+              ({width * height} squares = {width * height * 100} pixels)
+            </div>
+          </div>
         </div>
       </div>
     </div>
