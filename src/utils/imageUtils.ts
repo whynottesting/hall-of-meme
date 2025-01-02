@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export async function uploadImageFromUrl(imageUrl: string): Promise<string> {
   try {
     // Télécharger l'image
