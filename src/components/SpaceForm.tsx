@@ -62,14 +62,11 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
                 Processing...
               </>
             ) : (
-              'Secure Your Space'
+              'Secure Your Spot'
             )}
           </Button>
           <div className="text-right font-pixel text-xs whitespace-nowrap">
             Price: {actualPrice.toFixed(2)} SOL
-            <div className="text-[10px] text-muted-foreground">
-              ({width * height} squares = {width * height * 100} pixels)
-            </div>
           </div>
         </div>
       </div>
