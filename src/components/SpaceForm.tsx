@@ -33,8 +33,8 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
 
   return (
     <div className="bg-secondary p-4 pt-2 rounded-lg">
-      <div className="flex flex-wrap gap-4">
-        <div className="flex flex-wrap gap-4 flex-1">
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-4">
           <SpaceFormDimensions
             x={x}
             y={y}
@@ -43,30 +43,32 @@ const SpaceForm: React.FC<SpaceFormProps> = ({
             onInputChange={(field, value) => onInputChange(field, value)}
             isProcessing={isProcessing}
           />
+        </div>
+        <div className="flex flex-wrap gap-4 items-end">
           <SpaceFormMedia
             link={link}
             onInputChange={onInputChange}
             onImageUpload={onImageUpload}
             isProcessing={isProcessing}
           />
-        </div>
-        <div className="flex flex-col items-end gap-2 ml-auto self-end">
-          <Button
-            onClick={onSubmit}
-            className="retro-button h-8 px-4 py-0 whitespace-nowrap"
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              'Secure Your Spot'
-            )}
-          </Button>
-          <div className="text-right font-pixel text-xs whitespace-nowrap">
-            Price: {actualPrice.toFixed(2)} SOL
+          <div className="flex flex-col gap-2">
+            <Button
+              onClick={onSubmit}
+              className="retro-button h-8 px-4 py-0 whitespace-nowrap"
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                'Secure Your Spot'
+              )}
+            </Button>
+            <div className="text-right font-pixel text-xs whitespace-nowrap">
+              Price: {actualPrice.toFixed(2)} SOL
+            </div>
           </div>
         </div>
       </div>
