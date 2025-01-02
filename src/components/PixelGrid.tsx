@@ -34,6 +34,15 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
               return { ...cell, processedImageUrl: '' };
             }
 
+            // Si l'URL commence par http, c'est une URL directe
+            if (cell.image_url.startsWith('http')) {
+              return {
+                ...cell,
+                processedImageUrl: cell.image_url
+              };
+            }
+
+            // Sinon, c'est une image stockée dans Supabase
             const { data: { publicUrl } } = supabase.storage
               .from('space-images')
               .getPublicUrl(cell.image_url);
@@ -45,6 +54,7 @@ const PixelGrid: React.FC<PixelGridProps> = ({ selectedCells, ownedCells, onCell
           })
         );
         
+        console.log("✅ Cellules traitées:", processed);
         setProcessedCells(processed);
       } catch (error) {
         console.error('Erreur lors du traitement des images:', error);
