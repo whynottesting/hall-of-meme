@@ -36,8 +36,8 @@ const SpaceFormMedia = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 flex-1">
-      <div>
+    <>
+      <div className="flex-[2] min-w-[200px]">
         <label className="block text-xs font-pixel mb-1">Link URL</label>
         <Input
           type="url"
@@ -48,7 +48,7 @@ const SpaceFormMedia = ({
           disabled={isProcessing}
         />
       </div>
-      <div>
+      <div className="flex-[2] min-w-[200px]">
         <label className="block text-xs font-pixel mb-1">Image</label>
         <Input
           type="file"
@@ -59,7 +59,7 @@ const SpaceFormMedia = ({
           disabled={isProcessing}
         />
       </div>
-    </div>
+    </>
   );
 };
 
