@@ -74,7 +74,7 @@ const Index = () => {
             onClick={() => setShowForm(true)}
             className="text-primary text-xl md:text-2xl font-bold underline hover:text-accent transition-colors duration-200 mx-auto block mt-8 mb-8 animate-blink"
           >
-            ☛ Get your spot here before it's gone ☚
+            ☛Get your spot here before it's gone☚
           </button>
         ) : (
           <div className="relative mt-8 mb-8">
