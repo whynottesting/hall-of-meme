@@ -58,8 +58,8 @@
     grid-template-rows: repeat(100, 1fr);
     aspect-ratio: 1;
     width: 100vw;
-    max-height: 100vh;
-    margin: 0;
+    max-height: 100vw;
+    margin: 0 auto;
     border: 0.5px solid rgba(26, 43, 60, 0.1);
     background: #f0f0f0;
     position: relative;
@@ -67,13 +67,11 @@
     transform: translateX(-50%);
     box-sizing: border-box;
     overflow: hidden;
-    padding: 0;
 
     @media (min-width: 768px) {
       width: 98vw;
       max-height: 98vh;
       border: 2px solid #1a2b3c;
-      margin: 0 auto;
     }
   }
 
